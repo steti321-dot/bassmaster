@@ -42,7 +42,10 @@ jobs:
         # `--ignore-scripts` skips the postinstall yt-dlp setup — that script
         # downloads a Windows binary which we don't need in the web bundle
         # (Audio-to-Notes tab is excluded from REACT_APP_BUILD_TARGET=web).
-        run: npm ci --ignore-scripts
+        # `--legacy-peer-deps` because react-scripts@5.0.1 ships with stale
+        # peer-dep ranges (TypeScript >=2.7 < anything modern); the same flag
+        # is needed when installing alphatab locally.
+        run: npm ci --ignore-scripts --legacy-peer-deps
 
       - name: Build web bundle
         env:
