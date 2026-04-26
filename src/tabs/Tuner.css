@@ -1,0 +1,322 @@
+.tuner-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+  padding: 30px 20px;
+}
+
+.tuner-card {
+  background: var(--cy-bg-card);
+  border: 1px solid var(--cy-border);
+  border-top: 2px solid var(--cy-cyan);
+  border-radius: 6px;
+  padding: 28px 36px;
+  width: min(720px, 96vw);
+  box-shadow:
+    0 0 24px rgba(0, 245, 255, 0.18),
+    inset 0 0 50px rgba(0, 245, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.tuner-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.tuner-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cy-cyan);
+  text-shadow: 0 0 12px rgba(0, 245, 255, 0.55);
+}
+
+.instrument-toggle {
+  display: flex;
+  gap: 6px;
+}
+
+/* Note: .inst-btn is also used in Upload.css; same styling is fine here */
+
+/* Big detected note display */
+.tuner-display {
+  text-align: center;
+  padding: 30px 10px 20px;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(0, 245, 255, 0.16), transparent 70%),
+    rgba(0, 245, 255, 0.04);
+  border: 1px solid var(--cy-border);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.tuner-display.in-tune {
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(45, 255, 139, 0.22), transparent 70%),
+    rgba(45, 255, 139, 0.06);
+  border-color: var(--cy-green);
+  box-shadow: 0 0 24px rgba(45, 255, 139, 0.4),
+              inset 0 0 32px rgba(45, 255, 139, 0.1);
+}
+
+.big-note {
+  font-family: 'Rajdhani', 'Eurostile', sans-serif;
+  font-weight: 800;
+  font-size: clamp(4rem, 12vw, 7rem);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: var(--cy-cyan);
+  text-shadow:
+    0 0 24px rgba(0, 245, 255, 0.7),
+    0 0 60px rgba(0, 245, 255, 0.3);
+  font-variant-numeric: tabular-nums;
+}
+
+.tuner-display.in-tune .big-note {
+  color: var(--cy-green);
+  text-shadow:
+    0 0 24px rgba(45, 255, 139, 0.85),
+    0 0 60px rgba(45, 255, 139, 0.4);
+}
+
+.freq-line {
+  margin-top: 6px;
+  font-size: 0.95rem;
+  letter-spacing: 0.1em;
+  color: var(--cy-text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Needle */
+.needle-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.needle-target {
+  text-align: center;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  color: var(--cy-text-dim);
+  min-height: 1.2em;
+}
+
+.closest-string {
+  font-weight: 800;
+  text-shadow: 0 0 6px currentColor;
+}
+
+.needle-track {
+  position: relative;
+  height: 56px;
+  background: rgba(0, 245, 255, 0.04);
+  border: 1px solid var(--cy-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.needle-zero {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: rgba(0, 245, 255, 0.5);
+  transform: translateX(-50%);
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.35);
+}
+
+.needle-tick {
+  position: absolute;
+  top: 4px;
+  font-size: 0.7rem;
+  color: var(--cy-text-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+}
+
+.needle-tick.flat-100  { left: 1%; }
+.needle-tick.flat-50   { left: 25%; }
+.needle-tick.centre    { left: 50%; transform: translateX(-50%); color: var(--cy-cyan); }
+.needle-tick.sharp-50  { left: 73%; }
+.needle-tick.sharp-100 { right: 2%; }
+
+.needle {
+  position: absolute;
+  bottom: 8px;
+  width: 4px;
+  height: 36px;
+  border-radius: 2px;
+  transform: translateX(-50%);
+  transition: left 0.12s ease, background 0.2s ease;
+}
+
+.needle-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--cy-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  padding: 0 4px;
+}
+
+/* Strings row */
+.strings-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.string-pill {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 6px;
+  background: rgba(7, 9, 13, 0.55);
+  border: 1px solid;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  font-variant-numeric: tabular-nums;
+}
+
+.string-pill.active {
+  background: rgba(0, 245, 255, 0.06);
+  box-shadow: 0 0 12px rgba(0, 245, 255, 0.35);
+}
+
+.string-pill.active.ok {
+  background: rgba(45, 255, 139, 0.15);
+  box-shadow: 0 0 16px rgba(45, 255, 139, 0.55);
+  border-color: var(--cy-green) !important;
+  color: var(--cy-green) !important;
+}
+
+.pill-label {
+  font-weight: 800;
+  font-size: 1.4rem;
+  text-shadow: 0 0 8px currentColor;
+}
+
+.pill-target {
+  font-size: 0.78rem;
+  color: var(--cy-text-dim);
+  letter-spacing: 0.06em;
+}
+
+.pill-cents {
+  font-size: 0.78rem;
+  color: var(--cy-text-muted);
+  min-height: 1em;
+  letter-spacing: 0.04em;
+}
+
+.string-pill.active .pill-cents {
+  color: var(--cy-orange);
+}
+
+.string-pill.active.ok .pill-cents {
+  color: var(--cy-green);
+}
+
+/* Controls */
+.tuner-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.big-start-btn,
+.big-stop-btn {
+  padding: 12px 30px;
+  background: rgba(0, 245, 255, 0.18);
+  color: var(--cy-cyan);
+  border: 1px solid var(--cy-cyan);
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(0, 245, 255, 0.4);
+  transition: all 0.18s ease;
+}
+
+.big-start-btn:hover {
+  background: rgba(0, 245, 255, 0.28);
+  box-shadow: 0 0 22px rgba(0, 245, 255, 0.7);
+}
+
+.big-stop-btn {
+  color: var(--cy-red);
+  border-color: var(--cy-red);
+  background: rgba(255, 40, 96, 0.12);
+  box-shadow: 0 0 10px rgba(255, 40, 96, 0.4);
+}
+
+.big-stop-btn:hover {
+  background: rgba(255, 40, 96, 0.22);
+  box-shadow: 0 0 18px rgba(255, 40, 96, 0.7);
+}
+
+.signal-meter {
+  flex: 1;
+  height: 6px;
+  background: rgba(0, 245, 255, 0.08);
+  border: 1px solid var(--cy-border);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 100px;
+}
+
+.signal-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cy-green), var(--cy-yellow), var(--cy-red));
+  transition: width 0.08s ease;
+}
+
+.ns-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: rgba(0, 245, 255, 0.04);
+  border: 1px solid var(--cy-border);
+  border-radius: 3px;
+  font-size: 0.78rem;
+  color: var(--cy-text-dim);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ns-toggle input[type='checkbox'] {
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--cy-cyan);
+}
+
+.ns-toggle:hover {
+  border-color: var(--cy-cyan);
+  color: var(--cy-cyan);
+}
+
+.tuner-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--cy-text-muted);
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+}

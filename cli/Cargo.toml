@@ -1,0 +1,12 @@
+[package]
+name = "transcribe"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+symphonia = { version = "0.5", features = ["all-codecs", "all-formats"] }
+rustfft = "6.2"
+
+[profile.release]
+opt-level = 3
+lto = true

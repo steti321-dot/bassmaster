@@ -1,0 +1,55 @@
+{
+  "name": "mp3-to-gp4",
+  "version": "0.0.1",
+  "description": "Convert audio/video files to Guitar Pro notation (GP4 format)",
+  "main": "dist/main.js",
+  "homepage": "https://steti321-dot.github.io/bassmaster/",
+  "author": "Stefan Thies",
+  "license": "MIT",
+  "scripts": {
+    "postinstall": "node scripts/setup-ytdlp.mjs",
+    "dev": "concurrently \"npm run dev:renderer\" \"wait-on http://localhost:3000 && npm run dev:electron\"",
+    "dev:renderer": "react-scripts start",
+    "dev:electron": "npm run build:electron && cross-env NODE_ENV=development electron .",
+    "build": "npm run build:renderer && npm run build:electron && npm run build:wasm",
+    "build:renderer": "react-scripts build",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "build:wasm": "wasm-pack build src-wasm --target web --release",
+    "build:web": "cross-env REACT_APP_BUILD_TARGET=web PUBLIC_URL=. react-scripts build",
+    "deploy:worker": "cd worker && npx wrangler deploy",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "dependencies": {
+    "@coderline/alphatab": "^1.8.2",
+    "@ffmpeg/ffmpeg": "^0.12.10",
+    "@ffmpeg/util": "^0.12.1",
+    "@spotify/basic-pitch": "^1.0.1",
+    "audio-loader": "^1.0.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "yt-dlp-wrap": "^2.3.12"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "concurrently": "^8.2.0",
+    "cross-env": "^10.1.0",
+    "electron": "^27.0.0",
+    "react-scripts": "5.0.1",
+    "typescript": "^5.2.0",
+    "wait-on": "^7.0.1"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

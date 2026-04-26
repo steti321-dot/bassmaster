@@ -1,0 +1,7 @@
+name = "guitar-workbench-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+
+# Default deploy: workers.dev subdomain (free).
+# After `wrangler login`, run `npm run deploy` and Cloudflare will print
+# the public URL — copy it into REACT_APP_PROXY_BASE for the web build.

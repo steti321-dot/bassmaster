@@ -1,0 +1,68 @@
+.tab-preview {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fdfdfa;
+  overflow: hidden;
+}
+
+.tab-preview.empty {
+  padding: 30px;
+  text-align: center;
+  color: #999;
+}
+
+.tab-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  background: #f9f7f3;
+  border-bottom: 1px solid #e6e3dd;
+}
+
+.play-btn {
+  padding: 7px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  min-width: 80px;
+}
+
+.play-btn:hover {
+  background: #5568d3;
+}
+
+.play-btn.playing {
+  background: #e74c3c;
+}
+
+.play-btn.playing:hover {
+  background: #c0392b;
+}
+
+.tab-meta {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.tab-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 6px 0;
+}
+
+.tab-svg {
+  display: block;
+}
+
+.tab-svg .note-group:hover circle {
+  fill: #fff8d8;
+  stroke: #f39c12;
+}

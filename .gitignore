@@ -1,0 +1,40 @@
+node_modules/
+dist/
+build/
+.DS_Store
+*.swp
+*.swo
+*~
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Rust/Cargo
+target/
+Cargo.lock
+**/*.rs.bk
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Test coverage
+coverage/
+
+# yt-dlp binary — re-downloaded by scripts/setup-ytdlp.mjs on `npm install`
+bin/yt-dlp*
+
+# Local audio + tab samples (third-party tabs, large recordings)
+test-samples/
+
+# Wrangler local state
+worker/.wrangler/
+
+# Claude Code local settings (may contain logged commands with secrets)
+.claude/
+
+# Local plan / scratch files
+*.gp4.tmp
+*.gp5.tmp

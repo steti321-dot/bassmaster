@@ -1,0 +1,311 @@
+.game-screen {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  gap: 12px;
+  position: relative; /* for absolutely-positioned overlays */
+}
+
+.gear-btn {
+  background: rgba(0, 245, 255, 0.06);
+  border: 1px solid var(--cy-border);
+  color: var(--cy-cyan);
+  width: 32px;
+  height: 32px;
+  border-radius: 3px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.gear-btn:hover {
+  border-color: var(--cy-cyan);
+  background: rgba(0, 245, 255, 0.18);
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.4);
+}
+
+.game-stage {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.game-footer-bar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 9px 14px;
+  background: var(--cy-bg-card);
+  border: 1px solid var(--cy-border);
+  border-radius: 3px;
+  font-size: 0.78rem;
+  color: var(--cy-text-dim);
+  letter-spacing: 0.06em;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.back-btn {
+  padding: 7px 14px;
+  background: transparent;
+  color: var(--cy-cyan);
+  border: 1px solid var(--cy-border);
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: all 0.16s ease;
+}
+
+.back-btn:hover {
+  border-color: var(--cy-cyan);
+  background: rgba(0, 245, 255, 0.1);
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.4);
+}
+
+.backing-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  background: rgba(0, 245, 255, 0.05);
+  border: 1px solid var(--cy-border);
+  border-radius: 3px;
+}
+
+.mute-btn {
+  background: transparent;
+  border: none;
+  color: var(--cy-cyan);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: all 0.15s ease;
+}
+
+.mute-btn:hover {
+  filter: drop-shadow(0 0 8px var(--cy-cyan));
+}
+
+.mute-btn.muted {
+  color: var(--cy-red);
+  filter: drop-shadow(0 0 6px var(--cy-red));
+}
+
+.vol-slider {
+  width: 90px;
+  appearance: none;
+  height: 4px;
+  background: rgba(0, 245, 255, 0.2);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.vol-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: var(--cy-cyan);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 6px var(--cy-cyan);
+}
+
+.vol-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: var(--cy-cyan);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 6px var(--cy-cyan);
+}
+
+.vol-label {
+  font-size: 0.7rem;
+  color: var(--cy-text-muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.backing-tracks {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.track-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: rgba(0, 245, 255, 0.04);
+  border: 1px solid var(--cy-border);
+  border-radius: 3px;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--cy-text-dim);
+  cursor: pointer;
+  transition: all 0.16s ease;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track-chip input[type='checkbox'] {
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--cy-cyan);
+  flex-shrink: 0;
+}
+
+.track-chip.on {
+  color: var(--cy-cyan);
+  background: rgba(0, 245, 255, 0.12);
+  border-color: var(--cy-cyan);
+  box-shadow: 0 0 6px rgba(0, 245, 255, 0.4);
+}
+
+.track-chip.off:hover {
+  border-color: var(--cy-cyan);
+  color: var(--cy-cyan);
+}
+
+.track-chip.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.track-chip.player {
+  color: var(--cy-orange);
+  background: rgba(255, 157, 0, 0.06);
+  border-color: var(--cy-orange);
+  font-weight: 700;
+}
+
+.track-chip.player.on {
+  background: rgba(255, 157, 0, 0.18);
+  box-shadow: 0 0 10px rgba(255, 157, 0, 0.55);
+}
+
+.track-chip.player input[type='checkbox'] {
+  accent-color: var(--cy-orange);
+}
+
+.ns-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: rgba(0, 245, 255, 0.04);
+  border: 1px solid var(--cy-border);
+  border-radius: 3px;
+  font-size: 0.78rem;
+  color: var(--cy-text-dim);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ns-toggle input[type='checkbox'] {
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--cy-cyan);
+}
+
+.ns-toggle:hover {
+  border-color: var(--cy-cyan);
+  color: var(--cy-cyan);
+}
+
+.headphones-warn {
+  color: var(--cy-orange);
+  text-shadow: 0 0 6px rgba(255, 157, 0, 0.6);
+  font-size: 0.95em;
+}
+
+.mic-status {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: var(--cy-text-dim);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+.mic-status.mic-live {
+  color: var(--cy-green);
+  text-shadow: 0 0 6px rgba(45, 255, 139, 0.5);
+}
+.mic-status.mic-denied {
+  color: var(--cy-red);
+  text-shadow: 0 0 6px rgba(255, 40, 96, 0.5);
+}
+.mic-status.mic-requesting {
+  color: var(--cy-orange);
+  text-shadow: 0 0 6px rgba(255, 157, 0, 0.5);
+}
+
+.phase-note {
+  flex: 1;
+  font-style: italic;
+  color: var(--cy-orange);
+  text-shadow: 0 0 6px rgba(255, 157, 0, 0.4);
+}
+
+.difficulty-info {
+  font-size: 0.74rem;
+  color: var(--cy-text-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.wait-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 18px 36px;
+  background: rgba(7, 9, 13, 0.85);
+  border: 2px solid var(--cy-cyan);
+  border-radius: 4px;
+  color: var(--cy-cyan);
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-shadow: 0 0 12px rgba(0, 245, 255, 0.7);
+  box-shadow:
+    0 0 30px rgba(0, 245, 255, 0.55),
+    inset 0 0 24px rgba(0, 245, 255, 0.15);
+  pointer-events: none;
+  animation: wait-pulse 1.4s ease-in-out infinite;
+  z-index: 10;
+}
+
+@keyframes wait-pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow:
+      0 0 30px rgba(0, 245, 255, 0.55),
+      inset 0 0 24px rgba(0, 245, 255, 0.15);
+  }
+  50% {
+    opacity: 0.75;
+    box-shadow:
+      0 0 18px rgba(0, 245, 255, 0.35),
+      inset 0 0 14px rgba(0, 245, 255, 0.08);
+  }
+}

@@ -1,0 +1,59 @@
+name: Deploy web build to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        # `--ignore-scripts` skips the postinstall yt-dlp setup — that script
+        # downloads a Windows binary which we don't need in the web bundle
+        # (Audio-to-Notes tab is excluded from REACT_APP_BUILD_TARGET=web).
+        run: npm ci --ignore-scripts
+
+      - name: Build web bundle
+        env:
+          REACT_APP_PROXY_BASE: ${{ secrets.PROXY_BASE_URL }}
+          # CRA treats warnings as errors in CI by default — flip to keep
+          # a few unused-imports from breaking the deploy.
+          CI: 'false'
+        # `build:web` sets REACT_APP_BUILD_TARGET=web and PUBLIC_URL=. itself.
+        run: npm run build:web
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./build
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4

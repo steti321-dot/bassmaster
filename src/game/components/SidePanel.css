@@ -1,0 +1,440 @@
+.side-panel {
+  background: var(--cy-bg-card);
+  border: 1px solid var(--cy-border);
+  border-left: 2px solid var(--cy-cyan);
+  border-radius: 4px;
+  padding: 14px 16px;
+  box-shadow:
+    0 0 18px rgba(0, 245, 255, 0.18),
+    inset 0 0 30px rgba(0, 245, 255, 0.04);
+  width: 240px;
+  flex-shrink: 0;
+
+  /* Wheel layout: past notes flow up off the top, current note centred,
+     future notes line up below. Use flex with the centre as the anchor. */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.wheel-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* Reserve space so the centre card stays visually anchored even when there
+     are fewer past/future rows available. */
+  min-height: 132px;
+}
+
+.wheel-past {
+  justify-content: flex-end;
+  padding-bottom: 8px;
+  /* Fade gradient from top → bottom so the upper rows look like they're
+     drifting off the top of the wheel. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 60%);
+          mask-image: linear-gradient(to bottom, transparent 0%, black 60%);
+}
+
+.wheel-future {
+  justify-content: flex-start;
+  padding-top: 8px;
+  -webkit-mask-image: linear-gradient(to top, transparent 0%, black 60%);
+          mask-image: linear-gradient(to top, transparent 0%, black 60%);
+}
+
+.wheel-center {
+  /* Big card sits between past and future. Its own border/glow distinguishes
+     it as the active focal point. */
+  position: relative;
+  margin: 4px 0;
+}
+
+.wheel-center::before,
+.wheel-center::after {
+  content: '';
+  position: absolute;
+  left: -16px;
+  right: -16px;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--cy-cyan) 30%,
+    var(--cy-cyan) 70%,
+    transparent
+  );
+  box-shadow: 0 0 6px rgba(0, 245, 255, 0.5);
+  opacity: 0.6;
+}
+.wheel-center::before { top: -4px; }
+.wheel-center::after  { bottom: -4px; }
+
+/* Mini-card variant of the centre `.next-card` — same glow + gradient look,
+   one horizontal row instead of stacked sections. Each cell mirrors a
+   field on the big card so the eye doesn't have to relearn anything. */
+.wheel-row {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(0, 245, 255, 0.10), transparent 70%),
+    rgba(0, 245, 255, 0.04);
+  border: 1px solid rgba(0, 245, 255, 0.22);
+  border-radius: 3px;
+  font-size: 0.92rem;
+  color: var(--cy-text);
+  box-shadow:
+    0 0 6px rgba(0, 245, 255, 0.12),
+    inset 0 0 12px rgba(0, 245, 255, 0.04);
+}
+
+.wheel-past-row {
+  /* Past rows lean dimmer — same shape, less glow */
+  border-color: rgba(0, 245, 255, 0.14);
+  box-shadow: inset 0 0 8px rgba(0, 245, 255, 0.03);
+}
+
+.wheel-row .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.wheel-row .pitch {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 8px currentColor;
+  line-height: 1;
+}
+
+/* String/Fret cluster lives in the third grid cell. */
+.wheel-row .label {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 0.92rem;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--cy-text-dim);
+}
+
+.wheel-row .slash {
+  color: var(--cy-text-muted);
+  font-weight: 400;
+}
+
+/* Mini fret pill — same orange / glow as the centre card, just compact. */
+.wheel-row .fret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 5px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--cy-orange);
+  border-radius: 3px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--cy-orange);
+  box-shadow: 0 0 5px rgba(255, 157, 0, 0.35);
+  text-shadow: 0 0 5px rgba(255, 157, 0, 0.55);
+}
+
+.wheel-row .eta {
+  font-size: 0.68rem;
+  color: var(--cy-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.side-panel-title {
+  margin: 0 0 14px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--cy-cyan);
+  text-shadow: 0 0 8px rgba(0, 245, 255, 0.6);
+  border-bottom: 1px solid var(--cy-border);
+  padding-bottom: 8px;
+}
+
+.queue-title {
+  margin-top: 18px;
+}
+
+.next-card {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(0, 245, 255, 0.18), transparent 70%),
+    rgba(0, 245, 255, 0.05);
+  border: 1px solid var(--cy-cyan);
+  border-radius: 4px;
+  padding: 14px 12px;
+  margin-bottom: 8px;
+  box-shadow:
+    0 0 16px rgba(0, 245, 255, 0.35),
+    inset 0 0 24px rgba(0, 245, 255, 0.08);
+  text-align: center;
+  /* Fixed dimensions so content updates never reflow the card. */
+  height: 196px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.next-card.empty {
+  color: var(--cy-text-muted);
+  font-style: italic;
+  letter-spacing: 0.12em;
+  align-items: center;
+  justify-content: center;
+}
+
+.next-pitch {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 14px currentColor;
+  line-height: 1;
+  /* Fixed line slot so 2-char and 3-char pitches don't shift the layout */
+  min-height: 2.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.next-row {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 4px;
+  /* Fixed-height row so finger label width changes can't push it taller */
+  min-height: 64px;
+}
+
+.next-cell {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 4px 2px;
+}
+
+.next-cell-divider {
+  width: 1px;
+  background: var(--cy-border);
+  margin: 4px 0;
+}
+
+.next-cell-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--cy-text-muted);
+}
+
+.next-cell-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 0 8px currentColor;
+}
+
+/* Pill backdrops for fret + finger.
+   Locked dimensions so any value (1-2 digit fret, "open" finger) renders
+   in the exact same box — prevents the card from flickering in size. */
+.next-cell-value.fret-pill,
+.next-cell-value.finger-pill {
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 4px;
+  padding: 0;
+  width: 56px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.next-cell-value.fret-pill {
+  color: var(--cy-orange);
+  border: 1px solid var(--cy-orange);
+  box-shadow: inset 0 0 8px rgba(255, 157, 0, 0.2),
+              0 0 8px rgba(255, 157, 0, 0.45);
+}
+
+.next-cell-value.finger-pill {
+  color: var(--cy-yellow);
+  border: 1px solid var(--cy-yellow);
+  box-shadow: inset 0 0 8px rgba(255, 240, 102, 0.18),
+              0 0 8px rgba(255, 240, 102, 0.4);
+}
+
+.next-cell-value.finger-pill.open {
+  /* Smaller text for the longer "open" word, but pill dimensions are fixed above */
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.next-cell-label .suggested {
+  display: inline-block;
+  margin-left: 4px;
+  color: var(--cy-text-muted);
+  font-weight: 700;
+}
+
+.next-eta {
+  font-size: 0.78rem;
+  color: var(--cy-cyan);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  min-height: 1em;
+}
+
+.upcoming-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.upcoming-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  background: rgba(0, 245, 255, 0.04);
+  border: 1px solid rgba(0, 245, 255, 0.1);
+  border-radius: 3px;
+  font-size: 0.95rem;
+  color: var(--cy-text);
+  transition: all 0.18s ease;
+}
+
+.upcoming-item.next {
+  background: rgba(0, 245, 255, 0.12);
+  border-color: var(--cy-cyan);
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.4);
+}
+
+.upcoming-item .dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.upcoming-item .label {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 1.18rem;
+  letter-spacing: 0.04em;
+  color: var(--cy-text);
+  flex: 1;
+}
+
+.upcoming-item .slash {
+  margin: 0 4px;
+  color: var(--cy-text-muted);
+  font-weight: 400;
+}
+
+.upcoming-item .fret {
+  color: var(--cy-orange);
+  text-shadow: 0 0 6px rgba(255, 157, 0, 0.55);
+}
+
+.upcoming-item .eta {
+  font-size: 0.72rem;
+  color: var(--cy-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.upcoming-empty {
+  text-align: center;
+  color: var(--cy-text-muted);
+  font-style: italic;
+  padding: 18px 0;
+  letter-spacing: 0.1em;
+}
+
+/* Scrubber — visible only while paused. Plain horizontal range slider with
+   start/end timestamps. Vertical layout would feel novel but breaks user
+   expectations from every other media player. */
+.wheel-scrub {
+  margin-top: 14px;
+  padding: 10px 6px 6px;
+  border-top: 1px solid var(--cy-border);
+}
+
+.wheel-scrub-input {
+  width: 100%;
+  appearance: none;
+  height: 4px;
+  background: rgba(0, 245, 255, 0.18);
+  border-radius: 2px;
+  outline: none;
+  cursor: grab;
+}
+
+.wheel-scrub-input:active {
+  cursor: grabbing;
+}
+
+.wheel-scrub-input::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--cy-cyan);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 8px var(--cy-cyan);
+}
+
+.wheel-scrub-input::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--cy-cyan);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 8px var(--cy-cyan);
+}
+
+.wheel-scrub-times {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: var(--cy-text-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
