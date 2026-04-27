@@ -1,0 +1,40 @@
+.fretboard-mini {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(7, 9, 13, 0.85);
+  border: 1px solid var(--cy-border);
+  border-top: 2px solid var(--cy-cyan);
+  border-radius: 4px;
+  padding: 4px 6px 2px;
+  box-shadow:
+    0 0 14px rgba(0, 245, 255, 0.22),
+    inset 0 0 18px rgba(0, 245, 255, 0.04);
+  pointer-events: none;
+  z-index: 5;
+  user-select: none;
+}
+
+.fretboard-mini-svg {
+  display: block;
+}
+
+.fretboard-mini-eta {
+  text-align: center;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cy-text-muted);
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+  .fretboard-mini {
+    top: 4px;
+    right: 4px;
+    transform: scale(0.78);
+    transform-origin: top right;
+    padding: 3px 4px 1px;
+  }
+}

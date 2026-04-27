@@ -6,6 +6,7 @@ import type { PickedFile } from '../game/components/FilePicker';
 import NoteRain from '../game/components/NoteRain';
 import SidePanel from '../game/components/SidePanel';
 import HUD from '../game/components/HUD';
+import FretboardMini from '../game/components/FretboardMini';
 import { getInstrument, buildProfileFromTuning } from '../game/Instrument';
 import { DIFFICULTIES, INITIAL_SCORE } from '../game/types';
 import type { Song, Difficulty, ScoreState } from '../game/types';
@@ -628,6 +629,12 @@ export default function LearnGuitarGame() {
           notes={displayedNotes}
           currentTimeMs={currentTimeMs}
           fallDurationSec={fallDurationSec}
+          noteResults={noteResults}
+        />
+        <FretboardMini
+          instrument={profile}
+          notes={displayedNotes}
+          currentTimeMs={currentTimeMs}
           noteResults={noteResults}
         />
         {isWaiting && <div className="wait-overlay">🎯 Play this note…</div>}

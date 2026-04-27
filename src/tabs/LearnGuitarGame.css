@@ -32,6 +32,7 @@
   min-height: 0;
   gap: 14px;
   align-items: stretch;
+  position: relative; /* host for the absolute-positioned fretboard mini */
 }
 
 .game-footer-bar {
