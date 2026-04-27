@@ -311,26 +311,21 @@
 }
 
 /* ───────────────────────────────────────────────────────────
-   Mobile portrait — stack the side panel above the note rain
-   so both fit on a phone screen, and let the page scroll.
+   Mobile portrait — stack the side panel above the note rain so
+   both fit on the phone, but keep the layout flex-bounded to one
+   viewport (no scrolling). HUD + stage + footer-bar all share the
+   available height; the rain fills whatever's left.
    ─────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .game-screen {
-    /* Allow the page to grow past the viewport so nothing is clipped
-       behind the footer. */
-    min-height: auto;
-  }
-
   .game-stage {
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
   }
 
   .game-footer-bar {
-    flex-direction: column;
-    align-items: stretch;
+    align-items: center;
     gap: 6px;
-    padding: 6px 8px;
+    padding: 5px 8px;
     font-size: 0.72rem;
   }
 
@@ -354,8 +349,8 @@
   }
 
   .back-btn {
-    width: 100%;
-    padding: 6px 12px;
+    padding: 5px 10px;
+    font-size: 0.7rem;
   }
 
   .ns-toggle {

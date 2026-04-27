@@ -239,23 +239,21 @@ body {
 
 /* ───────────────────────────────────────────────────────────
    Mobile / phone portrait (≤ 768px)
-   The desktop layout uses fixed-height flex columns; on phones we
-   relax that so content can scroll, and shrink paddings + fonts.
+   Keep the single-viewport flex layout (no scrolling) — just
+   shrink paddings + fonts so everything still fits.
    ─────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .app {
-    height: auto;
-    min-height: 100vh;
-    min-height: 100dvh;
+  .app-header {
+    padding: 8px 12px 0;
   }
 
-  .app-header {
-    padding: 10px 14px 0;
+  .app-header-content {
+    gap: 8px;
   }
 
   .app-header h1 {
-    font-size: 1.1rem;
-    margin: 0 0 8px;
+    font-size: 1rem;
+    margin: 0 0 6px;
     letter-spacing: 0.08em;
   }
 
@@ -266,20 +264,18 @@ body {
 
   .tab-btn {
     flex: 1 1 auto;
-    padding: 7px 10px;
-    font-size: 0.74rem;
+    padding: 6px 8px;
+    font-size: 0.7rem;
     letter-spacing: 0.04em;
   }
 
   .app-main {
-    padding: 10px 12px;
-    overflow: visible;
-    flex: 0 0 auto;
+    padding: 8px 10px;
   }
 
   .app-footer {
-    padding: 6px 12px;
-    font-size: 0.66rem;
+    padding: 5px 10px;
+    font-size: 0.62rem;
     letter-spacing: 0.04em;
   }
 
@@ -289,6 +285,6 @@ body {
 
   .donate-link {
     display: inline-block;
-    margin-top: 4px;
+    margin-top: 2px;
   }
 }
