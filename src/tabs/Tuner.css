@@ -358,3 +358,77 @@
   line-height: 1.6;
   letter-spacing: 0.04em;
 }
+
+@media (max-width: 768px) {
+  .tuner-screen {
+    padding: 12px 10px;
+  }
+
+  .tuner-card {
+    padding: 14px 14px;
+    gap: 14px;
+  }
+
+  .tuner-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .tuner-header h2 {
+    font-size: 1.1rem;
+    text-align: center;
+  }
+
+  .instrument-toggle {
+    justify-content: center;
+  }
+
+  .inst-btn {
+    flex: 1 1 calc(50% - 4px);
+    padding: 7px 8px;
+    font-size: 0.74rem;
+    letter-spacing: 0.04em;
+  }
+
+  .tuner-display {
+    padding: 18px 6px 12px;
+  }
+
+  .big-note {
+    font-size: clamp(2.6rem, 18vw, 4.5rem);
+  }
+
+  .strings-row {
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .string-pill {
+    padding: 8px 4px;
+  }
+
+  .pill-label {
+    font-size: 1.1rem;
+  }
+
+  .pill-target,
+  .pill-cents {
+    font-size: 0.66rem;
+  }
+
+  .tuner-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .big-start-btn,
+  .big-stop-btn {
+    width: 100%;
+  }
+
+  .signal-meter {
+    width: 100%;
+  }
+}

@@ -241,3 +241,58 @@
               inset 0 0 10px rgba(0, 245, 255, 0.18);
   text-shadow: 0 0 6px rgba(0, 245, 255, 0.6);
 }
+
+@media (max-width: 768px) {
+  .hud {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 8px 10px;
+    font-size: 0.78rem;
+  }
+
+  .hud-section {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .hud-song {
+    min-width: 0;
+  }
+
+  .hud-title {
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .hud-stats {
+    justify-content: space-around;
+  }
+
+  .stat-value {
+    font-size: 1rem;
+  }
+
+  .hud-controls {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .hud-btn,
+  .speed-btn,
+  .difficulty-select,
+  .kids-btn,
+  .wait-btn {
+    padding: 6px 10px;
+    font-size: 0.74rem;
+    flex: 0 0 auto;
+  }
+
+  .hud-time {
+    width: 100%;
+    text-align: center;
+    font-size: 0.74rem;
+  }
+}

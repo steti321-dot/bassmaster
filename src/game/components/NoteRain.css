@@ -36,3 +36,12 @@
 .bulb {
   filter: drop-shadow(0 0 6px currentColor);
 }
+
+@media (max-width: 768px) {
+  .note-rain {
+    /* Lock a sensible height when the rain stops being flex-1 because the
+       parent stage is now column-flow; without this it'd collapse to 0. */
+    min-height: 60vh;
+    height: 60vh;
+  }
+}

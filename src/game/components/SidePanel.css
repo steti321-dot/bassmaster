@@ -438,3 +438,77 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.06em;
 }
+
+/* ───────────────────────────────────────────────────────────
+   Mobile portrait — collapse the wheel to just the centre card
+   so it doesn't hog phone-screen real estate above the note rain.
+   ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .side-panel {
+    width: 100%;
+    border-left: none;
+    border-top: 2px solid var(--cy-cyan);
+    padding: 10px 12px;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  /* Hide the past/future wheels on phones — the chips on the rain
+     plus the scrubber already convey what's coming. */
+  .wheel-list,
+  .wheel-center::before,
+  .wheel-center::after {
+    display: none;
+  }
+
+  .wheel-center {
+    flex: 1;
+    margin: 0;
+  }
+
+  .next-card {
+    height: auto;
+    padding: 8px 10px;
+    gap: 4px;
+  }
+
+  .next-pitch {
+    font-size: 1.4rem;
+    min-height: 1.6rem;
+  }
+
+  .next-row {
+    min-height: 0;
+    gap: 2px;
+  }
+
+  .next-cell {
+    padding: 2px;
+    gap: 2px;
+  }
+
+  .next-cell-value {
+    font-size: 1.05rem;
+  }
+
+  .next-cell-value.fret-pill,
+  .next-cell-value.finger-pill {
+    width: 38px;
+    height: 26px;
+    font-size: 1rem;
+  }
+
+  .next-cell-label {
+    font-size: 0.55rem;
+  }
+
+  .next-eta {
+    font-size: 0.66rem;
+  }
+
+  .wheel-scrub {
+    margin-top: 6px;
+  }
+}
