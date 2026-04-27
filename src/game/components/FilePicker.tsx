@@ -8,6 +8,8 @@ import {
   gprotabSearch,
 } from '../../services/gprotabClient';
 import { fetchGpFromUrl } from '../../services/fetchGpUrl';
+import { DEMO_SONGS } from '../demoSongs';
+import type { Song } from '../types';
 
 export interface PickedFile {
   name: string;
@@ -16,6 +18,9 @@ export interface PickedFile {
 
 interface FilePickerProps {
   onFilePicked: (file: PickedFile) => void;
+  /** Optional: hand a fully-built Song straight to the game, skipping the
+   *  TrackPicker. Used by the built-in "Quick start" songs. */
+  onSongDirect?: (song: Song) => void;
 }
 
 /**
@@ -23,7 +28,7 @@ interface FilePickerProps {
  * button for browsing the disk. Recent files are cached in IndexedDB so
  * the user can re-open without re-browsing.
  */
-export default function FilePicker({ onFilePicked }: FilePickerProps) {
+export default function FilePicker({ onFilePicked, onSongDirect }: FilePickerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [recents, setRecents] = useState<RecentFile[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -153,6 +158,28 @@ export default function FilePicker({ onFilePicked }: FilePickerProps) {
   return (
     <div className="song-picker">
       <h2>Pick a song to practice</h2>
+
+      {onSongDirect && (
+        <div className="picker-section">
+          <h3>Quick start</h3>
+          <ul className="quick-start-list">
+            {DEMO_SONGS.map((d) => (
+              <li key={d.id}>
+                <button
+                  type="button"
+                  className="quick-start-btn"
+                  onClick={() => onSongDirect(d.build())}
+                >
+                  {d.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <p className="picker-hint">
+            Built-in beginner songs — no download needed. Try them with Kids Mode + Training Mode.
+          </p>
+        </div>
+      )}
 
       {hasGprotabApi && (
         <div className="picker-section">

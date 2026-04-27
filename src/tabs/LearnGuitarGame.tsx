@@ -554,12 +554,18 @@ export default function LearnGuitarGame() {
     // every frame. Only rate / backing toggles should trigger this.
   }, [playbackRate, enabledBacking]);
 
-  // Phase 1: pick a file
-  if (!pickedFile) {
-    return <FilePicker onFilePicked={setPickedFile} />;
+  // Phase 1: pick a file (skipped when a built-in song was loaded directly).
+  if (!song && !pickedFile) {
+    return (
+      <FilePicker
+        onFilePicked={setPickedFile}
+        onSongDirect={(s) => setSong(s)}
+      />
+    );
   }
-  // Phase 2: pick the player + backing tracks
-  if (!song) {
+  // Phase 2: pick the player + backing tracks. Only relevant for files —
+  // built-in songs already arrive as a Song with one track.
+  if (!song && pickedFile) {
     return (
       <TrackPicker
         file={pickedFile}
@@ -568,6 +574,7 @@ export default function LearnGuitarGame() {
       />
     );
   }
+  if (!song) return null;
   // Phase 3: play (rendered below)
 
   const playerTuningProfile = song.tracks[song.playerTrackIndex]?.tuning ?? [];

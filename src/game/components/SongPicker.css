@@ -308,6 +308,44 @@
   padding: 0;
 }
 
+/* Quick-start built-in songs — same shape as recent files but with an
+   orange accent so they read as a featured/curated row. */
+.quick-start-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.quick-start-list li {
+  margin-bottom: 6px;
+}
+
+.quick-start-btn {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255, 157, 0, 0.06);
+  border: 1px solid rgba(255, 157, 0, 0.35);
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 0.92rem;
+  letter-spacing: 0.04em;
+  color: var(--cy-text);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.16s ease;
+}
+
+.quick-start-btn:hover {
+  background: rgba(255, 157, 0, 0.14);
+  border-color: var(--cy-orange);
+  color: var(--cy-orange);
+  box-shadow: 0 0 12px rgba(255, 157, 0, 0.45);
+  text-shadow: 0 0 6px rgba(255, 157, 0, 0.5);
+}
+
 .recent-list li {
   margin-bottom: 6px;
 }
