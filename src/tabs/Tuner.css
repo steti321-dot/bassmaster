@@ -385,50 +385,110 @@
   }
 
   .inst-btn {
-    flex: 1 1 calc(50% - 4px);
-    padding: 7px 8px;
-    font-size: 0.74rem;
-    letter-spacing: 0.04em;
+    flex: 1 1 calc(50% - 3px);
+    min-width: 0;          /* allow shrink past intrinsic width */
+    padding: 6px 6px;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tuner-card {
+    gap: 10px;
   }
 
   .tuner-display {
-    padding: 18px 6px 12px;
+    padding: 8px 6px 6px;
   }
 
   .big-note {
-    font-size: clamp(2.6rem, 18vw, 4.5rem);
+    font-size: clamp(2rem, 12vw, 3rem);
+  }
+
+  .freq-line {
+    margin-top: 2px;
+    font-size: 0.78rem;
+  }
+
+  /* Compress the cents needle vertically — it's already wide enough,
+     stacking everything tighter saves a lot of phone-screen space. */
+  .needle-track {
+    height: 30px;
+  }
+
+  .needle {
+    bottom: 4px;
+    height: 22px;
+  }
+
+  .needle-tick {
+    font-size: 0.6rem;
+    top: 2px;
+  }
+
+  .needle-target {
+    font-size: 0.78rem;
+  }
+
+  .needle-labels {
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
   }
 
   .strings-row {
-    gap: 4px;
+    gap: 3px;
     flex-wrap: wrap;
   }
 
   .string-pill {
-    padding: 8px 4px;
+    padding: 5px 3px;
+    gap: 1px;
   }
 
   .pill-label {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .pill-target,
   .pill-cents {
-    font-size: 0.66rem;
+    font-size: 0.6rem;
   }
 
+  /* Controls + status + noise-suppress all on one row, smaller labels.
+     ".inline-mic" / ".inline-ns" custom variants drop verbose copy. */
   .tuner-controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
   }
 
   .big-start-btn,
   .big-stop-btn {
-    width: 100%;
+    flex: 1 1 auto;
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
   }
 
   .signal-meter {
-    width: 100%;
+    flex: 1 1 80px;
+    min-width: 60px;
+  }
+
+  .mic-status {
+    font-size: 0.66rem;
+    padding: 4px 6px;
+  }
+
+  .ns-toggle {
+    padding: 4px 8px;
+    font-size: 0.66rem;
+  }
+
+  .tuner-hint {
+    display: none;
   }
 }

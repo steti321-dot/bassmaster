@@ -8,16 +8,16 @@ import type { InstrumentKind, InstrumentProfile } from '../game/Instrument';
 type TuningPreset = 'bass' | 'guitar' | 'guitar-drop-d' | 'bass-drop-d';
 
 const PRESETS: Record<TuningPreset, { label: string; kind: InstrumentKind; profile: InstrumentProfile }> = {
-  bass: { label: '🎸 Bass', kind: 'bass', profile: BASS },
+  bass: { label: 'Bass', kind: 'bass', profile: BASS },
   'bass-drop-d': {
-    label: '🎸 Bass · Drop D',
+    label: 'Bass · Drop D',
     kind: 'bass',
     // Bass drop D: G2 D2 A1 D1 (low E dropped to D)
     profile: buildProfileFromTuning([43, 38, 33, 26], 'bass'),
   },
-  guitar: { label: '🎸 Guitar', kind: 'guitar', profile: GUITAR },
+  guitar: { label: 'Guitar', kind: 'guitar', profile: GUITAR },
   'guitar-drop-d': {
-    label: '🎸 Guitar · Drop D',
+    label: 'Guitar · Drop D',
     kind: 'guitar',
     // Guitar drop D: e4 B3 G3 D3 A2 D2 (low E dropped to D)
     profile: buildProfileFromTuning([64, 59, 55, 50, 45, 38], 'guitar'),
@@ -391,11 +391,11 @@ export default function Tuner() {
             </button>
           )}
 
-          <span className={`mic-status mic-${micStatus}`}>
-            {micStatus === 'live' && '🟢 mic live'}
-            {micStatus === 'denied' && '🔴 mic denied'}
-            {micStatus === 'requesting' && '🟡 mic asking…'}
-            {micStatus === 'idle' && '⚪ mic ready'}
+          <span className={`mic-status mic-${micStatus}`} title="Microphone status">
+            {micStatus === 'live' && '🟢 live'}
+            {micStatus === 'denied' && '🔴 denied'}
+            {micStatus === 'requesting' && '🟡 …'}
+            {micStatus === 'idle' && '⚪ ready'}
           </span>
 
           <label className="ns-toggle" title="Suppress fans / HVAC / room hum (may attenuate sustained notes)">
@@ -404,7 +404,7 @@ export default function Tuner() {
               checked={noiseSuppress}
               onChange={(e) => setNoiseSuppress(e.target.checked)}
             />
-            <span>Suppress room noise</span>
+            <span>Noise gate</span>
           </label>
 
           {running && (
