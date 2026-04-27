@@ -41,11 +41,9 @@ function useElementSize<T extends HTMLElement>(): [React.RefObject<T>, { width: 
 // All sizes are computed from the measured container so the canvas always fits
 // the available window space.
 // Hit line is intentionally well below the middle: more vertical airtime for
-// upcoming chips, smaller post-hit margin (the bottom region only needs to
-// host the hit-line bloom + brief fade-out).
+// upcoming chips, smaller post-hit margin (the bottom region just needs to
+// host the hit-line bloom + brief fade + small string labels).
 const HIT_LINE_FRACTION = 0.88;
-// Reserved strip at the top for column header labels (string letters).
-const HEADER_H = 24;
 const TOP_SCALE = 0.45; // chip size at horizon
 const BOTTOM_SCALE = 1.0; // chip size at the hit line
 // Chips are flat poker-chip ellipses, not circles. ry/rx ratio = how flat they look.
@@ -77,12 +75,10 @@ export default function NoteRain({
   const baseBulbRadius = Math.min(columnWidth * 0.36, 56);
 
   // Perspective horizon sits above the visible area so notes "come from a distance".
-  // Everything is offset by HEADER_H so the rail visualization lives below the
-  // top label strip rather than overlapping it.
-  const railTopY = HEADER_H;
-  const perspectiveHorizonY = railTopY - stageHeight * 0.6;
+  const railTopY = 0;
+  const perspectiveHorizonY = -stageHeight * 0.6;
   const hitLineY = stageHeight * HIT_LINE_FRACTION;
-  const fallDistance = hitLineY - railTopY;
+  const fallDistance = hitLineY;
   const pixelsPerMs = fallDistance / (fallDurationSec * 1000);
 
   /** Compute (x, scale) for a note at vertical position y.
@@ -155,14 +151,15 @@ export default function NoteRain({
           );
         })}
 
-        {/* Column "rails" converging to the horizon. Labels are drawn at the
-            TOP (header strip) instead of the bottom — small + color-coded — so
-            the bottom of the canvas can host the hit-line bloom and brief
-            chip-fade only, reclaiming the old big-label real estate. */}
+        {/* Column "rails" converging to the horizon. Labels sit BELOW each
+            rail at the wide end so the label-x lines up with the rail-x.
+            Smaller font than the original (16 vs 28) — combined with the
+            lowered hit line, the bottom strip is compact (~12 % of stage). */}
         {Array.from({ length: numStrings }).map((_, s) => {
           const top = project(s, railTopY);
           const bottom = project(s, hitLineY);
           const c = instrument.stringColors[s];
+          const labelY = Math.min(stageHeight - 6, hitLineY + 18);
           return (
             <g key={`col-${s}`}>
               <line
@@ -177,7 +174,7 @@ export default function NoteRain({
               />
               <text
                 x={bottom.x}
-                y={16}
+                y={labelY}
                 textAnchor="middle"
                 fontSize={16}
                 fontWeight={800}
