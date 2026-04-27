@@ -156,6 +156,29 @@ body {
   text-transform: uppercase;
 }
 
+.footer-sep {
+  margin: 0 10px;
+  color: var(--cy-border);
+}
+
+.donate-link {
+  color: var(--cy-orange);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 6px rgba(255, 157, 0, 0.4);
+  transition: all 0.18s ease;
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
+.donate-link:hover {
+  border-color: var(--cy-orange);
+  background: rgba(255, 157, 0, 0.1);
+  text-shadow: 0 0 10px rgba(255, 157, 0, 0.7);
+  box-shadow: 0 0 12px rgba(255, 157, 0, 0.3);
+}
+
 /* ───────────────────────────────────────────────────────────
    Processing screen (Tab 1 transient state)
    ─────────────────────────────────────────────────────────── */

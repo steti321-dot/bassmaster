@@ -62,7 +62,19 @@ export default function App() {
       </main>
 
       <footer className="app-footer">
-        <p>All audio processing happens locally • No data is uploaded</p>
+        <p>
+          All audio processing happens locally • No data is uploaded
+          <span className="footer-sep">•</span>
+          <a
+            className="donate-link"
+            href="https://ko-fi.com/bassmaster"
+            target="_blank"
+            rel="noreferrer"
+            title="Help buy Stefan and his AI sidekick a domain to host this on"
+          >
+            ☕ Buy us a domain
+          </a>
+        </p>
       </footer>
     </div>
   );
