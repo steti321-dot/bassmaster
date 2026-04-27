@@ -218,8 +218,13 @@ export default function NoteRain({
             // Tail = end of duration hits the line at note.time + duration
             const dtHead = note.time - currentTimeMs;
             const dtTail = note.time + note.duration - currentTimeMs;
-            const yHead = hitLineY - dtHead * pixelsPerMs;
-            const yTail = hitLineY - dtTail * pixelsPerMs;
+            // Clamp both endpoints at the hit line. While the note is held
+            // (dtHead < 0 < dtTail), the head sits AT the hit line and the
+            // tail descends toward it — the stripe shortens in place rather
+            // than sliding off the bottom of the rain. Once dtTail < 0 the
+            // whole stripe is anchored at the hit line, then fades.
+            const yHead = hitLineY - Math.max(0, dtHead) * pixelsPerMs;
+            const yTail = hitLineY - Math.max(0, dtTail) * pixelsPerMs;
 
             const headProj = project(note.string, yHead);
             const tailProj = project(note.string, yTail);
@@ -252,10 +257,12 @@ export default function NoteRain({
               fillOpacity = 0.3;
             }
 
-            // Fade out after the head crosses the hit line
+            // Fade out only after the entire note is past — i.e. the tail
+            // has crossed the hit line. During sustain the stripe stays at
+            // full opacity but shrinks (head clamped, tail descending).
             let opacityFactor = 1;
-            if (dtHead < 0) {
-              opacityFactor = Math.max(0, 1 + dtHead / HIT_LINGER_MS);
+            if (dtTail < 0) {
+              opacityFactor = Math.max(0, 1 + dtTail / HIT_LINGER_MS);
             }
             if (opacityFactor <= 0) return null;
 
