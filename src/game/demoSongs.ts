@@ -8,70 +8,79 @@ import type { Song, GameNote } from './types';
 import { fretToHz, BASS, GUITAR } from './Instrument';
 
 /**
- * Queen — Another One Bites The Dust (bass intro, simplified).
- * Iconic 4-bar riff at ~110 BPM, mostly low E open + a couple of frets.
+ * Queen — Another One Bites The Dust (bass riff).
  *
- * Tab (E string, low to high time):
- *   E|--0--0--0----0--3--0----0--1--0--0----0--3--0----|
+ * Notes were extracted directly from the GP3 file shipped by the user:
+ *   `queen-another_one_bites_the_dust.gp3` → bass track → first 8 bars.
+ * See `scripts/extract-queen-bass.mjs` if you ever need to refresh them.
  */
 function queenBassIntro(): Song {
-  // Eighth note at 110 BPM = 60000 / 110 / 2 = 272.7 ms
-  const eighthMs = 60000 / 110 / 2;
-  const E_STRING = 3; // bass: index 3 = lowest = E
-  const A_STRING = 2;
-
-  const pattern: Array<{ string: number; fret: number; eighths: number }> = [
-    // Bar 1
-    { string: E_STRING, fret: 0, eighths: 1 },
-    { string: E_STRING, fret: 0, eighths: 1 },
-    { string: E_STRING, fret: 0, eighths: 1 },
-    { string: E_STRING, fret: 0, eighths: 1 }, // rest-ish
-    { string: E_STRING, fret: 0, eighths: 1 },
-    { string: E_STRING, fret: 3, eighths: 1 },
-    { string: E_STRING, fret: 0, eighths: 1 },
-    { string: E_STRING, fret: 0, eighths: 1 },
-    // Bar 2
-    { string: E_STRING, fret: 0, eighths: 1 },
-    { string: E_STRING, fret: 1, eighths: 1 },
-    { string: E_STRING, fret: 0, eighths: 1 },
-    { string: E_STRING, fret: 0, eighths: 1 },
-    { string: E_STRING, fret: 0, eighths: 1 },
-    { string: E_STRING, fret: 3, eighths: 1 },
-    { string: E_STRING, fret: 0, eighths: 1 },
-    { string: A_STRING, fret: 0, eighths: 1 }, // A string open as a bass walk
+  // tempo=110, tuning=[43,38,33,28] (G2 D2 A1 E1) — auto-generated.
+  const QUEEN_TEMPO = 110;
+  const data: Array<{ time: number; duration: number; string: number; fret: number }> = [
+    { time: 1909, duration: 136, string: 3, fret: 5 },
+    { time: 2045, duration: 136, string: 3, fret: 3 },
+    { time: 2182, duration: 273, string: 3, fret: 0 },
+    { time: 2727, duration: 273, string: 3, fret: 0 },
+    { time: 3273, duration: 273, string: 3, fret: 0 },
+    { time: 4227, duration: 136, string: 3, fret: 0 },
+    { time: 4364, duration: 273, string: 3, fret: 0 },
+    { time: 4636, duration: 273, string: 3, fret: 0 },
+    { time: 4909, duration: 273, string: 3, fret: 3 },
+    { time: 5182, duration: 136, string: 3, fret: 0 },
+    { time: 5318, duration: 136, string: 3, fret: 5 },
+    { time: 6273, duration: 136, string: 3, fret: 5 },
+    { time: 6409, duration: 136, string: 3, fret: 3 },
+    { time: 6545, duration: 273, string: 3, fret: 0 },
+    { time: 7091, duration: 273, string: 3, fret: 0 },
+    { time: 7636, duration: 273, string: 3, fret: 0 },
+    { time: 8591, duration: 136, string: 3, fret: 0 },
+    { time: 8727, duration: 273, string: 3, fret: 0 },
+    { time: 9000, duration: 273, string: 3, fret: 0 },
+    { time: 9273, duration: 273, string: 3, fret: 3 },
+    { time: 9545, duration: 136, string: 3, fret: 0 },
+    { time: 9682, duration: 136, string: 3, fret: 5 },
+    { time: 10909, duration: 273, string: 3, fret: 0 },
+    { time: 11455, duration: 273, string: 3, fret: 0 },
+    { time: 12000, duration: 273, string: 3, fret: 0 },
+    { time: 12955, duration: 136, string: 3, fret: 0 },
+    { time: 13091, duration: 273, string: 3, fret: 0 },
+    { time: 13364, duration: 273, string: 3, fret: 0 },
+    { time: 13636, duration: 273, string: 3, fret: 3 },
+    { time: 13909, duration: 136, string: 3, fret: 0 },
+    { time: 14045, duration: 136, string: 3, fret: 5 },
+    { time: 15273, duration: 273, string: 3, fret: 0 },
+    { time: 15818, duration: 273, string: 3, fret: 0 },
+    { time: 16364, duration: 273, string: 3, fret: 0 },
+    { time: 17318, duration: 136, string: 3, fret: 0 },
   ];
-
-  const notes: GameNote[] = [];
-  let t = 1000; // start at 1s so the player has lead-in
-  for (const p of pattern) {
-    notes.push({
-      time: t,
-      duration: eighthMs * p.eighths * 0.85,
-      string: p.string,
-      fret: p.fret,
-      frequency: fretToHz(BASS, p.string, p.fret),
-    });
-    t += eighthMs * p.eighths;
-  }
+  const notes: GameNote[] = data.map((n) => ({
+    time: n.time,
+    duration: n.duration,
+    string: n.string,
+    fret: n.fret,
+    frequency: fretToHz(BASS, n.string, n.fret),
+  }));
 
   const playerTrack = {
     index: 0,
-    name: 'Bass — Demo',
+    name: 'Bass — Another One Bites The Dust',
     instrument: 'bass' as const,
     isDrums: false,
     notes,
     tuning: BASS.midiTunings.slice(),
   };
   return {
-    title: 'Queen — Another One Bites The Dust (bass intro, demo)',
+    title: 'Queen — Another One Bites The Dust (bass)',
     artist: 'Queen',
-    tempo: 110,
+    tempo: QUEEN_TEMPO,
     tracks: [playerTrack],
     playerTrackIndex: 0,
     // Single-track demo: default the player track ON so Play makes sound.
     backingEnabled: new Set<number>([0]),
     instrument: 'bass',
     notes,
+    source: 'builtin:queen-aobtd',
   };
 }
 
@@ -145,54 +154,89 @@ function twinkleTwinkle(): Song {
   };
 }
 
-/** Smoke on the Water — single-note simplified intro lick. */
+/**
+ * Smoke on the Water (rhythm guitar).
+ *
+ * Notes extracted from the user's GP4 file:
+ *   `deep_purple-smoke_on_the_water_4.gp4` → track 1 "Rythm Guitar".
+ * The lick is played as G + D string power-chord pairs at frets 0/3/5/6.
+ * With Kids Mode on, the chord-policy reduces each pair to a single note
+ * (the D string at the same fret) so beginners can play the iconic riff
+ * one-fingered. See `scripts/extract-gp-track.mjs` to refresh.
+ */
 function smokeOnTheWater(): Song {
-  const tempo = 112;
-  const eighth = 60000 / tempo / 2;       // ~268 ms
-  const quarter = eighth * 2;
-  const halfNote = quarter * 2;
-
-  // The lick: G3 - Bb3 - C4 / G3 - Bb3 - Db4 - C4, repeated.
-  // All fit on G + B strings inside fret 0–5:
-  //   G3  = string 2 (G) fret 0
-  //   Bb3 = string 2 fret 3
-  //   C4  = string 2 fret 5
-  //   Db4 = string 1 (B) fret 2
-  type Step = [string: number, fret: number, dur: number];
-  const G3: Step = [2, 0, eighth];
-  const Bb3: Step = [2, 3, eighth];
-  const C4q: Step = [2, 5, quarter];      // landing note is longer
-  const Db4: Step = [1, 2, eighth];
-  const C4l: Step = [2, 5, halfNote];     // last note rings
-
-  const phrase: Step[] = [
-    G3, Bb3, C4q,
-    G3, Bb3, Db4, C4l,
+  // tempo=120, tuning=[64,59,55,50,45,40] (E4 B3 G3 D3 A2 E2)
+  const SOTW_TEMPO = 120;
+  const data: Array<{ time: number; duration: number; string: number; fret: number }> = [
+    { time: 0, duration: 500, string: 2, fret: 0 },
+    { time: 0, duration: 500, string: 3, fret: 0 },
+    { time: 500, duration: 500, string: 2, fret: 3 },
+    { time: 500, duration: 500, string: 3, fret: 3 },
+    { time: 1000, duration: 500, string: 2, fret: 5 },
+    { time: 1000, duration: 500, string: 3, fret: 5 },
+    { time: 1750, duration: 250, string: 2, fret: 0 },
+    { time: 1750, duration: 250, string: 3, fret: 0 },
+    { time: 2250, duration: 250, string: 2, fret: 3 },
+    { time: 2250, duration: 250, string: 3, fret: 3 },
+    { time: 2750, duration: 250, string: 2, fret: 6 },
+    { time: 2750, duration: 250, string: 3, fret: 6 },
+    { time: 3000, duration: 1000, string: 2, fret: 5 },
+    { time: 3000, duration: 1000, string: 3, fret: 5 },
+    { time: 4000, duration: 500, string: 2, fret: 0 },
+    { time: 4000, duration: 500, string: 3, fret: 0 },
+    { time: 4500, duration: 500, string: 2, fret: 3 },
+    { time: 4500, duration: 500, string: 3, fret: 3 },
+    { time: 5000, duration: 500, string: 2, fret: 5 },
+    { time: 5000, duration: 500, string: 3, fret: 5 },
+    { time: 5750, duration: 250, string: 2, fret: 3 },
+    { time: 5750, duration: 250, string: 3, fret: 3 },
+    { time: 6250, duration: 250, string: 2, fret: 0 },
+    { time: 6250, duration: 250, string: 3, fret: 0 },
+    { time: 8000, duration: 500, string: 2, fret: 0 },
+    { time: 8000, duration: 500, string: 3, fret: 0 },
+    { time: 8500, duration: 500, string: 2, fret: 3 },
+    { time: 8500, duration: 500, string: 3, fret: 3 },
+    { time: 9000, duration: 500, string: 2, fret: 5 },
+    { time: 9000, duration: 500, string: 3, fret: 5 },
+    { time: 9750, duration: 250, string: 2, fret: 0 },
+    { time: 9750, duration: 250, string: 3, fret: 0 },
+    { time: 10250, duration: 250, string: 2, fret: 3 },
+    { time: 10250, duration: 250, string: 3, fret: 3 },
+    { time: 10750, duration: 250, string: 2, fret: 6 },
+    { time: 10750, duration: 250, string: 3, fret: 6 },
+    { time: 11000, duration: 1000, string: 2, fret: 5 },
+    { time: 11000, duration: 1000, string: 3, fret: 5 },
+    { time: 12000, duration: 500, string: 2, fret: 0 },
+    { time: 12000, duration: 500, string: 3, fret: 0 },
+    { time: 12500, duration: 500, string: 2, fret: 3 },
+    { time: 12500, duration: 500, string: 3, fret: 3 },
+    { time: 13000, duration: 500, string: 2, fret: 5 },
+    { time: 13000, duration: 500, string: 3, fret: 5 },
+    { time: 13750, duration: 250, string: 2, fret: 3 },
+    { time: 13750, duration: 250, string: 3, fret: 3 },
+    { time: 14250, duration: 250, string: 2, fret: 0 },
+    { time: 14250, duration: 250, string: 3, fret: 0 },
   ];
-
-  const notes: GameNote[] = [];
-  let t = 800;
-  // Two iterations of the lick, separated by an eighth-rest
-  for (let rep = 0; rep < 2; rep++) {
-    for (const [s, f, d] of phrase) {
-      notes.push(gNote(s, f, t, d * 0.9));
-      t += d;
-    }
-    t += eighth; // rest
-  }
+  const notes: GameNote[] = data.map((n) => ({
+    time: n.time,
+    duration: n.duration,
+    string: n.string,
+    fret: n.fret,
+    frequency: fretToHz(GUITAR, n.string, n.fret),
+  }));
 
   const playerTrack = {
     index: 0,
-    name: 'Smoke on the Water — Riff',
+    name: 'Smoke on the Water — Rhythm Guitar',
     instrument: 'guitar' as const,
     isDrums: false,
     notes,
     tuning: GUITAR.midiTunings.slice(),
   };
   return {
-    title: 'Smoke on the Water (intro)',
+    title: 'Smoke on the Water (rhythm guitar)',
     artist: 'Deep Purple',
-    tempo,
+    tempo: SOTW_TEMPO,
     tracks: [playerTrack],
     playerTrackIndex: 0,
     backingEnabled: new Set<number>([0]),
