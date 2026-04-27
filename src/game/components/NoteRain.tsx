@@ -95,11 +95,16 @@ export default function NoteRain({
   const visibleNotes = notes
     .map((n, i) => ({ note: n, idx: i }))
     .filter(({ note }) => {
+      // Note is visible if its [head, tail] time range overlaps the rain's
+      // visible window (currentTimeMs - HIT_LINGER_MS .. currentTimeMs +
+      // fallDurationSec*1000 + grace). Long-sustain notes — like Four-Chord
+      // strums whose duration exceeds fallDuration — used to vanish here
+      // because the old check required the TAIL to already be inside the
+      // window AND the HEAD to still be inside it, an empty intersection
+      // for any note longer than the rain's fall window.
       const dtHead = note.time - currentTimeMs;
-      // Visible from when the tail enters the stage to when the head has just
-      // crossed the hit line. Played notes disappear quickly (HIT_LINGER_MS).
       const dtTail = note.time + note.duration - currentTimeMs;
-      return dtTail < fallDurationSec * 1000 + 200 && dtHead > -HIT_LINGER_MS;
+      return dtTail > -HIT_LINGER_MS && dtHead < fallDurationSec * 1000 + 200;
     });
 
   return (
