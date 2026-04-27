@@ -351,6 +351,12 @@
   letter-spacing: 0.04em;
 }
 
+/* Backdrop — only used on mobile; hidden on desktop where the popover
+   anchors to the button and outside-click-via-mousedown closes it. */
+.hud-options-backdrop {
+  display: none;
+}
+
 .hud-options-popover {
   position: absolute;
   top: calc(100% + 6px);
@@ -392,11 +398,27 @@
 }
 
 @media (max-width: 768px) {
+  /* On phones, render as a centred modal anchored to the viewport so it
+     never clips off the right edge and is comfortable to tap. A backdrop
+     is added via the React component (.hud-options-backdrop). */
   .hud-options-popover {
-    /* On narrow phones, anchor near the right edge of the screen so the
-       popover doesn't overflow horizontally. */
-    right: auto;
-    left: 0;
-    min-width: 88vw;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 88vw;
+    max-width: 360px;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 100;
+  }
+
+  .hud-options-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 9, 13, 0.65);
+    backdrop-filter: blur(2px);
+    z-index: 99;
   }
 }

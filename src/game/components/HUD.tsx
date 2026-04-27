@@ -112,7 +112,15 @@ export default function HUD({
             )}
           </button>
           {optionsOpen && (
-            <div className="hud-options-popover" role="dialog">
+            <>
+              {/* Backdrop only meaningful on mobile (centred modal); on
+                  desktop it's invisible because the popover is anchored
+                  to the button and the backdrop would over-darken. */}
+              <div
+                className="hud-options-backdrop"
+                onClick={() => setOptionsOpen(false)}
+              />
+              <div className="hud-options-popover" role="dialog">
               <div className="hud-option-row">
                 <span className="hud-option-label">Speed</span>
                 <div className="speed-group">
@@ -161,7 +169,8 @@ export default function HUD({
                   </button>
                 </div>
               </div>
-            </div>
+              </div>
+            </>
           )}
         </div>
 
