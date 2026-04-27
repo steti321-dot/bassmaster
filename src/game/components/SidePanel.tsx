@@ -131,7 +131,8 @@ export default function SidePanel({
         )}
       </div>
 
-      {/* Future — medium chips with ETA below each. */}
+      {/* Future — medium chips. ETA is shown only on the centre chip;
+          repeating it for every future row was redundant noise. */}
       <ul className="chip-list chip-future">
         {future.map(({ note, idx }, i) => (
           <NoteChip
@@ -140,7 +141,6 @@ export default function SidePanel({
             instrument={instrument}
             tone="future"
             distance={i}
-            etaMs={note.time - currentTimeMs}
           />
         ))}
       </ul>

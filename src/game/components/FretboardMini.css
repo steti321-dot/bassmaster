@@ -33,10 +33,14 @@
 
 @media (max-width: 768px) {
   .fretboard-mini {
-    padding: 3px 6px 4px;
+    /* The rain reclaimed its bottom-label space, so the fretboard can
+       breathe on phones — bigger string spacing and dots are easier to
+       read at a glance. */
+    padding: 6px 8px 8px;
   }
 
   .fretboard-mini-eta {
-    font-size: 0.62rem;
+    font-size: 0.7rem;
+    margin-top: 4px;
   }
 }

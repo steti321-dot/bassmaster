@@ -40,7 +40,12 @@ function useElementSize<T extends HTMLElement>(): [React.RefObject<T>, { width: 
 
 // All sizes are computed from the measured container so the canvas always fits
 // the available window space.
-const HIT_LINE_FRACTION = 0.7; // hit line two-thirds down — leaves room above for upcoming notes
+// Hit line is intentionally well below the middle: more vertical airtime for
+// upcoming chips, smaller post-hit margin (the bottom region only needs to
+// host the hit-line bloom + brief fade-out).
+const HIT_LINE_FRACTION = 0.88;
+// Reserved strip at the top for column header labels (string letters).
+const HEADER_H = 24;
 const TOP_SCALE = 0.45; // chip size at horizon
 const BOTTOM_SCALE = 1.0; // chip size at the hit line
 // Chips are flat poker-chip ellipses, not circles. ry/rx ratio = how flat they look.
@@ -71,10 +76,13 @@ export default function NoteRain({
   // Capped at an absolute max so chips stay readable but never gigantic on huge windows.
   const baseBulbRadius = Math.min(columnWidth * 0.36, 56);
 
-  // Perspective horizon sits above the visible area so notes "come from a distance"
-  const perspectiveHorizonY = -stageHeight * 0.6;
+  // Perspective horizon sits above the visible area so notes "come from a distance".
+  // Everything is offset by HEADER_H so the rail visualization lives below the
+  // top label strip rather than overlapping it.
+  const railTopY = HEADER_H;
+  const perspectiveHorizonY = railTopY - stageHeight * 0.6;
   const hitLineY = stageHeight * HIT_LINE_FRACTION;
-  const fallDistance = hitLineY;
+  const fallDistance = hitLineY - railTopY;
   const pixelsPerMs = fallDistance / (fallDurationSec * 1000);
 
   /** Compute (x, scale) for a note at vertical position y.
@@ -131,7 +139,7 @@ export default function NoteRain({
 
         {/* Horizontal "depth" grid lines — magenta near horizon, cyan near hit line */}
         {[0.92, 0.78, 0.62, 0.42, 0.22, 0.08].map((t, i) => {
-          const y = hitLineY * (1 - t);
+          const y = railTopY + (hitLineY - railTopY) * (1 - t);
           const color = t > 0.6 ? 'rgba(255, 68, 255, 0.18)' : 'rgba(0, 245, 255, 0.22)';
           return (
             <line
@@ -147,16 +155,19 @@ export default function NoteRain({
           );
         })}
 
-        {/* Column "rails" converging to the horizon */}
+        {/* Column "rails" converging to the horizon. Labels are drawn at the
+            TOP (header strip) instead of the bottom — small + color-coded — so
+            the bottom of the canvas can host the hit-line bloom and brief
+            chip-fade only, reclaiming the old big-label real estate. */}
         {Array.from({ length: numStrings }).map((_, s) => {
-          const top = project(s, 0);
+          const top = project(s, railTopY);
           const bottom = project(s, hitLineY);
           const c = instrument.stringColors[s];
           return (
             <g key={`col-${s}`}>
               <line
                 x1={top.x}
-                y1={0}
+                y1={railTopY}
                 x2={bottom.x}
                 y2={hitLineY}
                 stroke={c}
@@ -166,13 +177,13 @@ export default function NoteRain({
               />
               <text
                 x={bottom.x}
-                y={stageHeight - 16}
+                y={16}
                 textAnchor="middle"
-                fontSize="28"
-                fontWeight="800"
+                fontSize={16}
+                fontWeight={800}
                 fill={c}
                 style={{
-                  filter: `drop-shadow(0 0 6px ${c})`,
+                  filter: `drop-shadow(0 0 5px ${c})`,
                   letterSpacing: '0.08em',
                 }}
               >
