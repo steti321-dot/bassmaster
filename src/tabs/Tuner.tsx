@@ -77,8 +77,12 @@ export default function Tuner() {
   // samples to the running median to fight YIN's 2x/0.5x jumps (G1↔G2).
   const historyRef = useRef<number[]>([]);
   const lastUiUpdateRef = useRef<number>(0);
-  const HISTORY_SIZE = 10;          // ~165ms at 60fps — fast enough to feel live
-  const UI_UPDATE_INTERVAL_MS = 80; // throttle re-renders
+  const lastSignalAtRef = useRef<number>(0);
+  // Larger history + slower UI = calmer needle. We tune longer than we
+  // play, so latency matters less than steadiness here.
+  const HISTORY_SIZE = 24;            // ~400ms of samples
+  const UI_UPDATE_INTERVAL_MS = 150;  // 6.7 fps — plenty for a tuner needle
+  const READING_HOLD_MS = 600;        // keep last reading on screen during brief silences
 
   const profile: InstrumentProfile = PRESETS[preset].profile;
 
@@ -141,7 +145,11 @@ export default function Tuner() {
             profileNow.minPitchHz,
             profileNow.maxPitchHz
           );
-          if (r.confidence > 0.4 && r.frequency > 0) {
+          // Bumped confidence threshold — borderline detections are the
+          // single biggest source of needle-jitter on the web build where
+          // the room mic picks up more low-amplitude noise.
+          if (r.confidence > 0.55 && r.frequency > 0) {
+            lastSignalAtRef.current = performance.now();
             let midiF = freqToMidi(r.frequency);
 
             // Octave-snap against recent median to suppress YIN's 2x/0.5x jumps.
@@ -192,8 +200,13 @@ export default function Tuner() {
             }
           }
         } else {
-          historyRef.current = [];
-          setReading(null);
+          // Don't blank the display the instant the signal dips — wait
+          // READING_HOLD_MS of sustained silence first. Without this, the
+          // tuner flicks to "—" between every plucked note.
+          if (performance.now() - lastSignalAtRef.current > READING_HOLD_MS) {
+            historyRef.current = [];
+            setReading(null);
+          }
         }
       }
       rafRef.current = requestAnimationFrame(tick);
