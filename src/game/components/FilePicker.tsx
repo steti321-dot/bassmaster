@@ -154,6 +154,62 @@ export default function FilePicker({ onFilePicked }: FilePickerProps) {
     <div className="song-picker">
       <h2>Pick a song to practice</h2>
 
+      {hasGprotabApi && (
+        <div className="picker-section">
+          <h3>
+            Search online{' '}
+            <span className="picker-source">
+              · tabs from{' '}
+              <a
+                href="https://gprotab.net/"
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.open('https://gprotab.net/', '_blank');
+                }}
+              >
+                gprotab.net
+              </a>
+            </span>
+          </h3>
+          <form className="gprotab-search-form" onSubmit={handleSearch}>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Artist or song title…"
+              className="gprotab-input"
+            />
+            <button type="submit" disabled={searching || !searchQuery.trim()} className="gprotab-search-btn">
+              {searching ? '…' : '🔎 Search'}
+            </button>
+          </form>
+          {searchResults.length > 0 && (
+            <ul className="gprotab-results">
+              {searchResults.map((r) => (
+                <li key={r.url}>
+                  <button
+                    className="gprotab-result-btn"
+                    onClick={() => handleSearchResultPick(r)}
+                    disabled={downloadingUrl !== null}
+                  >
+                    <span className="gprotab-artist">{r.artist}</span>
+                    <span className="gprotab-title">{r.title}</span>
+                    <span className="gprotab-action">
+                      {downloadingUrl === r.url ? 'downloading…' : '⬇ open'}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="picker-hint">
+            For personal practice. Tabs are user-submitted to gprotab.net — please respect their site.
+          </p>
+        </div>
+      )}
+
       <div className="picker-section">
         <h3>Recent files</h3>
         {recents.length === 0 ? (
@@ -223,63 +279,6 @@ export default function FilePicker({ onFilePicked }: FilePickerProps) {
           Paste a direct link to a .gp / .gp4 / .gp5 file.
         </p>
       </div>
-
-      {hasGprotabApi && (
-        <div className="picker-section">
-          <h3>
-            Search online{' '}
-            <span className="picker-source">
-              · tabs from{' '}
-              <a
-                href="https://gprotab.net/"
-                target="_blank"
-                rel="noreferrer"
-                onClick={(e) => {
-                  // Open in default browser via Electron shell, fallback to default link
-                  e.preventDefault();
-                  window.open('https://gprotab.net/', '_blank');
-                }}
-              >
-                gprotab.net
-              </a>
-            </span>
-          </h3>
-          <form className="gprotab-search-form" onSubmit={handleSearch}>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Artist or song title…"
-              className="gprotab-input"
-            />
-            <button type="submit" disabled={searching || !searchQuery.trim()} className="gprotab-search-btn">
-              {searching ? '…' : '🔎 Search'}
-            </button>
-          </form>
-          {searchResults.length > 0 && (
-            <ul className="gprotab-results">
-              {searchResults.map((r) => (
-                <li key={r.url}>
-                  <button
-                    className="gprotab-result-btn"
-                    onClick={() => handleSearchResultPick(r)}
-                    disabled={downloadingUrl !== null}
-                  >
-                    <span className="gprotab-artist">{r.artist}</span>
-                    <span className="gprotab-title">{r.title}</span>
-                    <span className="gprotab-action">
-                      {downloadingUrl === r.url ? 'downloading…' : '⬇ open'}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="picker-hint">
-            For personal practice. Tabs are user-submitted to gprotab.net — please respect their site.
-          </p>
-        </div>
-      )}
 
       {error && <div className="picker-error">{error}</div>}
     </div>

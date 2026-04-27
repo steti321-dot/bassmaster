@@ -511,46 +511,86 @@
 
 @media (max-width: 768px) {
   .song-picker {
-    padding: 14px 12px;
+    /* Fill available space inside .app-main and scroll internally —
+       the parent flex container is overflow:hidden, so without this
+       the lower picker sections get clipped. */
+    margin: 0;
+    padding: 12px 10px;
+    max-width: none;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .song-picker h2 {
-    font-size: 1.1rem;
+    font-size: 1rem;
+    margin: 0 0 10px;
+    letter-spacing: 0.1em;
   }
 
   .picker-section {
-    padding: 10px 12px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
   }
 
   .picker-section h3 {
-    font-size: 0.78rem;
-    letter-spacing: 0.1em;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    margin: 0 0 6px;
+  }
+
+  .picker-hint {
+    font-size: 0.7rem;
+    margin-top: 6px;
   }
 
   .recent-btn,
   .import-btn {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
+    padding: 8px 10px;
   }
 
+  .recent-meta {
+    font-size: 0.62rem;
+  }
+
+  /* Search-online: keep input + button on one row even when narrow.
+     The button uses an icon-only label so it stays compact. */
   .gprotab-search-form {
-    flex-direction: column;
+    flex-direction: row;
     gap: 6px;
   }
 
+  .gprotab-input {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.84rem;
+    padding: 7px 9px;
+  }
+
   .gprotab-search-btn {
-    width: 100%;
+    flex: 0 0 auto;
+    padding: 7px 12px;
+    font-size: 0.74rem;
+    letter-spacing: 0.04em;
+  }
+
+  .gprotab-results {
+    max-height: 220px;
   }
 
   .gprotab-result-btn {
     grid-template-columns: 1fr auto;
     grid-template-rows: auto auto;
-    gap: 4px 8px;
-    font-size: 0.8rem;
+    gap: 2px 8px;
+    padding: 7px 10px;
+    font-size: 0.78rem;
   }
 
   .gprotab-artist {
     grid-row: 1;
     grid-column: 1;
+    font-size: 0.7rem;
   }
 
   .gprotab-title {
@@ -561,5 +601,6 @@
   .gprotab-action {
     grid-row: 1 / 3;
     grid-column: 2;
+    font-size: 0.68rem;
   }
 }
