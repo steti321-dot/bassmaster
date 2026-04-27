@@ -46,6 +46,13 @@ export default function FilePicker({ onFilePicked, onSongDirect }: FilePickerPro
   const [pasteUrl, setPasteUrl] = useState('');
   const [pasting, setPasting] = useState(false);
 
+  // Picker tab state — search bar always visible above; the tab decides
+  // which "secondary" source is shown below it.
+  type PickerTab = 'demo' | 'recent' | 'files' | 'web';
+  const [tab, setTab] = useState<PickerTab>(
+    onSongDirect ? 'demo' : 'recent',
+  );
+
   useEffect(() => {
     refreshRecents();
   }, []);
@@ -159,57 +166,23 @@ export default function FilePicker({ onFilePicked, onSongDirect }: FilePickerPro
     <div className="song-picker">
       <h2>Pick a song to practice</h2>
 
-      {onSongDirect && (
-        <div className="picker-section">
-          <h3>Quick start</h3>
-          <ul className="quick-start-list">
-            {DEMO_SONGS.map((d) => (
-              <li key={d.id}>
-                <button
-                  type="button"
-                  className="quick-start-btn"
-                  onClick={() => onSongDirect(d.build())}
-                >
-                  {d.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-          <p className="picker-hint">
-            Built-in beginner songs — no download needed. Try them with Kids Mode + Training Mode.
-          </p>
-        </div>
-      )}
-
+      {/* Search bar — always visible at the top. Results appear below it. */}
       {hasGprotabApi && (
-        <div className="picker-section">
-          <h3>
-            Search online{' '}
-            <span className="picker-source">
-              · tabs from{' '}
-              <a
-                href="https://gprotab.net/"
-                target="_blank"
-                rel="noreferrer"
-                onClick={(e) => {
-                  e.preventDefault();
-                  window.open('https://gprotab.net/', '_blank');
-                }}
-              >
-                gprotab.net
-              </a>
-            </span>
-          </h3>
+        <div className="picker-search">
           <form className="gprotab-search-form" onSubmit={handleSearch}>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Artist or song title…"
+              placeholder="🔎 Search gprotab.net by artist or song…"
               className="gprotab-input"
             />
-            <button type="submit" disabled={searching || !searchQuery.trim()} className="gprotab-search-btn">
-              {searching ? '…' : '🔎 Search'}
+            <button
+              type="submit"
+              disabled={searching || !searchQuery.trim()}
+              className="gprotab-search-btn"
+            >
+              {searching ? '…' : 'Search'}
             </button>
           </form>
           {searchResults.length > 0 && (
@@ -231,80 +204,149 @@ export default function FilePicker({ onFilePicked, onSongDirect }: FilePickerPro
               ))}
             </ul>
           )}
-          <p className="picker-hint">
-            For personal practice. Tabs are user-submitted to gprotab.net — please respect their site.
-          </p>
         </div>
       )}
 
-      <div className="picker-section">
-        <h3>Recent files</h3>
-        {recents.length === 0 ? (
-          <p className="picker-hint">
-            No recent files yet. Open a Guitar Pro file below — it'll appear here next time.
-          </p>
-        ) : (
-          <ul className="recent-list">
-            {recents.map((r) => (
-              <li key={r.name}>
-                <button className="recent-btn" onClick={() => handleRecentSelected(r.name)}>
-                  <span className="recent-name">📁 {r.name}</span>
-                  <span className="recent-meta">
-                    {(r.size / 1024).toFixed(1)} KB · {timeAgo(r.lastOpened)}
-                  </span>
-                  <span
-                    className="recent-remove"
-                    onClick={(e) => handleRemoveRecent(e, r.name)}
-                    title={`Remove "${r.name}" from recents`}
-                  >
-                    ✕
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <div className="picker-section">
-        <h3>Open from disk</h3>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".gp3,.gp4,.gp5"
-          onChange={handleFile}
-          style={{ display: 'none' }}
-        />
-        <button className="import-btn" onClick={() => fileInputRef.current?.click()}>
-          📁 Open Guitar Pro file (.gp3 / .gp4 / .gp5)
-        </button>
-        <p className="picker-hint">
-          You can also export a GP4 from the Audio to Notes tab and load it here.
-        </p>
-      </div>
-
-      <div className="picker-section">
-        <h3>Open from URL</h3>
-        <form className="gprotab-search-form" onSubmit={handlePasteUrl}>
-          <input
-            type="text"
-            value={pasteUrl}
-            onChange={(e) => setPasteUrl(e.target.value)}
-            placeholder="https://example.com/song.gp5"
-            className="gprotab-input"
-            disabled={pasting}
-          />
+      {/* Tab strip for the secondary sources. */}
+      <div className="picker-tabs" role="tablist">
+        {onSongDirect && (
           <button
-            type="submit"
-            disabled={pasting || !pasteUrl.trim()}
-            className="gprotab-search-btn"
+            type="button"
+            role="tab"
+            aria-selected={tab === 'demo'}
+            className={`picker-tab ${tab === 'demo' ? 'active' : ''}`}
+            onClick={() => setTab('demo')}
           >
-            {pasting ? '…' : '⬇ Load'}
+            ⭐ Demo
           </button>
-        </form>
-        <p className="picker-hint">
-          Paste a direct link to a .gp / .gp4 / .gp5 file.
-        </p>
+        )}
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'recent'}
+          className={`picker-tab ${tab === 'recent' ? 'active' : ''}`}
+          onClick={() => setTab('recent')}
+        >
+          🕒 Recent {recents.length > 0 ? `(${recents.length})` : ''}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'files'}
+          className={`picker-tab ${tab === 'files' ? 'active' : ''}`}
+          onClick={() => setTab('files')}
+        >
+          📁 Files
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'web'}
+          className={`picker-tab ${tab === 'web' ? 'active' : ''}`}
+          onClick={() => setTab('web')}
+        >
+          🔗 Web URL
+        </button>
+      </div>
+
+      {/* Tab content */}
+      <div className="picker-tab-content">
+        {tab === 'demo' && onSongDirect && (
+          <div className="picker-section">
+            <ul className="quick-start-list">
+              {DEMO_SONGS.map((d) => (
+                <li key={d.id}>
+                  <button
+                    type="button"
+                    className="quick-start-btn"
+                    onClick={() => onSongDirect(d.build())}
+                  >
+                    {d.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <p className="picker-hint">
+              Built-in beginner songs — no download needed. Try with Kids Mode + Training Mode.
+            </p>
+          </div>
+        )}
+
+        {tab === 'recent' && (
+          <div className="picker-section">
+            {recents.length === 0 ? (
+              <p className="picker-hint">
+                No recent files yet. Use Files / Web URL / Demo to open one — it'll appear here next time.
+              </p>
+            ) : (
+              <ul className="recent-list">
+                {recents.map((r) => (
+                  <li key={r.name}>
+                    <button className="recent-btn" onClick={() => handleRecentSelected(r.name)}>
+                      <span className="recent-name">📁 {r.name}</span>
+                      <span className="recent-meta">
+                        {(r.size / 1024).toFixed(1)} KB · {timeAgo(r.lastOpened)}
+                      </span>
+                      <span
+                        className="recent-remove"
+                        onClick={(e) => handleRemoveRecent(e, r.name)}
+                        title={`Remove "${r.name}" from recents`}
+                      >
+                        ✕
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {tab === 'files' && (
+          <div className="picker-section">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".gp3,.gp4,.gp5"
+              onChange={handleFile}
+              style={{ display: 'none' }}
+            />
+            <button
+              className="import-btn"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              📁 Open Guitar Pro file (.gp3 / .gp4 / .gp5)
+            </button>
+            <p className="picker-hint">
+              Drag &amp; drop also works. Files stay on your device — nothing is uploaded.
+            </p>
+          </div>
+        )}
+
+        {tab === 'web' && (
+          <div className="picker-section">
+            <form className="gprotab-search-form" onSubmit={handlePasteUrl}>
+              <input
+                type="text"
+                value={pasteUrl}
+                onChange={(e) => setPasteUrl(e.target.value)}
+                placeholder="https://example.com/song.gp5"
+                className="gprotab-input"
+                disabled={pasting}
+              />
+              <button
+                type="submit"
+                disabled={pasting || !pasteUrl.trim()}
+                className="gprotab-search-btn"
+              >
+                {pasting ? '…' : '⬇ Load'}
+              </button>
+            </form>
+            <p className="picker-hint">
+              Paste a direct link to a .gp / .gp4 / .gp5 file. CORS-blocked URLs route through the proxy automatically.
+            </p>
+          </div>
+        )}
       </div>
 
       {error && <div className="picker-error">{error}</div>}

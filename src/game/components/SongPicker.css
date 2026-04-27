@@ -642,3 +642,77 @@
     font-size: 0.68rem;
   }
 }
+
+/* ───────────────────────────────────────────────────────────
+   Consolidated picker layout — search bar on top, tabs below.
+   ─────────────────────────────────────────────────────────── */
+.picker-search {
+  margin-bottom: 14px;
+}
+
+.picker-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--cy-border);
+  margin-bottom: 12px;
+}
+
+.picker-tab {
+  flex: 1 1 0;
+  padding: 8px 6px;
+  background: rgba(0, 245, 255, 0.04);
+  color: var(--cy-text-dim);
+  border: 1px solid var(--cy-border);
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.picker-tab:hover:not(.active) {
+  background: rgba(0, 245, 255, 0.1);
+  color: var(--cy-cyan);
+}
+
+.picker-tab.active {
+  background: rgba(0, 245, 255, 0.18);
+  color: var(--cy-cyan);
+  border-color: var(--cy-cyan);
+  border-bottom-color: var(--cy-bg-card);
+  margin-bottom: -1px;
+  box-shadow: 0 -2px 12px rgba(0, 245, 255, 0.3),
+              inset 0 0 14px rgba(0, 245, 255, 0.08);
+  text-shadow: 0 0 6px rgba(0, 245, 255, 0.55);
+}
+
+.picker-tab-content {
+  /* Tabs share content area; sections inside drop their own outer padding
+     so we don't get double padding. */
+}
+
+.picker-tab-content .picker-section {
+  padding: 0;
+  border: none;
+  background: transparent;
+  margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .picker-tabs {
+    gap: 2px;
+  }
+  .picker-tab {
+    padding: 6px 4px;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+  }
+}
