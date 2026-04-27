@@ -1,324 +1,166 @@
-# MP3 to GP4 - Audio to Guitar Tabs
+# 🎸 Bassmaster Workbench
 
-Convert audio files and YouTube videos to Guitar Pro notation (GP4 format) with AI-powered pitch detection.
+A practice tool for bass &amp; guitar players — built around a Rocksmith-style **note-rain game** with mic scoring, plus a high-precision **tuner**. The Electron desktop build adds an **Audio → GPx transcriber** so you can turn any audio recording into a playable tab.
 
-## Project Architecture
-
-### Frontend
-- **Electron**: Cross-platform desktop application
-- **React + TypeScript**: Modern UI with real-time updates
-- **ffmpeg.wasm**: Browser-based audio extraction (no external dependencies)
-
-### Backend (Audio Processing)
-- **Rust/WASM**: High-performance pitch detection and audio analysis
-- **Web Workers**: Non-blocking audio processing
-- **YIN Algorithm**: Fast, accurate monophonic pitch detection
-
-### Core Features
-- 🎵 Detect notes from audio with <60s processing time
-- 📝 Manual note editor with fretboard visualization
-- 💾 Export to GP4 (Guitar Pro 4) format
-- 🎬 YouTube URL support (coming soon)
-- 📁 Local file upload (MP3, WAV, M4A, MP4, WebM, OGG)
+**Live web app:** https://steti321-dot.github.io/bassmaster/ (Tuner + Game)
 
 ---
 
-## Project Structure
+## A. Learn Bass &amp; Guitar Game (the main event)
 
-```
-mp3togp4/
-├── src/
-│   ├── electron/
-│   │   └── main.ts              # Electron app entry point
-│   ├── renderer/
-│   │   ├── App.tsx              # Main React component
-│   │   ├── App.css
-│   │   └── index.tsx
-│   ├── pages/
-│   │   ├── Upload.tsx           # File/YouTube input UI
-│   │   ├── Upload.css
-│   │   ├── Editor.tsx           # Note editor & fretboard
-│   │   └── Editor.css
-│   ├── services/
-│   │   └── audioService.ts      # Audio extraction via ffmpeg.wasm
-│   └── workers/
-│       └── audioWorker.ts       # Web Worker for WASM pitch detection
-│
-├── src-wasm/
-│   ├── lib.rs                   # Main WASM module entry
-│   └── gp4_writer.rs            # GP4 binary file generator
-│
-├── public/
-│   └── index.html               # HTML template
-│
-├── package.json                 # Node dependencies
-├── Cargo.toml                   # Rust/WASM dependencies
-├── tsconfig.json                # TypeScript config
-└── tsconfig.electron.json       # Electron-specific TS config
-```
+Open a Guitar Pro file (`.gp3` / `.gp4` / `.gp5`), pick the track you want to play, then play along on a real instrument while the app listens via your microphone. Notes scroll down per-string columns; the app scores each one on **pitch + timing** as it crosses the hit line.
+
+### Loading tabs
+
+| Source | Where |
+|---|---|
+| Drag &amp; drop a `.gp` file from disk | always |
+| Paste a direct URL to a `.gp` file | always (proxied via Cloudflare Worker if CORS-blocked) |
+| Search **gprotab.net** | always (proxied) |
+| Recent files | cached locally per browser (IndexedDB) |
+
+Per-song settings (selected track, backing tracks, difficulty, latency offset, etc.) are saved automatically and restored next time you open that file.
+
+### Difficulty + scoring
+
+| Level | Pitch tolerance | Timing window |
+|---|:---:|:---:|
+| Easy | ±150 ¢ | ±250 ms |
+| Medium | ±50 ¢ | ±150 ms |
+| Strict | ±25 ¢ | ±75 ms |
+
+Hit / miss are detected from your mic in real time using a YIN pitch detector + RMS attack tracker. After every hit a small refractory period plus a fresh-attack detection step prevents one sustained note from accidentally scoring multiple identical chips in a row.
+
+### 🧒 Kids Mode
+
+Designed for beginners (or for kids who want to play along to *Seven Nation Army* without learning fret 7). Two simplifications run in sequence on the player track:
+
+1. **Chord reduction** — for any group of simultaneous notes, keep only the lowest pitch. Power chords reduce to root, full chords stay readable as a single melodic line. (v2 will refine this to "5th of the chord" — see `project_kids_mode_chord_policy.md`.)
+2. **Position remap inside the 0–5 fret window** — for every note, prefer an alternative `(string, fret)` that produces the same pitch with `fret ≤ 5`, biased toward **staying on the previous note's string**. This dramatically reduces forced string-jumping.
+
+Kids Mode applies to **both display and scoring**, so the player isn't penalized for chord notes that aren't shown.
+
+### 🎯 Training Mode
+
+The song clock **freezes on each upcoming note** until you play the right pitch. Backing tracks pause too. As soon as the mic detects the correct note (RMS spike + pitch match), the clock resumes from where it stopped — so the song progresses at the player's pace, not the tape's.
+
+Pairs cleanly with Kids Mode: kids see one chip per beat, can see/hear the target as long as they need, then trigger the next one with a fresh pluck. Three Es in a row → three plucks.
+
+### Other niceties
+
+- **Note rain** is colored by *pitch class* (12 chromatic colors), not by string — so two notes at different frets on the same string look visibly different. Each chip's fret number sits inside the stripe with a perspective tilt to match the column rails.
+- **Side wheel** to the left of the rain shows the current note big and centered, with previous and upcoming notes flowing through. While paused, drag the slider to seek anywhere.
+- **Per-instrument tuning** — bass (4-string), guitar (6-string), drop-D, 5-string, 7-string, anything the file declares.
+- **Backing synth** runs every other track from the file via a look-ahead Web Audio scheduler — drums, rhythm guitar, vocals, all at once. Mute / volume per track.
+- **Latency offset slider** in the gear menu compensates for audio-interface round-trip on mic input.
+- **Countdown** before play (4 metronome ticks at the song's tempo) so you can pick up your instrument.
+- **Results screen** at song end with accuracy %, hits/misses, best combo, per-string accuracy chart.
 
 ---
 
-## Setup & Development
+## B. Tuner
 
-### Prerequisites
-- **Node.js 18+** and npm
-- **Rust 1.70+** with `wasm-pack`
-- **Electron 27+** (installed via npm)
+Cyber-themed chromatic tuner with **drop-D presets** for bass and guitar. Pluck a string and:
 
-### Installation
+- The big readout shows the detected pitch (e.g. `A1`, `D2`).
+- A needle shows cents-off-target, snapping green when you're within ±5 ¢.
+- The closest open-string pill highlights so you know which string you're tuning.
 
-1. **Clone and install dependencies:**
-   ```bash
-   npm install
-   ```
+Implementation details:
 
-2. **Install Rust WASM toolchain** (if not already installed):
-   ```bash
-   rustup target add wasm32-unknown-unknown
-   cargo install wasm-pack
-   ```
+- 10-sample median ring buffer (~165 ms at 60 fps) smooths YIN's output.
+- **Octave-snap** — incoming readings more than 6 semitones from the running median get folded by ±12 semitones, so YIN's classic 2× / 0.5× errors (G1 ↔ G2) don't make the tuner bounce between octaves.
+- UI re-renders are throttled to ~80 ms so the needle stops twitching even when the underlying detection runs at full rate.
+- Optional **noise suppression** toggle (browser-level RNNoise) for noisy rooms; off by default since it tends to attenuate sustained tonal content.
 
-3. **Build WASM module** (development):
-   ```bash
-   npm run build:wasm
-   ```
+---
 
-### Development
+## C. Audio to GPx (Electron-only add-on)
 
-**Option 1: Run in development mode with hot reload**
+The desktop build ships an **Audio to Notes** tab that runs the Rust transcribe binary plus Spotify's [Basic Pitch](https://github.com/spotify/basic-pitch) ML model to convert any audio recording into a `.gp4` file. Three sources:
+
+- **📁 File** — drop or pick any audio (MP3 / M4A / WAV / FLAC / OGG / MP4 audio).
+- **▶️ YouTube** — paste a URL, `yt-dlp` downloads the audio locally and pipes it into transcription.
+- **🎤 Mic** — record directly through your mic (Float32 → 16-bit WAV) and transcribe.
+
+Three detection modes:
+
+- ⭐ **AI (Basic Pitch)** — best quality, ~2.5× realtime. Recommended.
+- **Mono (YIN)** — fastest, single-note tracker. Best for clean melodies.
+- **Chords (FFT)** — polyphonic; can pick up harmonics.
+
+Plus a **Suppress drums (HPSS)** pre-filter for percussion-heavy material.
+
+Output is a regular `.gp4` you can edit in the built-in fretboard editor or export and load straight into the **Learn Game** tab. **All audio processing happens locally** — no data leaves the machine.
+
+> **Why not in the web build?** The transcriber needs a native Rust binary and `yt-dlp.exe`, neither of which run in a browser. Hosting the pipeline server-side would mean a paid backend + lose the local-only privacy guarantee. So the web app is play/practice; the Electron app is the production studio.
+
+---
+
+## Building &amp; running
+
+### Desktop (Electron, full feature set)
+
 ```bash
-npm run dev
+npm install
+npm run dev          # spins up React + Electron
 ```
-This starts both the React dev server and Electron app.
 
-**Option 2: Build everything then run**
 ```bash
-npm run build
-npm start
+npm run build        # produces an Electron-ready bundle
 ```
 
-### Testing Individual Components
+Requires Rust toolchain for the `transcribe` binary (`cargo build --release` in `cli/`) and `yt-dlp` (auto-downloaded on `npm install` via `scripts/setup-ytdlp.mjs`).
 
-**Test Rust WASM locally:**
+### Web (Tuner + Game, deployed to GitHub Pages)
+
 ```bash
-cd src-wasm
-cargo test
+npm run build:web    # produces ./build for static hosting
 ```
 
-**Test pitch detection with sample audio:**
+Pushed to `main`, the GH Action at `.github/workflows/deploy-pages.yml` builds and deploys to GH Pages automatically.
+
+### Cloudflare Worker (CORS proxy used by the web build)
+
 ```bash
-cd src-wasm
-cargo build --target wasm32-unknown-unknown
+cd worker
+npm install
+CLOUDFLARE_API_TOKEN=... npx wrangler deploy
 ```
 
----
-
-## MVP Feature Set
-
-✅ **Phase 1 (Current)**
-- [x] Electron + React scaffold
-- [x] Local file upload (MP3, WAV, etc.)
-- [x] Pitch detection (YIN algorithm in Rust/WASM)
-- [x] Note-to-fret conversion
-- [x] Tempo/BPM estimation
-- [x] GP4 binary writer
-- [x] Manual note editor UI
-- [x] Fretboard visualization
-- [ ] YouTube video download (ytdl-core ready)
-- [ ] ffmpeg.wasm integration
-
-🚧 **Phase 2 (Future)**
-- [ ] Multi-track source separation (drums, bass, melody)
-- [ ] Standard notation output (staff notation)
-- [ ] Advanced effects (bends, hammer-ons, slides)
-- [ ] Lyrics synchronization
-- [ ] Audio waveform editor
+Deploys ~50 lines of code that re-implement the Electron main process's `gprotab-search` / `gprotab-download` handlers as HTTP endpoints with permissive CORS — letting the static web app fetch tabs from third-party hosts.
 
 ---
 
-## Audio Processing Pipeline
+## Tech stack
 
-```
-1. User uploads file (local) or provides URL (YouTube)
-   ↓
-2. ffmpeg.wasm extracts audio → PCM float32 buffer
-   ↓
-3. Web Worker receives buffer, sends to WASM
-   ↓
-4. Rust WASM processes:
-   • Pitch detection (YIN autocorrelation) → frequencies
-   • Frequency → fret number conversion
-   • Tempo estimation (beat interval analysis)
-   • Note clustering (group by fret + string)
-   ↓
-5. Results returned to React UI:
-   • List of notes with fret, string, time, duration
-   • Detected tempo
-   • Time signature (default 4/4)
-   ↓
-6. User edits notes in Editor UI
-   ↓
-7. Export → GP4Writer generates binary file
-   ↓
-8. User downloads .gp4 file, opens in Guitar Pro
-```
+- **React + TypeScript** — UI for both Electron and web.
+- **Web Audio API** — note rain audio scheduling, mic input, tuner detection.
+- **[@coderline/alphatab](https://github.com/CoderLine/alphaTab)** — GP3/GP4/GP5/GPX parsing.
+- **Electron 27** — desktop shell (renderer + main).
+- **Rust + WASM** — transcribe binary &amp; pitch math (Electron only).
+- **Spotify Basic Pitch** — ML transcription (Electron only).
+- **Cloudflare Workers** — static-site CORS proxy.
 
 ---
 
-## Key Technologies
+## Status / roadmap
 
-### Pitch Detection: YIN Algorithm
-- **Autocorrelation-based**: Fast, reliable for monophonic audio
-- **No training required**: Works with any guitar without ML models
-- **Real-time capable**: Processes 44.1kHz audio in <60s for 3-min song
+Shipped (v1):
 
-### GP4 Format Implementation
-- **Custom Rust serializer**: No external dependencies
-- **Supports**:
-  - Single/multi-track files
-  - Note properties (fret, string, duration, fingering)
-  - Tempo, key signature, time signature
-  - Basic MIDI settings
-- **MVP scope**: Single guitar track with standard notes
+- Tuner with drop-D presets, octave-snap stabilization
+- Note-rain game with chord-color stripes, perspective tilt, side wheel
+- Kids Mode (chord reduction + 0–5 fret window + same-string smoothing)
+- Training Mode (clock freezes per note until played)
+- gprotab.net + paste-URL + drag-drop file inputs
+- Audio-to-Notes desktop pipeline (Mic / File / YouTube)
+- GH Pages deploy
 
-### ffmpeg.wasm
-- Browser-based, no installation required
-- Converts MP3/MP4/WebM → PCM WAV
-- ~30MB bundle (loaded on-demand)
+Tracked for future iterations (see `~/.claude/projects/.../memory/`):
 
----
-
-## Build & Deployment
-
-**Build for production:**
-```bash
-npm run build
-npm run build:wasm -- --release
-```
-
-**Create distributable package:**
-```bash
-npm run package
-```
-(Uses electron-builder, configure in package.json)
-
----
-
-## Known Limitations (MVP)
-
-1. **Monophonic only**: Detects single note at a time (not chords)
-2. **Constant tempo**: Assumes steady BPM
-3. **Standard tuning only**: Assumes standard guitar tuning
-4. **No effects**: Bends, slides, harmonics not yet supported
-5. **4/4 time only**: Default time signature
-
----
-
-## Testing Notes
-
-**Test with simple files first:**
-- Single melodic instrument (not polyphonic)
-- Clear, clean audio (low noise)
-- Standard tuning (E A D G B E)
-- Constant tempo (no tempo changes)
-
-**Example test workflow:**
-1. Record simple guitar riff (10-15 seconds)
-2. Save as MP3
-3. Upload in app
-4. Verify detected notes match expected tabs
-5. Export GP4, open in Guitar Pro, verify playback
-
----
-
-## Troubleshooting
-
-**App won't start:**
-- Ensure Node.js 18+ installed: `node -v`
-- Clear npm cache: `npm cache clean --force`
-- Reinstall: `rm -rf node_modules && npm install`
-
-**WASM won't compile:**
-- Install toolchain: `rustup target add wasm32-unknown-unknown`
-- Install wasm-pack: `cargo install wasm-pack`
-- Try clean build: `rm -rf target && npm run build:wasm`
-
-**Audio processing fails:**
-- Check browser console (Dev Tools)
-- Verify ffmpeg.wasm CDN access
-- Test with different audio format
-
----
-
-## Important Documentation & References
-
-### GP4 / Guitar Pro Format
-Since the GP4 format is proprietary and has no official documentation, these reverse-engineered specs are critical:
-
-- **[dGuitar GP4 Format Specification](https://dguitar.sourceforge.net/GP4format.html)** ⭐ PRIMARY REFERENCE
-  - Complete byte-level binary structure
-  - Measure headers, track definitions, beat encoding
-  - Use this when implementing/debugging [gp4_writer.rs](src-wasm/gp4_writer.rs)
-
-- **[PyGuitarPro Format Documentation](https://pyguitarpro.readthedocs.io/en/stable/pyguitarpro/format.html)**
-  - Python reference implementation (for comparison)
-  - Well-documented data types and parsing logic
-
-- **[music-notation.info - Guitar Pro Format](http://www.music-notation.info/en/formats/GuitarProFormat.html)**
-  - Cross-version comparison (.gp3, .gp4, .gp5, .gpx)
-  - Useful for understanding format evolution
-
-- **[alphaTab - Guitar Pro 3-5 Parser](https://alphatab.net/docs/formats/guitar-pro-3-5)**
-  - JavaScript/TypeScript parser (alternative reference)
-  - Good for validating our Rust implementation
-
-### Audio Processing & Pitch Detection
-
-- **YIN Algorithm Paper**: "YIN, a fundamental frequency estimator for speech and music" by de Cheveigné & Kawahara (2002)
-  - The algorithm implemented in [lib.rs](src-wasm/lib.rs) `detect_pitch_yin()`
-  - Autocorrelation-based monophonic pitch detection
-
-- **[librosa Documentation](https://librosa.org/)** (Python, for reference)
-  - Excellent docs on audio analysis concepts (tempo, onset, pitch)
-  - Reference for algorithm choices even though we use Rust
-
-- **[Essentia](https://essentia.upf.edu/)** — Music audio analysis library
-  - Advanced algorithms we may port to Rust in Phase 2
-
-### Technology Stack
-
-- **[Electron Documentation](https://www.electronjs.org/docs/latest)**
-- **[React Documentation](https://react.dev/)**
-- **[wasm-bindgen Guide](https://rustwasm.github.io/wasm-bindgen/)** — Rust ↔ JS interop
-- **[ffmpeg.wasm](https://ffmpegwasm.netlify.app/)** — Browser-based audio conversion
-- **[ytdl-core](https://github.com/fent/node-ytdl-core)** — YouTube video download
-
-### Binary Format Tools (for debugging GP4 output)
-
-- **[HxD Hex Editor](https://mh-nexus.de/en/hxd/)** (Windows) — Inspect generated .gp4 bytes
-- **Guitar Pro** (official app) — Verify files open & playback correctly
-- **[TuxGuitar](http://www.tuxguitar.com.ar/)** — Free alternative for validation
-
-### MIDI Reference (for tuning & channels)
-
-- **[MIDI 1.0 Specification](https://www.midi.org/specifications)** — For understanding GP4's MIDI channel layout
-- Guitar standard tuning frequencies:
-  - High E: 329.63 Hz
-  - B: 246.94 Hz
-  - G: 196.00 Hz
-  - D: 146.83 Hz
-  - A: 110.00 Hz
-  - Low E: 82.41 Hz
-
----
-
-## Contributing
-
-This is a personal project. Feel free to use it as a reference for:
-- Electron + React + Rust/WASM integration
-- Pitch detection algorithms
-- Binary file format parsing/writing
+- Power-chord vs full-chord refinement (root vs 5th instead of plain "lowest pitch")
+- Vite migration off the deprecated CRA toolchain
+- More aggressive string-smoothing in Kids Mode v2
 
 ---
 

@@ -24,7 +24,7 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <div className="app-header-content">
-          <h1>🎸 Guitar Workbench</h1>
+          <h1>🎸 Bassmaster Workbench</h1>
           <nav className="app-tabs">
             {!IS_WEB_BUILD && (
               <button
