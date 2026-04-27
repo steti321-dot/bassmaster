@@ -183,6 +183,28 @@ body {
   box-shadow: 0 0 12px rgba(255, 157, 0, 0.3);
 }
 
+.share-link {
+  background: transparent;
+  color: var(--cy-cyan);
+  border: 1px solid transparent;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: 0.06em;
+  text-transform: inherit;
+  cursor: pointer;
+  text-shadow: 0 0 6px rgba(0, 245, 255, 0.4);
+  transition: all 0.18s ease;
+}
+
+.share-link:hover {
+  border-color: var(--cy-cyan);
+  background: rgba(0, 245, 255, 0.1);
+  text-shadow: 0 0 10px rgba(0, 245, 255, 0.7);
+  box-shadow: 0 0 12px rgba(0, 245, 255, 0.3);
+}
+
 /* ───────────────────────────────────────────────────────────
    Processing screen (Tab 1 transient state)
    ─────────────────────────────────────────────────────────── */

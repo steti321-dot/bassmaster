@@ -15,6 +15,33 @@ const Music2Notes = IS_WEB_BUILD
   ? null
   : lazy(() => import('./tabs/Music2Notes'));
 
+const SHARE_URL = 'https://tinyurl.com/bassmaster52';
+
+async function handleShare() {
+  // Web Share API on mobile gives the proper share sheet (Messages,
+  // WhatsApp, etc). Desktop browsers fall back to clipboard copy.
+  if (typeof navigator !== 'undefined' && (navigator as any).share) {
+    try {
+      await (navigator as any).share({
+        title: 'Bassmaster Workbench',
+        text: 'Free practice tool for bass &amp; guitar — try it!',
+        url: SHARE_URL,
+      });
+      return;
+    } catch {
+      /* user cancelled or share failed — fall through to clipboard */
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(SHARE_URL);
+    alert('Link copied to clipboard!');
+  } catch {
+    // Last resort: open the share URL in a new tab so the user can
+    // copy it from the address bar.
+    window.open(SHARE_URL, '_blank');
+  }
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>(
     IS_WEB_BUILD ? 'learn-guitar' : 'music2notes',
@@ -74,6 +101,15 @@ export default function App() {
           >
             ☕ Buy us a domain
           </a>
+          <span className="footer-sep">•</span>
+          <button
+            type="button"
+            className="share-link"
+            onClick={handleShare}
+            title={`Share ${SHARE_URL}`}
+          >
+            🔗 Share
+          </button>
         </p>
       </footer>
     </div>
