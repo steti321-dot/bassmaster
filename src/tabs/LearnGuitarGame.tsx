@@ -624,19 +624,21 @@ export default function LearnGuitarGame() {
             setNoteResults(new Map());
           }}
         />
-        <NoteRain
-          instrument={profile}
-          notes={displayedNotes}
-          currentTimeMs={currentTimeMs}
-          fallDurationSec={fallDurationSec}
-          noteResults={noteResults}
-        />
-        <FretboardMini
-          instrument={profile}
-          notes={displayedNotes}
-          currentTimeMs={currentTimeMs}
-          noteResults={noteResults}
-        />
+        <div className="rain-column">
+          <NoteRain
+            instrument={profile}
+            notes={displayedNotes}
+            currentTimeMs={currentTimeMs}
+            fallDurationSec={fallDurationSec}
+            noteResults={noteResults}
+          />
+          <FretboardMini
+            instrument={profile}
+            notes={displayedNotes}
+            currentTimeMs={currentTimeMs}
+            noteResults={noteResults}
+          />
+        </div>
         {isWaiting && <div className="wait-overlay">🎯 Play this note…</div>}
       </div>
 

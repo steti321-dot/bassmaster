@@ -32,7 +32,18 @@
   min-height: 0;
   gap: 14px;
   align-items: stretch;
-  position: relative; /* host for the absolute-positioned fretboard mini */
+  position: relative; /* host for absolute overlays (wait-overlay) */
+}
+
+/* Right-hand column inside the stage — note rain on top, fretboard panel
+   below. Shares the leftover horizontal space with the SidePanel. */
+.rain-column {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  gap: 8px;
 }
 
 .game-footer-bar {

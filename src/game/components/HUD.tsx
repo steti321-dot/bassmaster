@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './HUD.css';
 import type { ScoreState, Difficulty } from '../types';
 
@@ -43,6 +43,28 @@ export default function HUD({
   waitMode,
   onWaitModeChange,
 }: HUDProps) {
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const optionsRef = useRef<HTMLDivElement>(null);
+
+  // Close the popover when clicking outside.
+  useEffect(() => {
+    if (!optionsOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (!optionsRef.current?.contains(e.target as Node)) setOptionsOpen(false);
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [optionsOpen]);
+
+  // Show the active option summary on the trigger button so the user
+  // can see at-a-glance what's enabled without opening the popover.
+  const triggerSummary: string[] = [];
+  if (kidsMode) triggerSummary.push('🧒');
+  if (waitMode) triggerSummary.push('🎯');
+  if (Math.abs(playbackRate - 1) > 0.01) {
+    triggerSummary.push(`${Math.round(playbackRate * 100)}%`);
+  }
+
   return (
     <div className="hud">
       <div className="hud-section hud-song">
@@ -70,51 +92,78 @@ export default function HUD({
       </div>
 
       <div className="hud-section hud-controls">
-        <div className="speed-group" title="Playback speed">
-          {RATE_PRESETS.map((rate) => (
-            <button
-              key={rate}
-              className={`speed-btn ${Math.abs(playbackRate - rate) < 0.01 ? 'active' : ''}`}
-              onClick={() => onPlaybackRateChange(rate)}
-            >
-              {rate < 1 ? `${Math.round(rate * 100)}%` : '1×'}
-            </button>
-          ))}
-        </div>
-
-        <select
-          className="difficulty-select"
-          value={difficulty}
-          onChange={(e) => onDifficultyChange(e.target.value as Difficulty)}
-          disabled={isPlaying}
-        >
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="strict">Strict</option>
-        </select>
-
-        <button
-          className={`kids-btn ${kidsMode ? 'active' : ''}`}
-          onClick={() => onKidsModeChange(!kidsMode)}
-          title="Kids Mode — chord reduction + 0–5 fret only"
-        >
-          🧒 Kids
-        </button>
-
-        <button
-          className={`wait-btn ${waitMode ? 'active' : ''}`}
-          onClick={() => onWaitModeChange(!waitMode)}
-          title="Training Mode — song pauses on each note until you play it"
-        >
-          🎯 Training
-        </button>
-
         {isPlaying ? (
           <button className="hud-btn pause" onClick={onPause}>⏸ Pause</button>
         ) : (
           <button className="hud-btn play" onClick={onPlay}>▶ Play</button>
         )}
         <button className="hud-btn stop" onClick={onStop}>⏹ Stop</button>
+
+        <div className="hud-options" ref={optionsRef}>
+          <button
+            className={`hud-options-btn ${optionsOpen ? 'open' : ''} ${triggerSummary.length ? 'has-active' : ''}`}
+            onClick={() => setOptionsOpen((v) => !v)}
+            title="Game options — speed, difficulty, Kids Mode, Training Mode"
+            aria-expanded={optionsOpen}
+          >
+            ⚙ Options
+            {triggerSummary.length > 0 && (
+              <span className="hud-options-summary">{triggerSummary.join(' ')}</span>
+            )}
+          </button>
+          {optionsOpen && (
+            <div className="hud-options-popover" role="dialog">
+              <div className="hud-option-row">
+                <span className="hud-option-label">Speed</span>
+                <div className="speed-group">
+                  {RATE_PRESETS.map((rate) => (
+                    <button
+                      key={rate}
+                      className={`speed-btn ${Math.abs(playbackRate - rate) < 0.01 ? 'active' : ''}`}
+                      onClick={() => onPlaybackRateChange(rate)}
+                    >
+                      {rate < 1 ? `${Math.round(rate * 100)}%` : '1×'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="hud-option-row">
+                <span className="hud-option-label">Difficulty</span>
+                <select
+                  className="difficulty-select"
+                  value={difficulty}
+                  onChange={(e) => onDifficultyChange(e.target.value as Difficulty)}
+                  disabled={isPlaying}
+                >
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="strict">Strict</option>
+                </select>
+              </div>
+
+              <div className="hud-option-row">
+                <span className="hud-option-label">Modes</span>
+                <div className="hud-option-toggles">
+                  <button
+                    className={`kids-btn ${kidsMode ? 'active' : ''}`}
+                    onClick={() => onKidsModeChange(!kidsMode)}
+                    title="Kids Mode — chord reduction + 0–5 fret only"
+                  >
+                    🧒 Kids
+                  </button>
+                  <button
+                    className={`wait-btn ${waitMode ? 'active' : ''}`}
+                    onClick={() => onWaitModeChange(!waitMode)}
+                    title="Training Mode — song pauses on each note until you play it"
+                  >
+                    🎯 Training
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="hud-time">
           {formatTime(currentTimeSec)} / {formatTime(totalTimeSec)}
