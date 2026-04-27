@@ -2,6 +2,7 @@ import React from 'react';
 import './SidePanel.css';
 import type { GameNote } from '../types';
 import type { InstrumentProfile } from '../Instrument';
+import { pitchClassColor } from '../Instrument';
 import { fingerLabel, fingerName } from '../fingering';
 
 interface SidePanelProps {
@@ -21,18 +22,19 @@ interface SidePanelProps {
   noteResults?: Map<number, 'hit' | 'miss'>;
 }
 
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 function midiToPitchName(midi: number): string {
-  const names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  const note = names[midi % 12];
+  const note = NOTE_NAMES[((midi % 12) + 12) % 12];
   const octave = Math.floor(midi / 12) - 1;
   return `${note}${octave}`;
 }
 
 /**
- * Side panel: a "wheel" of notes — recently-played notes flow upward off the
- * top, the current/next note sits in the centre as a big card, and upcoming
- * notes line up below. As time advances, the column scrolls upward through
- * the panel.
+ * Side panel: a vertical column of round "note chips" — past notes drift
+ * up off the top, the current/next note is the big chip in the middle,
+ * upcoming notes line up below. Each chip shows the string letter (top)
+ * and fret number (bottom), color-coded by pitch class. Optimised for
+ * narrow horizontal real estate so the rain gets the rest.
  */
 export default function SidePanel({
   instrument,
@@ -44,130 +46,95 @@ export default function SidePanel({
   onSeek,
   noteResults,
 }: SidePanelProps) {
-  // Find the "current" note — first un-played note with a small grace window
-  // so the card switches as soon as a note is hit/missed instead of lingering
-  // on it for 200ms (which caused the SidePanel pitch label to disagree with
-  // the chip at the hit line).
+  // First un-played note in the future (with small grace).
   const currentIdx = notes.findIndex(
-    (n, idx) =>
-      !noteResults?.has(idx) && n.time > currentTimeMs - 50,
+    (n, idx) => !noteResults?.has(idx) && n.time > currentTimeMs - 50,
   );
 
-  // History: most-recent N notes already past (onset < currentTimeMs - 200)
+  // History: most-recent N notes already past (newest near the centre).
   const past: { note: GameNote; idx: number }[] = [];
   if (currentIdx > 0) {
     const start = Math.max(0, currentIdx - count);
-    for (let i = currentIdx - 1; i >= start; i--) {
-      past.push({ note: notes[i], idx: i });
-    }
+    for (let i = currentIdx - 1; i >= start; i--) past.push({ note: notes[i], idx: i });
   } else if (currentIdx === -1 && notes.length > 0) {
     const start = Math.max(0, notes.length - count);
-    for (let i = notes.length - 1; i >= start; i--) {
-      past.push({ note: notes[i], idx: i });
-    }
+    for (let i = notes.length - 1; i >= start; i--) past.push({ note: notes[i], idx: i });
   }
 
-  // Future: next N notes after the current
+  // Future: next N notes after the current.
   const future: { note: GameNote; idx: number }[] = [];
   if (currentIdx >= 0) {
     const end = Math.min(notes.length, currentIdx + 1 + count);
-    for (let i = currentIdx + 1; i < end; i++) {
-      future.push({ note: notes[i], idx: i });
-    }
+    for (let i = currentIdx + 1; i < end; i++) future.push({ note: notes[i], idx: i });
   }
 
-  const current =
-    currentIdx >= 0 ? { note: notes[currentIdx], idx: currentIdx } : null;
+  const current = currentIdx >= 0 ? { note: notes[currentIdx], idx: currentIdx } : null;
 
   return (
     <div className="side-panel">
-      {/* Past — fades upward */}
-      <ul className="wheel-list wheel-past">
+      {/* Past — small dimmed chips, oldest at top. */}
+      <ul className="chip-list chip-past">
         {past
           .slice()
-          .reverse() /* oldest at top, newest near current card */
-          .map(({ note, idx }, i) => {
-            const distance = past.length - 1 - i; // 0 = newest past, larger = older
-            return (
-              <NoteRow
-                key={`past-${idx}`}
-                note={note}
-                instrument={instrument}
-                tone="past"
-                distance={distance}
-                etaMs={note.time - currentTimeMs}
-              />
-            );
-          })}
+          .reverse()
+          .map(({ note, idx }, i) => (
+            <NoteChip
+              key={`past-${idx}`}
+              note={note}
+              instrument={instrument}
+              tone="past"
+              distance={past.length - 1 - i}
+            />
+          ))}
       </ul>
 
-      {/* Centre — big "current" card */}
-      <div className="wheel-center">
+      {/* Centre — big current/next chip + pitch + finger info below. */}
+      <div className="chip-center">
         {current ? (
           (() => {
             const finger = fingerLabel(current.note.fret, current.note.finger);
             const dt = current.note.time - currentTimeMs;
+            const midi =
+              (instrument.midiTunings[current.note.string] || 0) + current.note.fret;
+            const pitch = midiToPitchName(midi);
+            const color = pitchClassColor(midi);
+            const stringLetter = instrument.stringLabels[current.note.string] || '?';
+            const stringColor = instrument.stringColors[current.note.string];
             return (
-              <div className="next-card">
-                <div
-                  className="next-pitch"
-                  style={{ color: instrument.stringColors[current.note.string] }}
-                >
-                  {midiToPitchName(
-                    (instrument.midiTunings[current.note.string] || 0) + current.note.fret,
-                  )}
+              <>
+                <div className="chip-current" style={{ '--chip-color': color } as React.CSSProperties}>
+                  <span className="chip-current-string" style={{ color: stringColor }}>
+                    {stringLetter}
+                  </span>
+                  <span className="chip-current-fret">{current.note.fret}</span>
                 </div>
-                <div className="next-row">
-                  <div className="next-cell">
-                    <div className="next-cell-label">String</div>
-                    <div
-                      className="next-cell-value"
-                      style={{ color: instrument.stringColors[current.note.string] }}
-                    >
-                      {instrument.stringLabels[current.note.string]}
-                    </div>
-                  </div>
-                  <div className="next-cell-divider" />
-                  <div className="next-cell">
-                    <div className="next-cell-label">Fret</div>
-                    <div className="next-cell-value fret-pill">{current.note.fret}</div>
-                  </div>
-                  <div className="next-cell-divider" />
-                  <div className="next-cell" title={fingerName(finger.label)}>
-                    <div className="next-cell-label">
-                      Finger
-                      {!finger.fromSource &&
-                        finger.label !== 'open' &&
-                        finger.label !== '—' && (
-                          <span className="suggested" title="Suggested by app (file has no fingering)">
-                            ~
-                          </span>
-                        )}
-                    </div>
-                    <div
-                      className={`next-cell-value finger-pill ${finger.label === 'open' ? 'open' : ''}`}
-                    >
-                      {finger.label}
-                    </div>
-                  </div>
+                <div className="chip-current-pitch" style={{ color }}>
+                  {pitch}
                 </div>
-                <div className="next-eta">
-                  {dt > 0
-                    ? `in ${(dt / 1000).toFixed(1)}s`
-                    : 'now'}
+                <div className="chip-current-finger" title={fingerName(finger.label)}>
+                  finger&nbsp;
+                  <span className="finger-val">
+                    {finger.label}
+                    {!finger.fromSource &&
+                      finger.label !== 'open' &&
+                      finger.label !== '—' && <span className="suggested">~</span>}
+                  </span>
                 </div>
-              </div>
+                <div className="chip-current-eta">
+                  {dt > 0 ? `in ${(dt / 1000).toFixed(1)}s` : 'now'}
+                </div>
+              </>
             );
           })()
         ) : (
-          <div className="next-card empty">— done —</div>
+          <div className="chip-current empty">—</div>
         )}
       </div>
 
-      {/* Future — fades downward */}
-      <ul className="wheel-list wheel-future">
+      {/* Future — medium chips with ETA below each. */}
+      <ul className="chip-list chip-future">
         {future.map(({ note, idx }, i) => (
-          <NoteRow
+          <NoteChip
             key={`future-${idx}`}
             note={note}
             instrument={instrument}
@@ -178,8 +145,7 @@ export default function SidePanel({
         ))}
       </ul>
 
-      {/* Scrubber — only when paused, lets the user jump to any moment in
-          the song. Active percentage = currentTimeMs / totalTimeMs. */}
+      {/* Scrubber */}
       {paused && totalTimeMs > 0 && onSeek && (
         <div className="wheel-scrub">
           <input
@@ -208,37 +174,39 @@ function formatTime(ms: number): string {
   return `${m}:${String(s % 60).padStart(2, '0')}`;
 }
 
-interface NoteRowProps {
+interface NoteChipProps {
   note: GameNote;
   instrument: InstrumentProfile;
   tone: 'past' | 'future';
-  /** 0 = closest to current, larger = further away. Used to fade rows. */
   distance: number;
   etaMs?: number;
 }
 
-function NoteRow({ note, instrument, tone, distance, etaMs }: NoteRowProps) {
+function NoteChip({ note, instrument, tone, distance, etaMs }: NoteChipProps) {
   const stringName = instrument.stringLabels[note.string] || '?';
-  const color = instrument.stringColors[note.string] || '#667eea';
-  const pitch = midiToPitchName(
-    (instrument.midiTunings[note.string] || 0) + note.fret,
-  );
-  const opacity = Math.max(0.25, 1 - distance * (tone === 'past' ? 0.3 : 0.22));
+  const stringColor = instrument.stringColors[note.string];
+  const midi = (instrument.midiTunings[note.string] || 0) + note.fret;
+  const color = pitchClassColor(midi);
+  const opacity = Math.max(0.3, 1 - distance * (tone === 'past' ? 0.3 : 0.18));
   const etaLabel =
     etaMs === undefined
       ? ''
       : tone === 'future' && etaMs > 0
-        ? `in ${(etaMs / 1000).toFixed(1)}s`
-        : tone === 'past' && etaMs < 0
-          ? `${(-etaMs / 1000).toFixed(1)}s ago`
-          : '';
+        ? `${(etaMs / 1000).toFixed(1)}s`
+        : '';
+
   return (
-    <li className={`wheel-row wheel-${tone}-row`} style={{ opacity }}>
-      <span className="dot" style={{ background: color, color }} />
-      <span className="pitch" style={{ color }}>{pitch}</span>
-      <span className="label" style={{ color }}>{stringName}</span>
-      <span className="fret">{note.fret}</span>
-      <span className="eta">{etaLabel}</span>
+    <li
+      className={`chip-row chip-${tone}-row`}
+      style={{ opacity, '--chip-color': color } as React.CSSProperties}
+    >
+      <span className="chip-mini">
+        <span className="chip-mini-string" style={{ color: stringColor }}>
+          {stringName}
+        </span>
+        <span className="chip-mini-fret">{note.fret}</span>
+      </span>
+      {etaLabel && <span className="chip-eta">{etaLabel}</span>}
     </li>
   );
 }
