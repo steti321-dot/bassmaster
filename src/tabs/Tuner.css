@@ -40,10 +40,48 @@
 
 .instrument-toggle {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
-/* Note: .inst-btn is also used in Upload.css; same styling is fine here */
+/* Local copy of the cyber-themed pill — this used to live in Upload.css
+   (shared with the Audio-to-Notes tab) but the web build excludes Upload,
+   so the Tuner needs its own. Cyan border, orange glow when active. */
+.inst-btn {
+  padding: 8px 14px;
+  background: rgba(0, 245, 255, 0.04);
+  color: var(--cy-text-dim);
+  border: 1px solid var(--cy-border);
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  white-space: nowrap;
+}
+
+.inst-btn:hover:not(:disabled) {
+  border-color: var(--cy-orange);
+  color: var(--cy-orange);
+  box-shadow: 0 0 10px rgba(255, 157, 0, 0.3);
+}
+
+.inst-btn.active {
+  background: rgba(255, 157, 0, 0.15);
+  color: var(--cy-orange);
+  border-color: var(--cy-orange);
+  box-shadow: 0 0 14px rgba(255, 157, 0, 0.4),
+              inset 0 0 8px rgba(255, 157, 0, 0.12);
+  text-shadow: 0 0 8px rgba(255, 157, 0, 0.5);
+}
+
+.inst-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 /* Big detected note display */
 .tuner-display {
