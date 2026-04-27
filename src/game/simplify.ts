@@ -2,10 +2,16 @@
  * Kids Mode helpers — derive a beginner-friendly notes list from a song's
  * player track. Two passes run in sequence:
  *
- *   1. Chord reduction: collapse simultaneous notes (same `time`) to the
- *      single lowest-pitched note. v1 picks the lowest; the project memory
- *      `project_kids_mode_chord_policy.md` records the planned refinement
- *      (power-chord → root, full-chord → 5th).
+ *   1. Chord reduction with musical context:
+ *        Power chord (root + 5th, possibly + octaves) → keep ROOT (lowest).
+ *          The bass/rhythm tracks already carry the root sometimes, but for
+ *          power-chord textures playing the root is what feels right.
+ *        Full chord (root + 3rd + 5th, etc.)         → keep the 5TH.
+ *          Backing tracks usually carry the root, so layering the 5th on
+ *          top makes the kid's note sound supportive instead of doubled.
+ *        Diminished / sus / no-5th voicings          → fall back to root.
+ *      Detection is purely from the chord's pitch-class set — no key
+ *      analysis, no Roman-numeral parsing.
  *   2. Position remap with string-smoothing: enumerate every (string, fret)
  *      candidate within the 0–5 fret window producing the same MIDI pitch,
  *      then prefer the candidate matching the PREVIOUS output note's
@@ -20,31 +26,69 @@ import type { GameNote } from './types';
 
 const FRET_WINDOW = 5;
 
+/**
+ * Pick a single note out of a chord group using the power-vs-full rule.
+ * `tuning[noteString]` must be defined for every member of `group`.
+ */
+function pickFromChord(group: GameNote[], tuning: number[]): GameNote {
+  if (group.length === 1) return group[0];
+
+  // Compute absolute MIDI for each note + bookkeep the lowest.
+  const midis: number[] = group.map((n) => tuning[n.string] + n.fret);
+  let rootIdx = 0;
+  for (let i = 1; i < midis.length; i++) {
+    if (midis[i] < midis[rootIdx]) rootIdx = i;
+  }
+  const root = midis[rootIdx];
+  const rootPc = ((root % 12) + 12) % 12;
+  const fifthPc = (rootPc + 7) % 12;
+
+  // Build the pitch-class set so we can classify the chord shape.
+  const pcs = new Set<number>();
+  for (const m of midis) pcs.add(((m % 12) + 12) % 12);
+
+  // Power chord (or unison/octaves): only root + perfect-5th pitch classes.
+  // Either size 1 (just root, in different octaves) or size 2 with the 5th.
+  if (pcs.size === 1 || (pcs.size === 2 && pcs.has(fifthPc))) {
+    return group[rootIdx];
+  }
+
+  // Full chord — find a note whose pitch class is the 5th. If multiple
+  // candidates, prefer the one whose absolute MIDI is closest to the root
+  // (so we don't pluck a 5th two octaves above the bass note).
+  let fifthIdx = -1;
+  let fifthDist = Number.POSITIVE_INFINITY;
+  for (let i = 0; i < midis.length; i++) {
+    const pc = ((midis[i] % 12) + 12) % 12;
+    if (pc === fifthPc) {
+      const d = Math.abs(midis[i] - root);
+      if (d < fifthDist) {
+        fifthDist = d;
+        fifthIdx = i;
+      }
+    }
+  }
+  if (fifthIdx >= 0) return group[fifthIdx];
+
+  // Diminished, sus2, sus4-without-5th, or any voicing missing a perfect
+  // 5th — fall back to the root.
+  return group[rootIdx];
+}
+
 export function simplifyForKids(notes: GameNote[], tuning: number[]): GameNote[] {
   // Drum tracks (no tuning data) and empty inputs are returned as-is —
   // simplification only makes sense for stringed-instrument note streams.
   if (!notes || notes.length === 0 || tuning.length === 0) return notes;
 
   // Step 1 — chord reduction. Group by exact `time` value (parsers emit
-  // simultaneous chord notes with identical times) and keep the lowest pitch.
+  // simultaneous chord notes with identical times) and pick one note via
+  // the power-vs-full chord policy.
   const reduced: GameNote[] = [];
   let groupStart = 0;
   for (let i = 1; i <= notes.length; i++) {
     if (i === notes.length || notes[i].time !== notes[groupStart].time) {
-      if (i - groupStart === 1) {
-        reduced.push(notes[groupStart]);
-      } else {
-        let lowestIdx = groupStart;
-        let lowestPitch = tuning[notes[groupStart].string] + notes[groupStart].fret;
-        for (let j = groupStart + 1; j < i; j++) {
-          const p = tuning[notes[j].string] + notes[j].fret;
-          if (p < lowestPitch) {
-            lowestPitch = p;
-            lowestIdx = j;
-          }
-        }
-        reduced.push(notes[lowestIdx]);
-      }
+      const group = notes.slice(groupStart, i);
+      reduced.push(pickFromChord(group, tuning));
       groupStart = i;
     }
   }
