@@ -23,7 +23,11 @@ export interface GprotabDownloadResult {
   filename: string;
 }
 
-const PROXY_BASE = (process.env.REACT_APP_PROXY_BASE || '').replace(/\/+$/, '');
+// Default to the deployed Cloudflare Worker so the web build still works
+// even when the GH Actions PROXY_BASE_URL secret isn't set. Override at
+// build time via REACT_APP_PROXY_BASE if you ever rehost the proxy.
+const DEFAULT_PROXY = 'https://guitar-workbench-proxy.bassmaster.workers.dev';
+const PROXY_BASE = (process.env.REACT_APP_PROXY_BASE || DEFAULT_PROXY).replace(/\/+$/, '');
 
 function hasElectronApi(): boolean {
   return typeof window !== 'undefined' && !!(window as any).electronAPI?.gprotabSearch;

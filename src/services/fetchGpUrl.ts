@@ -12,7 +12,11 @@
  * error pages early.
  */
 
-const PROXY_BASE = (process.env.REACT_APP_PROXY_BASE || '').replace(/\/+$/, '');
+// Default to the deployed Cloudflare Worker so the URL-paste / proxy
+// fallback works even when REACT_APP_PROXY_BASE isn't injected at build
+// time. Override per-build via the env var if you ever rehost the proxy.
+const DEFAULT_PROXY = 'https://guitar-workbench-proxy.bassmaster.workers.dev';
+const PROXY_BASE = (process.env.REACT_APP_PROXY_BASE || DEFAULT_PROXY).replace(/\/+$/, '');
 const GP_MAGIC = 'FICHIER GUITAR PRO';
 
 export interface FetchedGpFile {
