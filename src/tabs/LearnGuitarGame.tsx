@@ -19,8 +19,19 @@ import { simplifyForKids } from '../game/simplify';
 import CountdownOverlay from '../game/components/CountdownOverlay';
 import ResultsScreen from '../game/components/ResultsScreen';
 import SettingsPanel from '../game/components/SettingsPanel';
+import CalibrationWizard from '../game/components/CalibrationWizard';
+import { loadCalibration } from '../game/calibration';
+import type { CalibrationData } from '../game/calibration';
+import type { EmbeddedAudioTrack } from '../game/extractGpAudio';
 
 type GamePhase = 'idle' | 'countdown' | 'playing' | 'paused' | 'results';
+
+const NOTE_NAMES_DBG = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+function freqToNoteName(hz: number): string {
+  const midi = Math.round(69 + 12 * Math.log2(hz / 440));
+  const oct  = Math.floor(midi / 12) - 1;
+  return NOTE_NAMES_DBG[((midi % 12) + 12) % 12] + oct;
+}
 
 /**
  * Tab 2: Learn Guitar Game.
@@ -36,7 +47,7 @@ export default function LearnGuitarGame() {
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [latencyOffsetMs, setLatencyOffsetMs] = useState(0);
+  const [latencyOffsetMs, setLatencyOffsetMs] = useState(() => loadCalibration()?.latencyOffsetMs ?? 0);
   const [customPitchToleranceCents, setCustomPitchToleranceCents] = useState<number | undefined>(undefined);
   const [kidsMode, setKidsMode] = useState(false);
   const [waitMode, setWaitMode] = useState(false);
@@ -46,6 +57,8 @@ export default function LearnGuitarGame() {
   const [backingVolume, setBackingVolume] = useState(0.55);
   const [enabledBacking, setEnabledBacking] = useState<Set<number>>(new Set());
   const [score, setScore] = useState<ScoreState>(INITIAL_SCORE);
+  const [calibration, setCalibration] = useState<CalibrationData | null>(() => loadCalibration());
+  const [calOpen, setCalOpen] = useState(false);
   const [micEnabled, setMicEnabled] = useState(true);
   const [micStatus, setMicStatus] = useState<'idle' | 'requesting' | 'live' | 'denied'>('idle');
   // Monitor (hear yourself through speakers) defaults to 0 — using speakers
@@ -58,6 +71,20 @@ export default function LearnGuitarGame() {
   // used by NoteRain to render a brief expanding-ring burst on each fresh
   // hit. Re-uses the same map as a ref to avoid extra re-renders.
   const hitAtRef = useRef<Map<number, number>>(new Map());
+
+  // Embedded audio from GP7/8 BCFS container — present when the user chose
+  // "Use embedded audio as backing" in TrackPicker. Played via HTMLAudioElement
+  // in sync with the game clock; oscillator backing is skipped for these songs.
+  const [embeddedAudio, setEmbeddedAudio] = useState<EmbeddedAudioTrack[] | undefined>(undefined);
+  const audioElRef = useRef<HTMLAudioElement | null>(null);
+
+  // Mic debug overlay — updated at ~25 Hz in the scoring loop.
+  interface MicDebugState {
+    rms: number;
+    gateOpen: boolean;
+    pitches: Array<{ freq: number; note: string; conf: number }>;
+  }
+  const [micDebug, setMicDebug] = useState<MicDebugState | null>(null);
 
   // Refs for the realtime scoring loop (avoid stale closures)
   const scoreRef = useRef<ScoreState>(INITIAL_SCORE);
@@ -89,6 +116,11 @@ export default function LearnGuitarGame() {
   // shape, not absolute silence.
   const requireSilenceRef = useRef<boolean>(false);
   const peakRmsSinceHitRef = useRef<number>(0);
+  const calibrationRef = useRef<CalibrationData | null>(null);
+  calibrationRef.current = calibration;
+  // Log throttle — only print a detection-frame summary every 200 ms so the
+  // console stays readable. Scoring events (hit/miss) always log immediately.
+  const lastLogAtRef = useRef<number>(0);
   // Smoothed RMS used as a "recent loudness" baseline to detect fresh pluck
   // attacks. When current RMS jumps well above this baseline, we treat it
   // as a new pluck even if the previous note is still ringing.
@@ -99,6 +131,8 @@ export default function LearnGuitarGame() {
   // after the hit was scored.
   const lastHitAtRef = useRef<number>(0);
   const REFRACTORY_MS = 200;
+  const embeddedAudioRef = useRef<EmbeddedAudioTrack[] | undefined>(undefined);
+  embeddedAudioRef.current = embeddedAudio;
 
   // Initialize enabled-backing set whenever a new song loads.
   // Also restore per-song preferences (difficulty, speed, audio levels) from
@@ -174,6 +208,18 @@ export default function LearnGuitarGame() {
       .filter((t) => enabled.has(t.index) && t.notes.length > 0)
       .map((t) => ({ notes: t.notes, instrument: t.instrument, isDrums: t.isDrums }));
 
+  // Start / stop the embedded HTMLAudioElement synced to the game clock.
+  // Volume is kept in sync by a separate effect; no need to set it here.
+  const startAudio = (fromMs: number, rate: number) => {
+    const el = audioElRef.current;
+    if (!el) return;
+    el.playbackRate = rate;
+    el.currentTime = fromMs / 1000;
+    el.play().catch(() => {/* autoplay blocked — user interaction required */});
+  };
+
+  const stopAudio = () => audioElRef.current?.pause();
+
   const startRefMs = useRef<number>(0);
   const offsetRefMs = useRef<number>(0);
   const animationRef = useRef<number | null>(null);
@@ -194,6 +240,25 @@ export default function LearnGuitarGame() {
     const synth = synthRef.current;
     return () => synth.dispose();
   }, []);
+
+  // Set up / tear down the HTMLAudioElement when embedded audio changes.
+  useEffect(() => {
+    const prev = audioElRef.current;
+    if (prev) { prev.pause(); prev.src = ''; audioElRef.current = null; }
+
+    if (embeddedAudio && embeddedAudio.length > 0) {
+      const el = new Audio(embeddedAudio[0].url);
+      el.preload = 'auto';
+      audioElRef.current = el;
+    }
+  }, [embeddedAudio]);
+
+  // Sync HTMLAudioElement volume with the backing volume control.
+  useEffect(() => {
+    const el = audioElRef.current;
+    if (!el) return;
+    el.volume = backingMuted ? 0 : backingVolume;
+  }, [backingVolume, backingMuted]);
 
   // Kids mode: derive a simplified note stream (chord reduction + 0–5 fret
   // remap) from the player track. The same array drives display AND scoring,
@@ -246,20 +311,25 @@ export default function LearnGuitarGame() {
             isWaitingRef.current = true;
             setIsWaiting(true);
             synthRef.current.stop();
+            stopAudio();
           }
           elapsed = target.time;
         } else if (isWaitingRef.current) {
           // Just exited the gate (note hit, or wait mode toggled off mid-wait).
-          // Re-anchor the real-time clock and resume the synth from here.
+          // Re-anchor the real-time clock and resume audio from here.
           isWaitingRef.current = false;
           setIsWaiting(false);
           startRefMs.current = performance.now() - elapsed / playbackRateRef.current;
           if (song) {
-            synthRef.current.start(
-              buildBackingTracks(song, enabledBacking),
-              elapsed,
-              playbackRate,
-            );
+            if (embeddedAudioRef.current) {
+              startAudio(elapsed, playbackRateRef.current);
+            } else {
+              synthRef.current.start(
+                buildBackingTracks(song, enabledBacking),
+                elapsed,
+                playbackRateRef.current,
+              );
+            }
           }
         }
       } else if (isWaitingRef.current) {
@@ -268,11 +338,15 @@ export default function LearnGuitarGame() {
         setIsWaiting(false);
         startRefMs.current = performance.now() - elapsed / playbackRateRef.current;
         if (song) {
-          synthRef.current.start(
-            buildBackingTracks(song, enabledBacking),
-            elapsed,
-            playbackRate,
-          );
+          if (embeddedAudioRef.current) {
+            startAudio(elapsed, playbackRateRef.current);
+          } else {
+            synthRef.current.start(
+              buildBackingTracks(song, enabledBacking),
+              elapsed,
+              playbackRateRef.current,
+            );
+          }
         }
       }
 
@@ -284,6 +358,7 @@ export default function LearnGuitarGame() {
         : 0;
       if (elapsed > lastNoteEnd + 2000) {
         synthRef.current.stop();
+        stopAudio();
         setGamePhase('results');
         return;
       }
@@ -299,17 +374,12 @@ export default function LearnGuitarGame() {
         const effectiveElapsed = elapsed - latencyOffsetRef.current;
 
         const snap = micCaptureRef.current.snapshot();
-        const RMS_GATE = 0.005;
-        // Gate release thresholds. Training Mode is more permissive so a
-        // soft re-pluck during the previous note's decay is still detected
-        // (the EMA baseline tracks the ringing tail closely, so a 1.5×
-        // spike is hard to hit — the user complained that re-plucks
-        // weren't registering). Normal scrolling play sticks with the
-        // stricter thresholds to keep one pluck from advancing through
-        // multiple identical notes.
+        // Use calibrated thresholds when available; fall back to conservative defaults.
+        const cal = calibrationRef.current;
+        const RMS_GATE    = cal?.rmsGate    ?? 0.005;
+        const ATTACK_FLOOR = cal?.attackFloor ?? 0.008;
         const inWait = isWaitingRef.current;
         const ATTACK_RATIO = inWait ? 1.2 : 1.5;
-        const ATTACK_FLOOR = inWait ? 0.018 : 0.025;
         if (snap) {
           const prevBaseline = recentRmsRef.current;
           if (requireSilenceRef.current) {
@@ -353,6 +423,20 @@ export default function LearnGuitarGame() {
           );
         }
 
+        // Throttled detection log (~5 Hz) — open browser console to read.
+        if (now - lastLogAtRef.current > 200) {
+          lastLogAtRef.current = now;
+          const gateStr  = requireSilenceRef.current ? 'GATE:closed' : 'GATE:open';
+          const rmsStr   = `RMS:${((snap?.rms ?? 0) * 100).toFixed(1)}%`;
+          const refStr   = inRefractory ? ' REFRACTORY' : '';
+          const pitchStr = detectedPitches.length === 0
+            ? 'no-pitch'
+            : detectedPitches.map(p =>
+                `${freqToNoteName(p.frequency)}(${p.frequency.toFixed(0)}Hz,${(p.confidence * 100).toFixed(0)}%)`
+              ).join(' ');
+          console.log(`[MIC] ${gateStr} ${rmsStr}${refStr} → ${pitchStr}`);
+        }
+
         // Walk forward over upcoming notes, scoring within timing window
         const results = noteResultsRef.current;
         let resultsChanged = false;
@@ -393,6 +477,10 @@ export default function LearnGuitarGame() {
             newScore.combo = 0;
             scoreChanged = true;
             nextEvalIdxRef.current = i + 1;
+            // The gate was protecting this note; it's resolved now, so open
+            // up immediately so the next note's pluck is detectable.
+            requireSilenceRef.current = false;
+            console.log(`[MISS] note#${i} ${freqToNoteName(n.frequency)}(${n.frequency.toFixed(0)}Hz) dt=${dt.toFixed(0)}ms lateLimit=${lateLimit.toFixed(0)}ms`);
             continue;
           }
 
@@ -429,10 +517,10 @@ export default function LearnGuitarGame() {
                 newScore.bestCombo = Math.max(newScore.bestCombo, newScore.combo);
                 newScore.score += 100 + 10 * newScore.combo;
                 scoreChanged = true;
-                // Stamp the wall-clock time so NoteRain can render a brief
-                // hit-burst at this index over the next ~500 ms.
                 hitAtRef.current.set(hitIdx, now);
                 anyHitThisFrame = true;
+                const hn = displayedNotes[hitIdx];
+                console.log(`[HIT]  note#${hitIdx} ${freqToNoteName(hn.frequency)}(${hn.frequency.toFixed(0)}Hz) detected@${detectedFreq.toFixed(0)}Hz ±${bestMatchCents.toFixed(0)}¢`);
               }
             }
             // Attack detection/refractory applies only to the first pitch
@@ -505,6 +593,17 @@ export default function LearnGuitarGame() {
         if (scoreChanged) {
           setScore(newScore);
         }
+
+        // Mic debug overlay — update every detection tick (~25 Hz).
+        setMicDebug({
+          rms: snap?.rms ?? 0,
+          gateOpen: !requireSilenceRef.current,
+          pitches: detectedPitches.slice(0, 6).map(p => ({
+            freq: p.frequency,
+            note: freqToNoteName(p.frequency),
+            conf: p.confidence,
+          })),
+        });
       }
 
       animationRef.current = requestAnimationFrame(tick);
@@ -542,7 +641,11 @@ export default function LearnGuitarGame() {
 
     if (gamePhase === 'paused') {
       // Resume from where we left off — no countdown needed
-      synthRef.current.start(buildBackingTracks(song, enabledBacking), currentTimeMs, playbackRate);
+      if (embeddedAudio) {
+        startAudio(currentTimeMs, playbackRate);
+      } else {
+        synthRef.current.start(buildBackingTracks(song, enabledBacking), currentTimeMs, playbackRate);
+      }
       setGamePhase('playing');
     } else {
       // Fresh start: pre-roll countdown
@@ -553,12 +656,17 @@ export default function LearnGuitarGame() {
   // Called by CountdownOverlay when the 4th tick fires.
   const handleCountdownComplete = () => {
     if (!song) return;
-    synthRef.current.start(buildBackingTracks(song, enabledBacking), currentTimeMs, playbackRate);
+    if (embeddedAudio) {
+      startAudio(currentTimeMs, playbackRate);
+    } else {
+      synthRef.current.start(buildBackingTracks(song, enabledBacking), currentTimeMs, playbackRate);
+    }
     setGamePhase('playing');
   };
 
   const handlePause = () => {
     synthRef.current.stop();
+    stopAudio();
     offsetRefMs.current = currentTimeMs;
     isWaitingRef.current = false;
     setIsWaiting(false);
@@ -567,6 +675,7 @@ export default function LearnGuitarGame() {
 
   const handleStop = () => {
     synthRef.current.stop();
+    stopAudio();
     setGamePhase('idle');
     offsetRefMs.current = 0;
     setCurrentTimeMs(0);
@@ -586,6 +695,7 @@ export default function LearnGuitarGame() {
   // selection is restored automatically.
   const handleBackToTracks = () => {
     synthRef.current.stop();
+    stopAudio();
     setGamePhase('idle');
     offsetRefMs.current = 0;
     setCurrentTimeMs(0);
@@ -658,11 +768,17 @@ export default function LearnGuitarGame() {
   // The visual rAF loop already picks up the new rate via playbackRateRef.
   useEffect(() => {
     if (isPlaying && song) {
-      synthRef.current.start(
-        buildBackingTracks(song, enabledBacking),
-        currentTimeMs,
-        playbackRate
-      );
+      if (embeddedAudio) {
+        // Resync audio element on rate change (no backing-track-selection concept)
+        const el = audioElRef.current;
+        if (el) el.playbackRate = playbackRate;
+      } else {
+        synthRef.current.start(
+          buildBackingTracks(song, enabledBacking),
+          currentTimeMs,
+          playbackRate
+        );
+      }
     }
     // We deliberately don't include currentTimeMs in deps — that would re-schedule
     // every frame. Only rate / backing toggles should trigger this.
@@ -683,8 +799,8 @@ export default function LearnGuitarGame() {
     return (
       <TrackPicker
         file={pickedFile}
-        onBack={() => setPickedFile(null)}
-        onSongReady={(s) => setSong(s)}
+        onBack={() => { setPickedFile(null); setEmbeddedAudio(undefined); }}
+        onSongReady={(s, setup) => { setSong(s); setEmbeddedAudio(setup.embeddedAudio); }}
       />
     );
   }
@@ -824,6 +940,38 @@ export default function LearnGuitarGame() {
           {micStatus === 'idle' && (micEnabled ? '⚪ mic ready' : '⚫ mic off')}
         </span>
 
+        {/* Mic debug strip — only shown when mic is live */}
+        {micStatus === 'live' && micDebug && (
+          <div className="mic-debug-strip" title="Mic debug: RMS level, attack gate, detected pitches">
+            <span
+              className="mic-debug-gate"
+              title={micDebug.gateOpen ? 'Attack gate OPEN — will detect next pluck' : 'Attack gate CLOSED — waiting for silence before next hit'}
+              style={{ color: micDebug.gateOpen ? '#2dff8b' : '#ff9d00' }}
+            >
+              {micDebug.gateOpen ? '▶' : '⏸'}
+            </span>
+            <span className="mic-debug-rms" title="RMS level (0–100%)">
+              <span
+                className="mic-debug-rms-bar"
+                style={{ width: `${Math.min(100, micDebug.rms * 500)}%` }}
+              />
+            </span>
+            {micDebug.pitches.length === 0
+              ? <span className="mic-debug-no-pitch">—</span>
+              : micDebug.pitches.map((p, i) => (
+                <span
+                  key={i}
+                  className="mic-debug-pitch"
+                  title={`${p.freq.toFixed(1)} Hz  conf ${(p.conf * 100).toFixed(0)}%`}
+                  style={{ opacity: 0.5 + p.conf * 0.5 }}
+                >
+                  {p.note}
+                </span>
+              ))
+            }
+          </div>
+        )}
+
         <label className="ns-toggle" title="Suppress fans / HVAC / room hum (may attenuate sustained notes)">
           <input
             type="checkbox"
@@ -832,6 +980,14 @@ export default function LearnGuitarGame() {
           />
           <span>Suppress room noise</span>
         </label>
+
+        <button
+          className="calibrate-btn"
+          onClick={() => setCalOpen(true)}
+          title={calibration ? `Calibrated: ${calibration.instrument} · ${new Date(calibration.calibratedAt).toLocaleDateString()}` : 'Calibrate mic input levels and latency'}
+        >
+          {calibration ? '🎯' : '🎯'} Cal{calibration ? '✓' : ''}
+        </button>
 
         <button
           className="gear-btn"
@@ -869,6 +1025,18 @@ export default function LearnGuitarGame() {
           songTitle={song.title}
           onPlayAgain={handlePlayAgain}
           onBackToTracks={handleBackToTracks}
+        />
+      )}
+
+      {/* Calibration wizard */}
+      {calOpen && (
+        <CalibrationWizard
+          onApply={(data) => {
+            setCalibration(data);
+            setLatencyOffsetMs(data.latencyOffsetMs);
+            setCalOpen(false);
+          }}
+          onClose={() => setCalOpen(false)}
         />
       )}
 

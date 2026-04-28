@@ -716,3 +716,31 @@
     letter-spacing: 0.04em;
   }
 }
+
+/* ── Embedded audio toggle (TrackPicker) ───────────────────────────────────── */
+.embedded-audio-toggle {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--cy-text-dim);
+  padding: 6px 0;
+  user-select: none;
+}
+
+.embedded-audio-toggle:hover {
+  color: var(--cy-cyan);
+}
+
+.embedded-audio-list {
+  list-style: none;
+  margin: 6px 0 0 26px;
+  padding: 0;
+  font-size: 0.78rem;
+  color: var(--cy-text-muted);
+  letter-spacing: 0.04em;
+}
+
+.embedded-audio-item {
+  padding: 2px 0;
+}

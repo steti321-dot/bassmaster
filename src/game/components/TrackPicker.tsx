@@ -5,11 +5,16 @@ import type { GpFileSummary } from '../Gp4Reader';
 import type { Song } from '../types';
 import { loadSettings } from '../songSettings';
 import type { PickedFile } from './FilePicker';
+import { extractGpAudio, revokeGpAudioUrls } from '../extractGpAudio';
+import type { EmbeddedAudioTrack } from '../extractGpAudio';
 
 interface TrackPickerProps {
   file: PickedFile;
   onBack: () => void;
-  onSongReady: (song: Song, setup: { playerIdx: number; backingSet: Set<number> }) => void;
+  onSongReady: (
+    song: Song,
+    setup: { playerIdx: number; backingSet: Set<number>; embeddedAudio?: EmbeddedAudioTrack[] }
+  ) => void;
 }
 
 /**
@@ -21,10 +26,18 @@ export default function TrackPicker({ file, onBack, onSongReady }: TrackPickerPr
   const [error, setError] = useState<string | null>(null);
   const [playerIdx, setPlayerIdx] = useState<number | null>(null);
   const [backingSet, setBackingSet] = useState<Set<number>>(new Set());
+  const [embeddedAudio, setEmbeddedAudio] = useState<EmbeddedAudioTrack[]>([]);
+  const [useEmbedded, setUseEmbedded] = useState(false);
 
-  // Inspect the file (header + tracks only) and apply any saved settings
+  // Inspect the file (header + tracks only), apply saved settings, extract embedded audio
   useEffect(() => {
     setError(null);
+    setUseEmbedded(false);
+
+    // Extract audio before parsing (BCFS/BCFZ only; silent for GP3–5)
+    const audio = extractGpAudio(file.bytes);
+    setEmbeddedAudio(audio);
+
     try {
       const sum = inspectGpFile(file.bytes);
       setSummary(sum);
@@ -46,6 +59,10 @@ export default function TrackPicker({ file, onBack, onSongReady }: TrackPickerPr
         `Could not read "${file.name}": ${err instanceof Error ? err.message : 'unknown'}`
       );
     }
+
+    return () => {
+      revokeGpAudioUrls(audio);
+    };
   }, [file]);
 
   const handleStart = () => {
@@ -55,7 +72,11 @@ export default function TrackPicker({ file, onBack, onSongReady }: TrackPickerPr
       const song = parseGpFile(file.bytes, undefined, playerIdx);
       song.source = file.name;
       song.backingEnabled = new Set(backingSet);
-      onSongReady(song, { playerIdx, backingSet: new Set(backingSet) });
+      onSongReady(song, {
+        playerIdx,
+        backingSet: new Set(backingSet),
+        embeddedAudio: useEmbedded ? embeddedAudio : undefined,
+      });
     } catch (err) {
       setError(
         `Could not load "${file.name}": ${err instanceof Error ? err.message : 'unknown'}`
@@ -147,6 +168,35 @@ export default function TrackPicker({ file, onBack, onSongReady }: TrackPickerPr
           })}
         </ul>
       </div>
+
+      {/* Embedded audio option — only shown for GP6–8 files that contain audio */}
+      {embeddedAudio.length > 0 && (
+        <div className="picker-section">
+          <label className="embedded-audio-toggle">
+            <input
+              type="checkbox"
+              checked={useEmbedded}
+              onChange={(e) => setUseEmbedded(e.target.checked)}
+              style={{ accentColor: 'var(--cy-cyan)', marginRight: 8 }}
+            />
+            <span>
+              🎵 Use embedded audio as backing
+              <span className="picker-hint" style={{ display: 'inline', marginLeft: 8 }}>
+                ({embeddedAudio.length} track{embeddedAudio.length !== 1 ? 's' : ''} found in file)
+              </span>
+            </span>
+          </label>
+          {useEmbedded && (
+            <ul className="embedded-audio-list">
+              {embeddedAudio.map((a) => (
+                <li key={a.name} className="embedded-audio-item">
+                  🎵 {a.name.replace(/^(audio|Content)\//i, '')}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       <div className="picker-actions">
         <button className="back-btn" onClick={onBack}>
