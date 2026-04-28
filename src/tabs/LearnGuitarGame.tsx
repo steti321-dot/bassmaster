@@ -85,6 +85,7 @@ export default function LearnGuitarGame() {
     rms: number;
     gateOpen: boolean;
     pitches: Array<{ freq: number; note: string; conf: number }>;
+    target: { note: string; freq: number } | null;
   }
   const [micDebug, setMicDebug] = useState<MicDebugState | null>(null);
 
@@ -504,7 +505,16 @@ export default function LearnGuitarGame() {
                 j++
               ) {
                 if (results.has(j)) continue;
-                const cj = Math.abs(centsBetween(detectedFreq, displayedNotes[j].frequency));
+                // Octave-snap ÷2 only: the polyphonic FFT sometimes locks on
+                // the 2x harmonic instead of the fundamental (e.g. returns G2
+                // when the player plays G1). Try one octave down and pick the
+                // closer match. Limiting to a single ÷2 avoids higher harmonics
+                // (5th = G# of E, etc.) collapsing into unrelated notes through
+                // repeated folding — which is what caused the E→G/F false hits.
+                const targetFreq = displayedNotes[j].frequency;
+                const cDirect   = Math.abs(centsBetween(detectedFreq,     targetFreq));
+                const cOneDown  = Math.abs(centsBetween(detectedFreq / 2, targetFreq));
+                const cj = Math.min(cDirect, cOneDown);
                 if (cj < bestMatchCents) {
                   bestMatchCents = cj;
                   bestMatchIdx = j;
@@ -538,15 +548,13 @@ export default function LearnGuitarGame() {
             }
           }
 
-          // Partial-chord forgiveness: if enough notes of this chord have
-          // already been scored (across any prior or current frame), forgive
-          // the remaining ones so a partial strum doesn't generate misses.
-          //   Easy   → 1 detected hit forgives the rest
-          //   Medium → 2 detected hits forgive the rest
-          //   Strict → no forgiveness
-          const forgiveMin =
-            difficultyRef.current === 'easy' ? 1 :
-            difficultyRef.current === 'medium' ? 2 : Infinity;
+          // Partial-chord forgiveness: DISABLED across all difficulties.
+          // The rule is now uniform: every note requires its own attack +
+          // matching pitch. Polyphonic detection already accepts multiple
+          // simultaneous pitches from one strum, so legitimate full strums
+          // still score the whole chord on a single attack — but partial
+          // strums that miss strings now correctly miss those notes.
+          const forgiveMin = Infinity;
           if (forgiveMin < Infinity) {
             // Scan backward to find the first chord member at n.time
             // (earlier members may have been scored in previous frames).
@@ -597,6 +605,7 @@ export default function LearnGuitarGame() {
         }
 
         // Mic debug overlay — update every detection tick (~25 Hz).
+        const targetNote = displayedNotes[nextEvalIdxRef.current];
         setMicDebug({
           rms: snap?.rms ?? 0,
           gateOpen: !requireSilenceRef.current,
@@ -605,6 +614,9 @@ export default function LearnGuitarGame() {
             note: freqToNoteName(p.frequency),
             conf: p.confidence,
           })),
+          target: targetNote
+            ? { note: freqToNoteName(targetNote.frequency), freq: targetNote.frequency }
+            : null,
         });
       }
 
@@ -872,6 +884,50 @@ export default function LearnGuitarGame() {
             currentTimeMs={currentTimeMs}
             noteResults={noteResults}
           />
+          {/* Mic debug panel — upper-right corner of the note rain */}
+          {micStatus === 'live' && micDebug && (
+            <div className="mic-debug-panel" title="Mic debug: gate · RMS · detected pitches vs target">
+              <div className="mic-debug-panel-row">
+                <span
+                  className="mic-debug-gate"
+                  style={{ color: micDebug.gateOpen ? '#2dff8b' : '#ff9d00' }}
+                  title={micDebug.gateOpen ? 'Gate OPEN' : 'Gate CLOSED — waiting for attack'}
+                >
+                  {micDebug.gateOpen ? '▶' : '⏸'}
+                </span>
+                <span className="mic-debug-rms">
+                  <span
+                    className="mic-debug-rms-bar"
+                    style={{ width: `${Math.min(100, micDebug.rms * 500)}%` }}
+                  />
+                </span>
+              </div>
+              <div className="mic-debug-panel-row mic-debug-target-row">
+                <span className="mic-debug-label">exp</span>
+                <span className="mic-debug-target">
+                  {micDebug.target ? micDebug.target.note : '—'}
+                </span>
+              </div>
+              <div className="mic-debug-panel-row">
+                <span className="mic-debug-label">det</span>
+                <span className="mic-debug-pitches">
+                  {micDebug.pitches.length === 0
+                    ? <span className="mic-debug-no-pitch">—</span>
+                    : micDebug.pitches.map((p, i) => (
+                      <span
+                        key={i}
+                        className="mic-debug-pitch"
+                        title={`${p.freq.toFixed(1)} Hz  conf ${(p.conf * 100).toFixed(0)}%`}
+                        style={{ opacity: 0.5 + p.conf * 0.5 }}
+                      >
+                        {p.note}
+                      </span>
+                    ))
+                  }
+                </span>
+              </div>
+            </div>
+          )}
         </div>
         {isWaiting && <div className="wait-overlay">{t('game:waiting_for_note')}</div>}
       </div>
@@ -941,38 +997,6 @@ export default function LearnGuitarGame() {
           {micStatus === 'requesting' && t('game:mic_asking')}
           {micStatus === 'idle' && (micEnabled ? t('game:mic_ready') : t('game:mic_off'))}
         </span>
-
-        {/* Mic debug strip — only shown when mic is live */}
-        {micStatus === 'live' && micDebug && (
-          <div className="mic-debug-strip" title="Mic debug: RMS level, attack gate, detected pitches">
-            <span
-              className="mic-debug-gate"
-              title={micDebug.gateOpen ? 'Attack gate OPEN — will detect next pluck' : 'Attack gate CLOSED — waiting for silence before next hit'}
-              style={{ color: micDebug.gateOpen ? '#2dff8b' : '#ff9d00' }}
-            >
-              {micDebug.gateOpen ? '▶' : '⏸'}
-            </span>
-            <span className="mic-debug-rms" title="RMS level (0–100%)">
-              <span
-                className="mic-debug-rms-bar"
-                style={{ width: `${Math.min(100, micDebug.rms * 500)}%` }}
-              />
-            </span>
-            {micDebug.pitches.length === 0
-              ? <span className="mic-debug-no-pitch">—</span>
-              : micDebug.pitches.map((p, i) => (
-                <span
-                  key={i}
-                  className="mic-debug-pitch"
-                  title={`${p.freq.toFixed(1)} Hz  conf ${(p.conf * 100).toFixed(0)}%`}
-                  style={{ opacity: 0.5 + p.conf * 0.5 }}
-                >
-                  {p.note}
-                </span>
-              ))
-            }
-          </div>
-        )}
 
         <label className="ns-toggle" title="Suppress fans / HVAC / room hum (may attenuate sustained notes)">
           <input

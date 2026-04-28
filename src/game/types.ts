@@ -66,7 +66,7 @@ export interface DifficultyConfig {
 }
 
 export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
-  easy: { pitchToleranceCents: 150, timingWindowMs: 250 },
+  easy: { pitchToleranceCents: 50, timingWindowMs: 250 },
   medium: { pitchToleranceCents: 50, timingWindowMs: 150 },
   strict: { pitchToleranceCents: 25, timingWindowMs: 75 },
 };
