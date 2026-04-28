@@ -299,45 +299,49 @@ export default function LearnGuitarGame() {
 
         const snap = micCaptureRef.current.snapshot();
         const RMS_GATE = 0.005;
-        // Gate release: a fresh pluck attack is the ONLY way to advance
-        // after a hit. We previously also allowed "silence reached" but
-        // that was unreliable — long-decay notes hit the floor while
-        // still audible enough to false-score the next frozen note.
-        // Now: gate stays on until RMS spikes above the recent baseline
-        // (1.5× rise) AND is loud enough to be a real pluck (>0.025).
+        // Gate release thresholds. Training Mode is more permissive so a
+        // soft re-pluck during the previous note's decay is still detected
+        // (the EMA baseline tracks the ringing tail closely, so a 1.5×
+        // spike is hard to hit — the user complained that re-plucks
+        // weren't registering). Normal scrolling play sticks with the
+        // stricter thresholds to keep one pluck from advancing through
+        // multiple identical notes.
+        const inWait = isWaitingRef.current;
+        const ATTACK_RATIO = inWait ? 1.2 : 1.5;
+        const ATTACK_FLOOR = inWait ? 0.018 : 0.025;
         if (snap) {
           const prevBaseline = recentRmsRef.current;
           if (requireSilenceRef.current) {
             peakRmsSinceHitRef.current = Math.max(peakRmsSinceHitRef.current, snap.rms);
             const newAttack =
               prevBaseline > 0.001 &&
-              snap.rms > prevBaseline * 1.5 &&
-              snap.rms > 0.025;
-            if (newAttack) {
+              snap.rms > prevBaseline * ATTACK_RATIO &&
+              snap.rms > ATTACK_FLOOR;
+            // Training Mode safety net: if we've been waiting for more
+            // than 1.2 s without detecting an attack, force-clear the
+            // gate. Either the user is plucking softly enough that the
+            // baseline tracks every pluck, or the previous note has
+            // decayed below the EMA — either way, blocking detection
+            // any longer just frustrates the player.
+            const stuckTooLong =
+              inWait && now - lastHitAtRef.current > 1200;
+            if (newAttack || stuckTooLong) {
               requireSilenceRef.current = false;
               peakRmsSinceHitRef.current = snap.rms;
-              // A confirmed fresh pluck also bypasses the refractory —
-              // we don't want the next note to wait an extra 200ms when
-              // we've already detected a clean attack.
               lastHitAtRef.current = 0;
             }
           }
           // EMA over ~4 frames — baseline lags the current RMS, so a sharp
-          // re-pluck spike still beats it. Update AFTER the check so the
-          // comparison is against past frames, not the current one.
+          // re-pluck spike still beats it.
           recentRmsRef.current = prevBaseline * 0.75 + snap.rms * 0.25;
         }
         let detectedFreq = 0;
         const inRefractory = now - lastHitAtRef.current < REFRACTORY_MS;
-        // Training Mode bypasses the silence/refractory gates: the clock is
-        // frozen on the current note, and the for-loop below breaks after
-        // the first scored note, so multiple-detect-doesn't-double-score.
-        // The gate's anti-repeat protection is only useful for normal play.
-        const gatesActive = !isWaitingRef.current;
         if (
           snap &&
           snap.rms > RMS_GATE &&
-          (!gatesActive || (!requireSilenceRef.current && !inRefractory))
+          !requireSilenceRef.current &&
+          !inRefractory
         ) {
           const r = detectPitch(snap.samples, snap.sampleRate, profile.minPitchHz, profile.maxPitchHz);
           if (r.confidence > 0.4) detectedFreq = r.frequency;
