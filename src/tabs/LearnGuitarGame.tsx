@@ -445,15 +445,57 @@ export default function LearnGuitarGame() {
               peakRmsSinceHitRef.current = snap?.rms ?? 0;
               recentRmsRef.current = snap?.rms ?? 0;
               lastHitAtRef.current = now;
-              // Advance nextEvalIdxRef past contiguously-hit chord members
-              // so the next frame's loop starts at the first un-played note.
-              while (
-                nextEvalIdxRef.current < displayedNotes.length &&
-                results.has(nextEvalIdxRef.current)
-              ) {
-                nextEvalIdxRef.current += 1;
+            }
+          }
+
+          // Partial-chord forgiveness: if enough notes of this chord have
+          // already been scored (across any prior or current frame), forgive
+          // the remaining ones so a partial strum doesn't generate misses.
+          //   Easy   → 1 detected hit forgives the rest
+          //   Medium → 2 detected hits forgive the rest
+          //   Strict → no forgiveness
+          const forgiveMin =
+            difficultyRef.current === 'easy' ? 1 :
+            difficultyRef.current === 'medium' ? 2 : Infinity;
+          if (forgiveMin < Infinity) {
+            // Scan backward to find the first chord member at n.time
+            // (earlier members may have been scored in previous frames).
+            let chordStart = i;
+            while (chordStart > 0 && displayedNotes[chordStart - 1].time === n.time) chordStart--;
+            // Scan forward to find the last chord member.
+            let chordEnd = i;
+            while (chordEnd + 1 < displayedNotes.length && displayedNotes[chordEnd + 1].time === n.time) chordEnd++;
+
+            const chordSize = chordEnd - chordStart + 1;
+            if (chordSize > 1) {
+              let chordHits = 0;
+              for (let j = chordStart; j <= chordEnd; j++) {
+                if (results.get(j) === 'hit') chordHits++;
+              }
+              if (chordHits >= forgiveMin) {
+                for (let j = i; j <= chordEnd; j++) {
+                  if (!results.has(j)) {
+                    results.set(j, 'hit');
+                    resultsChanged = true;
+                    newScore.hits += 1;
+                    newScore.combo += 1;
+                    newScore.bestCombo = Math.max(newScore.bestCombo, newScore.combo);
+                    newScore.score += 100 + 10 * newScore.combo;
+                    scoreChanged = true;
+                    hitAtRef.current.set(j, now);
+                  }
+                }
               }
             }
+          }
+
+          // Advance nextEvalIdxRef past contiguously-scored chord members
+          // (covers both directly-detected hits and forgiven notes above).
+          while (
+            nextEvalIdxRef.current < displayedNotes.length &&
+            results.has(nextEvalIdxRef.current)
+          ) {
+            nextEvalIdxRef.current += 1;
           }
         }
 
