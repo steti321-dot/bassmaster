@@ -23,13 +23,28 @@ Per-song settings (selected track, backing tracks, difficulty, latency offset, e
 
 ### Difficulty + scoring
 
-| Level | Pitch tolerance | Timing window |
-|---|:---:|:---:|
-| Easy | ±150 ¢ | ±250 ms |
-| Medium | ±50 ¢ | ±150 ms |
-| Strict | ±25 ¢ | ±75 ms |
+| Level | Pitch tolerance | Onset window | Late-hit grace |
+|---|:---:|:---:|:---:|
+| Easy | ±150 ¢ | ±250 ms | full sustain (any time the chip is still active) |
+| Medium | ±50 ¢ | ±150 ms | half the sustain |
+| Strict | ±25 ¢ | ±75 ms | none — onset window only |
 
 Hit / miss are detected from your mic in real time using a YIN pitch detector + RMS attack tracker. After every hit a small refractory period plus a fresh-attack detection step prevents one sustained note from accidentally scoring multiple identical chips in a row.
+
+For chord groups (multiple notes sharing the same time), pluck **any** member's pitch — the scorer matches against every un-played member and accepts the closest one.
+
+#### Stripe visual states
+
+Each falling chip's stripe gives an at-a-glance cue for what to do:
+
+| State | Fill | Stroke | Glow | Triggered when |
+|---|---|---|---|---|
+| **Approaching** | 0.32 (subtle) | 2.4 px @ 0.95 opacity | none | the head is still > +timing-window from the hit line |
+| **Hittable** | **0.55** (bolder) | **3.4 px @ 1.0 opacity** | **drop-shadow halo** | head is inside ±window — *or* note is still sustaining |
+| **Hit** | 0.7 green | 3.4 px green | green burst ring at the hit line | pitch matched within tolerance |
+| **Miss** | 0.3 red | 3.4 px red | none | onset + late-grace window passed without a match |
+
+The hittable state uses the active difficulty's timing window, so Easy stripes wake up ~250 ms before onset (and stay bold the whole sustain thanks to late-grace), while Strict only highlights right at the hit line.
 
 ### 🧒 Kids Mode
 
