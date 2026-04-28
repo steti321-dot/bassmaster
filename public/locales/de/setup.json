@@ -1,0 +1,19 @@
+{
+  "title": "Einrichtung",
+  "calibration_section": "🎯 Kalibrierung & Latenz",
+  "calibration_status_done": "Kalibriert · {{instrument}} · {{date}}",
+  "calibration_status_none": "Noch nicht kalibriert — kalibriere, um Mikrofonpegel, Instrument und Latenz einzurichten.",
+  "start_calibration": "Kalibrierung starten",
+  "recalibrate": "Neu kalibrieren",
+  "clear_calibration": "Kalibrierung löschen",
+  "clear_calibration_confirm": "Gespeicherte Kalibrierungsdaten löschen?",
+  "latency_offset": "Latenz-Versatz",
+  "latency_offset_hint": "Gleicht die Verzögerung des Audio-Interfaces aus. Positive Werte verschieben das Zeitfenster nach vorne (dein Audio kommt zu spät). Neukalibrierung überschreibt diesen Wert; der Schieberegler dient dem Nachjustieren.",
+  "language_section": "🌐 Sprache",
+  "mic_section": "🎤 Mikrofon-Einstellungen",
+  "mic_test": "Mikrofon-Test (RMS)",
+  "start_mic_test": "Starten",
+  "stop_mic_test": "Stopp",
+  "default_noise_suppress": "Raumgeräusche standardmäßig unterdrücken",
+  "default_noise_suppress_hint": "Wird auf neue Spiel- und Stimmgerät-Sitzungen angewendet. In jeder Sitzung kann es lokal umgeschaltet werden."
+}

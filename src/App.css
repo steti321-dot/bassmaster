@@ -205,43 +205,6 @@ body {
   box-shadow: 0 0 12px rgba(0, 245, 255, 0.3);
 }
 
-.header-actions {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.lang-select {
-  padding: 6px 10px;
-  border: 1px solid var(--cy-border);
-  border-radius: 4px;
-  background: rgba(0, 245, 255, 0.06);
-  color: var(--cy-text-dim);
-  font-family: inherit;
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.lang-select:hover {
-  border-color: var(--cy-border-strong);
-  background: rgba(0, 245, 255, 0.12);
-  color: var(--cy-cyan);
-}
-
-.lang-select:focus {
-  outline: none;
-  border-color: var(--cy-cyan);
-  background: rgba(0, 245, 255, 0.15);
-  box-shadow: 0 0 8px rgba(0, 245, 255, 0.3);
-}
-
-.lang-select option {
-  background: var(--cy-bg-elev);
-  color: var(--cy-text);
-}
-
 /* ───────────────────────────────────────────────────────────
    Processing screen (Tab 1 transient state)
    ─────────────────────────────────────────────────────────── */
@@ -326,15 +289,6 @@ body {
     padding: 6px 8px;
     font-size: 0.7rem;
     letter-spacing: 0.04em;
-  }
-
-  .header-actions {
-    gap: 0.5rem;
-  }
-
-  .lang-select {
-    padding: 4px 6px;
-    font-size: 0.7rem;
   }
 
   .app-main {

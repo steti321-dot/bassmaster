@@ -19,10 +19,9 @@ import { loadSettings, saveSettings } from '../game/songSettings';
 import { simplifyForKids } from '../game/simplify';
 import CountdownOverlay from '../game/components/CountdownOverlay';
 import ResultsScreen from '../game/components/ResultsScreen';
-import SettingsPanel from '../game/components/SettingsPanel';
-import CalibrationWizard from '../game/components/CalibrationWizard';
 import { loadCalibration } from '../game/calibration';
 import type { CalibrationData } from '../game/calibration';
+import { loadPrefs } from '../game/userPrefs';
 import type { EmbeddedAudioTrack } from '../game/extractGpAudio';
 
 type GamePhase = 'idle' | 'countdown' | 'playing' | 'paused' | 'results';
@@ -48,9 +47,6 @@ export default function LearnGuitarGame() {
   const isPlaying = gamePhase === 'playing';
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [latencyOffsetMs, setLatencyOffsetMs] = useState(() => loadCalibration()?.latencyOffsetMs ?? 0);
-  const [customPitchToleranceCents, setCustomPitchToleranceCents] = useState<number | undefined>(undefined);
   const [kidsMode, setKidsMode] = useState(false);
   const [waitMode, setWaitMode] = useState(false);
   const [isWaiting, setIsWaiting] = useState(false);
@@ -59,15 +55,17 @@ export default function LearnGuitarGame() {
   const [backingVolume, setBackingVolume] = useState(0.55);
   const [enabledBacking, setEnabledBacking] = useState<Set<number>>(new Set());
   const [score, setScore] = useState<ScoreState>(INITIAL_SCORE);
-  const [calibration, setCalibration] = useState<CalibrationData | null>(() => loadCalibration());
-  const [calOpen, setCalOpen] = useState(false);
+  const [calibration] = useState<CalibrationData | null>(() => loadCalibration());
   const [micEnabled, setMicEnabled] = useState(true);
   const [micStatus, setMicStatus] = useState<'idle' | 'requesting' | 'live' | 'denied'>('idle');
   // Monitor (hear yourself through speakers) defaults to 0 — using speakers
   // without headphones causes mic-feedback. User must explicitly raise it.
   const [monitorVolume, setMonitorVolume] = useState(0);
   const [monitorMuted, setMonitorMuted] = useState(false);
-  const [noiseSuppress, setNoiseSuppress] = useState(false);
+  const [noiseSuppress, setNoiseSuppress] = useState(() => loadPrefs().noiseSuppressDefault);
+  // Latency offset is global (set in Setup tab via calibration). The game
+  // reads it once on mount; remounting (tab switch) picks up changes.
+  const latencyOffsetMs = calibration?.latencyOffsetMs ?? 0;
   const [noteResults, setNoteResults] = useState<Map<number, 'hit' | 'miss'>>(new Map());
   // Wall-clock timestamp (performance.now()) of when each hit was scored —
   // used by NoteRain to render a brief expanding-ring burst on each fresh
@@ -99,8 +97,6 @@ export default function LearnGuitarGame() {
   difficultyRef.current = difficulty;
   const latencyOffsetRef = useRef<number>(0);
   latencyOffsetRef.current = latencyOffsetMs;
-  const customToleranceRef = useRef<number | undefined>(undefined);
-  customToleranceRef.current = customPitchToleranceCents;
   const waitModeRef = useRef<boolean>(false);
   waitModeRef.current = waitMode;
   // Tracks whether the rAF loop is currently frozen waiting for the player.
@@ -157,14 +153,10 @@ export default function LearnGuitarGame() {
         setMonitorVolume(saved.monitorVolume);
         setMonitorMuted(saved.monitorMuted);
         setNoiseSuppress(saved.noiseSuppress);
-        setLatencyOffsetMs(saved.latencyOffsetMs ?? 0);
-        setCustomPitchToleranceCents(saved.customPitchToleranceCents);
         setKidsMode(saved.kidsMode ?? false);
         setWaitMode(saved.waitMode ?? false);
       } else {
-        // Fresh session — reset overrides to defaults
-        setLatencyOffsetMs(0);
-        setCustomPitchToleranceCents(undefined);
+        // Fresh session — reset to defaults
         setKidsMode(false);
         setWaitMode(false);
       }
@@ -184,8 +176,6 @@ export default function LearnGuitarGame() {
       monitorVolume,
       monitorMuted,
       noiseSuppress,
-      latencyOffsetMs,
-      customPitchToleranceCents,
       kidsMode,
       waitMode,
     });
@@ -199,8 +189,6 @@ export default function LearnGuitarGame() {
     monitorVolume,
     monitorMuted,
     noiseSuppress,
-    latencyOffsetMs,
-    customPitchToleranceCents,
     kidsMode,
     waitMode,
   ]);
@@ -371,7 +359,7 @@ export default function LearnGuitarGame() {
         lastDetectAtRef.current = now;
         const cfg = DIFFICULTIES[difficultyRef.current];
         // Pitch tolerance: user override beats difficulty preset
-        const pitchTol = customToleranceRef.current ?? cfg.pitchToleranceCents;
+        const pitchTol = cfg.pitchToleranceCents;
         // Latency offset shifts effective elapsed: positive value means user's
         // audio arrives late, so we treat the song clock as further along.
         const effectiveElapsed = elapsed - latencyOffsetRef.current;
@@ -1007,24 +995,8 @@ export default function LearnGuitarGame() {
           <span>{t('game:suppress_room_noise')}</span>
         </label>
 
-        <button
-          className="calibrate-btn"
-          onClick={() => setCalOpen(true)}
-          title={calibration ? `Calibrated: ${calibration.instrument} · ${new Date(calibration.calibratedAt).toLocaleDateString()}` : 'Calibrate mic input levels and latency'}
-        >
-          {calibration ? '🎯' : '🎯'} Cal{calibration ? '✓' : ''}
-        </button>
-
-        <button
-          className="gear-btn"
-          onClick={() => setSettingsOpen(true)}
-          title="Advanced settings (latency offset, custom tolerance)"
-        >
-          ⚙️
-        </button>
-
         <span className="difficulty-info">
-          ±{customPitchToleranceCents ?? DIFFICULTIES[difficulty].pitchToleranceCents}¢ /
+          ±{DIFFICULTIES[difficulty].pitchToleranceCents}¢ /
           ±{DIFFICULTIES[difficulty].timingWindowMs}ms
           {latencyOffsetMs !== 0 && ` · lat ${latencyOffsetMs > 0 ? '+' : ''}${latencyOffsetMs}ms`}
         </span>
@@ -1054,28 +1026,6 @@ export default function LearnGuitarGame() {
         />
       )}
 
-      {/* Calibration wizard */}
-      {calOpen && (
-        <CalibrationWizard
-          onApply={(data) => {
-            setCalibration(data);
-            setLatencyOffsetMs(data.latencyOffsetMs);
-            setCalOpen(false);
-          }}
-          onClose={() => setCalOpen(false)}
-        />
-      )}
-
-      {/* Settings drawer */}
-      <SettingsPanel
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        difficulty={difficulty}
-        latencyOffsetMs={latencyOffsetMs}
-        onLatencyOffsetChange={setLatencyOffsetMs}
-        customPitchToleranceCents={customPitchToleranceCents}
-        onCustomPitchToleranceChange={setCustomPitchToleranceCents}
-      />
     </div>
   );
 }

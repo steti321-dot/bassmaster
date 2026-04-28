@@ -1,0 +1,19 @@
+{
+  "title": "Setup",
+  "calibration_section": "🎯 Calibration & latency",
+  "calibration_status_done": "Calibrated · {{instrument}} · {{date}}",
+  "calibration_status_none": "Not calibrated yet — calibrate to tune mic levels, instrument, and latency.",
+  "start_calibration": "Start calibration",
+  "recalibrate": "Re-calibrate",
+  "clear_calibration": "Clear calibration",
+  "clear_calibration_confirm": "Clear stored calibration data?",
+  "latency_offset": "Latency offset",
+  "latency_offset_hint": "Compensates for audio interface delay. Positive values shift the timing window earlier (your audio arrives late). Re-calibration overwrites this; this slider is for fine-tuning afterwards.",
+  "language_section": "🌐 Language",
+  "mic_section": "🎤 Mic preferences",
+  "mic_test": "Mic test (RMS)",
+  "start_mic_test": "Start",
+  "stop_mic_test": "Stop",
+  "default_noise_suppress": "Suppress room noise by default",
+  "default_noise_suppress_hint": "Applied to new game and tuner sessions. Each session can still toggle locally."
+}

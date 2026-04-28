@@ -5,6 +5,7 @@ import { MicCapture } from '../game/MicCapture';
 import { detectPitch, centsBetween } from '../game/PitchDetectorJS';
 import { BASS, GUITAR, buildProfileFromTuning } from '../game/Instrument';
 import type { InstrumentKind, InstrumentProfile } from '../game/Instrument';
+import { loadPrefs } from '../game/userPrefs';
 
 type TuningPreset = 'bass' | 'guitar' | 'guitar-drop-d' | 'bass-drop-d';
 
@@ -62,7 +63,7 @@ export default function Tuner() {
   const [micStatus, setMicStatus] = useState<'idle' | 'requesting' | 'live' | 'denied'>('idle');
   const [reading, setReading] = useState<DetectedReading | null>(null);
   const [signalLevel, setSignalLevel] = useState(0);
-  const [noiseSuppress, setNoiseSuppress] = useState(false);
+  const [noiseSuppress, setNoiseSuppress] = useState(() => loadPrefs().noiseSuppressDefault);
 
   const ctxRef = useRef<AudioContext | null>(null);
   const micRef = useRef<MicCapture | null>(null);

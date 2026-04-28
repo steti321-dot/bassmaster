@@ -13,7 +13,7 @@ i18n
   .init({
     fallbackLng: 'en',
     defaultNS: 'common',
-    ns: ['common', 'tuner', 'game', 'calibration', 'settings'],
+    ns: ['common', 'tuner', 'game', 'calibration', 'setup'],
     nsSeparator: ':',
     keySeparator: ':',
     backend: {

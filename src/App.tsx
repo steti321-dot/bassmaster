@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import './App.css';
 import LearnGuitarGame from './tabs/LearnGuitarGame';
 import Tuner from './tabs/Tuner';
+import Setup from './tabs/Setup';
 
-type Tab = 'music2notes' | 'tuner' | 'learn-guitar';
+type Tab = 'music2notes' | 'tuner' | 'setup' | 'learn-guitar';
 
 // Audio-to-Notes is Electron-only (Rust transcribe binary + yt-dlp). When the
 // app is built for the web (REACT_APP_BUILD_TARGET=web), we skip it entirely
@@ -42,14 +43,10 @@ async function handleShare(linkCopiedMsg: string) {
 }
 
 export default function App() {
-  const { t, i18n } = useTranslation(['common']);
+  const { t } = useTranslation(['common']);
   const [activeTab, setActiveTab] = useState<Tab>(
     IS_WEB_BUILD ? 'learn-guitar' : 'music2notes',
   );
-
-  const handleLanguageChange = async (lng: string) => {
-    await i18n.changeLanguage(lng);
-  };
 
   return (
     <div className="app">
@@ -73,29 +70,19 @@ export default function App() {
               {t('common:tab_tuner')}
             </button>
             <button
+              className={`tab-btn ${activeTab === 'setup' ? 'active' : ''}`}
+              onClick={() => setActiveTab('setup')}
+              title="Calibration, language, mic preferences"
+            >
+              {t('common:tab_setup')}
+            </button>
+            <button
               className={`tab-btn ${activeTab === 'learn-guitar' ? 'active' : ''}`}
               onClick={() => setActiveTab('learn-guitar')}
             >
               {t('common:tab_learn_guitar')}
             </button>
           </nav>
-
-          <div className="header-actions">
-            <select
-              id="lang-select"
-              value={i18n.language}
-              onChange={(e) => handleLanguageChange(e.target.value)}
-              className="lang-select"
-              title="Choose your language"
-            >
-              <option value="en">English</option>
-              <option value="de">Deutsch</option>
-              <option value="fr">Français</option>
-              <option value="es">Español</option>
-              <option value="it">Italiano</option>
-              <option value="pt">Português</option>
-            </select>
-          </div>
         </div>
       </header>
 
@@ -106,6 +93,7 @@ export default function App() {
           </Suspense>
         )}
         {activeTab === 'tuner' && <Tuner />}
+        {activeTab === 'setup' && <Setup />}
         {activeTab === 'learn-guitar' && <LearnGuitarGame />}
       </main>
 

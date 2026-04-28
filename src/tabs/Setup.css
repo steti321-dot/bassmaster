@@ -1,0 +1,279 @@
+.setup-screen {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+  padding: 24px 20px;
+  overflow-y: auto;
+}
+
+.setup-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: min(720px, 96vw);
+}
+
+.setup-title {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cy-cyan);
+  text-shadow: 0 0 12px rgba(0, 245, 255, 0.55);
+}
+
+.setup-card {
+  background: var(--cy-bg-card);
+  border: 1px solid var(--cy-border);
+  border-top: 2px solid var(--cy-cyan);
+  border-radius: 6px;
+  padding: 20px 26px;
+  box-shadow:
+    0 0 18px rgba(0, 245, 255, 0.12),
+    inset 0 0 40px rgba(0, 245, 255, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.setup-card-title {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cy-cyan);
+  text-shadow: 0 0 6px rgba(0, 245, 255, 0.4);
+}
+
+.setup-card-status {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--cy-text-dim);
+  letter-spacing: 0.04em;
+}
+
+.setup-card-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.setup-primary-btn {
+  padding: 8px 18px;
+  background: rgba(45, 255, 139, 0.1);
+  color: var(--cy-green);
+  border: 1px solid var(--cy-green);
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.setup-primary-btn:hover {
+  background: rgba(45, 255, 139, 0.22);
+  box-shadow: 0 0 12px rgba(45, 255, 139, 0.45);
+}
+
+.setup-secondary-btn {
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--cy-text-dim);
+  border: 1px solid var(--cy-border);
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.setup-secondary-btn:hover {
+  border-color: var(--cy-red);
+  color: var(--cy-red);
+  background: rgba(255, 40, 96, 0.08);
+}
+
+.setup-slider-block {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--cy-border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.setup-slider-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.setup-slider-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cy-text-dim);
+}
+
+.setup-slider-value {
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--cy-cyan);
+  text-shadow: 0 0 6px rgba(0, 245, 255, 0.45);
+  font-weight: 600;
+}
+
+.setup-slider {
+  width: 100%;
+  appearance: none;
+  height: 5px;
+  background: rgba(0, 245, 255, 0.18);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.setup-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--cy-cyan);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 8px var(--cy-cyan);
+}
+
+.setup-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--cy-cyan);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 8px var(--cy-cyan);
+}
+
+.setup-hint {
+  margin: 4px 0 0;
+  font-size: 0.74rem;
+  color: var(--cy-text-muted);
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+}
+
+.setup-link-btn {
+  align-self: flex-start;
+  background: transparent;
+  border: none;
+  color: var(--cy-cyan);
+  font-family: inherit;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 2px 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.setup-link-btn:hover:not(:disabled) {
+  text-shadow: 0 0 6px rgba(0, 245, 255, 0.5);
+}
+
+.setup-link-btn:disabled {
+  color: var(--cy-text-muted);
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.setup-lang-select {
+  padding: 8px 12px;
+  border: 1px solid var(--cy-border);
+  border-radius: 4px;
+  background: rgba(0, 245, 255, 0.06);
+  color: var(--cy-text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  align-self: flex-start;
+  min-width: 200px;
+  transition: all 0.15s ease;
+}
+
+.setup-lang-select:hover,
+.setup-lang-select:focus {
+  border-color: var(--cy-cyan);
+  background: rgba(0, 245, 255, 0.14);
+  outline: none;
+  box-shadow: 0 0 8px rgba(0, 245, 255, 0.3);
+}
+
+.setup-lang-select option {
+  background: var(--cy-bg-elev);
+  color: var(--cy-text);
+}
+
+.setup-checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.92rem;
+  color: var(--cy-text);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.setup-checkbox-row input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--cy-cyan);
+  cursor: pointer;
+  margin: 0;
+}
+
+.setup-mic-test {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--cy-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setup-rms-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--cy-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.setup-rms-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cy-green) 0%, var(--cy-yellow) 60%, var(--cy-red) 100%);
+  transition: width 60ms linear;
+}
+
+@media (max-width: 768px) {
+  .setup-screen {
+    padding: 12px 10px;
+  }
+  .setup-card {
+    padding: 14px 16px;
+  }
+  .setup-title {
+    font-size: 1.15rem;
+  }
+}

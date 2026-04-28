@@ -8,42 +8,6 @@
   position: relative; /* for absolutely-positioned overlays */
 }
 
-.calibrate-btn {
-  background: rgba(45, 255, 139, 0.07);
-  border: 1px solid rgba(45, 255, 139, 0.35);
-  color: #2dff8b;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-}
-.calibrate-btn:hover {
-  background: rgba(45, 255, 139, 0.18);
-  box-shadow: 0 0 8px rgba(45, 255, 139, 0.35);
-}
-
-.gear-btn {
-  background: rgba(0, 245, 255, 0.06);
-  border: 1px solid var(--cy-border);
-  color: var(--cy-cyan);
-  width: 32px;
-  height: 32px;
-  border-radius: 3px;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.gear-btn:hover {
-  border-color: var(--cy-cyan);
-  background: rgba(0, 245, 255, 0.18);
-  box-shadow: 0 0 10px rgba(0, 245, 255, 0.4);
-}
-
 .game-stage {
   display: flex;
   flex: 1;

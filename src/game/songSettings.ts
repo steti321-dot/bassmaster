@@ -18,10 +18,6 @@ export interface SongSettings {
   monitorVolume: number;
   monitorMuted: boolean;
   noiseSuppress: boolean;
-  /** ms to compensate audio interface / mic round-trip latency. Positive = your audio arrives late. Default 0. */
-  latencyOffsetMs?: number;
-  /** When set, replaces the difficulty preset's pitch tolerance for scoring. */
-  customPitchToleranceCents?: number;
   /** Kids mode: chord-to-single-note + 0–5 fret window. Default off. */
   kidsMode?: boolean;
   /** Wait mode: song clock freezes on each note until the right pitch is played. */
@@ -38,7 +34,16 @@ export function loadSettings(songKey: string): SongSettings | null {
   try {
     const raw = localStorage.getItem(key(songKey));
     if (!raw) return null;
-    return JSON.parse(raw) as SongSettings;
+    // Strip legacy fields silently — older saves had latencyOffsetMs and
+    // customPitchToleranceCents per-song, both now removed (latency is
+    // global via calibration; tolerance is fully driven by difficulty).
+    const parsed = JSON.parse(raw) as SongSettings & {
+      latencyOffsetMs?: unknown;
+      customPitchToleranceCents?: unknown;
+    };
+    delete parsed.latencyOffsetMs;
+    delete parsed.customPitchToleranceCents;
+    return parsed;
   } catch (err) {
     console.warn('[songSettings] load failed:', err);
     return null;

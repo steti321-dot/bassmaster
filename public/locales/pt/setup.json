@@ -1,0 +1,19 @@
+{
+  "title": "Configuração",
+  "calibration_section": "🎯 Calibração e latência",
+  "calibration_status_done": "Calibrado · {{instrument}} · {{date}}",
+  "calibration_status_none": "Ainda não calibrado — calibre para ajustar nível do microfone, instrumento e latência.",
+  "start_calibration": "Iniciar calibração",
+  "recalibrate": "Recalibrar",
+  "clear_calibration": "Limpar calibração",
+  "clear_calibration_confirm": "Limpar os dados de calibração armazenados?",
+  "latency_offset": "Deslocamento de latência",
+  "latency_offset_hint": "Compensa o atraso da interface de áudio. Valores positivos deslocam a janela de tempo para mais cedo (seu áudio chega atrasado). A recalibração sobrescreve isto; este controle é para ajuste fino.",
+  "language_section": "🌐 Idioma",
+  "mic_section": "🎤 Preferências do microfone",
+  "mic_test": "Teste do microfone (RMS)",
+  "start_mic_test": "Iniciar",
+  "stop_mic_test": "Parar",
+  "default_noise_suppress": "Suprimir ruído ambiente por padrão",
+  "default_noise_suppress_hint": "Aplicado às novas sessões de jogo e afinador. Cada sessão pode alternar localmente."
+}
