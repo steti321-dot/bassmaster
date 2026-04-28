@@ -34,9 +34,14 @@ export default function TrackPicker({ file, onBack, onSongReady }: TrackPickerPr
     setError(null);
     setUseEmbedded(false);
 
-    // Extract audio before parsing (BCFS/BCFZ only; silent for GP3–5)
-    const audio = extractGpAudio(file.bytes);
-    setEmbeddedAudio(audio);
+    let audio: EmbeddedAudioTrack[] = [];
+    let cancelled = false;
+
+    // Extract embedded audio asynchronously (GP7/8 = ZIP, GP6 = BCFS; silent for GP3–5)
+    extractGpAudio(file.bytes).then((result) => {
+      if (!cancelled) { audio = result; setEmbeddedAudio(result); }
+      else revokeGpAudioUrls(result);
+    });
 
     try {
       const sum = inspectGpFile(file.bytes);
@@ -61,6 +66,7 @@ export default function TrackPicker({ file, onBack, onSongReady }: TrackPickerPr
     }
 
     return () => {
+      cancelled = true;
       revokeGpAudioUrls(audio);
     };
   }, [file]);
