@@ -379,11 +379,32 @@ export default function LearnGuitarGame() {
             continue;
           }
 
-          // Inside the window: did we detect the right pitch?
+          // Inside the window: did we detect the right pitch? For chords
+          // (multiple un-played notes sharing the same time), accept ANY
+          // member's pitch — the user can pluck any string of the chord
+          // and we score the matching one. Without this, the detector
+          // would compare only against the first array member, even when
+          // the user played a different chord tone (e.g. the 5th instead
+          // of the root). The picked-member's index becomes the actual
+          // scored idx; loop continues from there.
           if (detectedFreq > 0) {
-            const cents = Math.abs(centsBetween(detectedFreq, n.frequency));
-            if (cents < pitchTol) {
-              results.set(i, 'hit');
+            let bestMatchIdx = -1;
+            let bestMatchCents = pitchTol;
+            for (
+              let j = i;
+              j < displayedNotes.length && displayedNotes[j].time === n.time;
+              j++
+            ) {
+              if (results.has(j)) continue;
+              const cj = Math.abs(centsBetween(detectedFreq, displayedNotes[j].frequency));
+              if (cj < bestMatchCents) {
+                bestMatchCents = cj;
+                bestMatchIdx = j;
+              }
+            }
+            if (bestMatchIdx >= 0) {
+              const hitIdx = bestMatchIdx;
+              results.set(hitIdx, 'hit');
               resultsChanged = true;
               newScore.hits += 1;
               newScore.combo += 1;
@@ -399,8 +420,15 @@ export default function LearnGuitarGame() {
               lastHitAtRef.current = now;
               // Stamp the wall-clock time so NoteRain can render a brief
               // hit-burst at this index over the next ~500 ms.
-              hitAtRef.current.set(i, now);
-              if (i === nextEvalIdxRef.current) nextEvalIdxRef.current = i + 1;
+              hitAtRef.current.set(hitIdx, now);
+              // Advance nextEvalIdxRef past contiguously-hit chord members
+              // so the next frame's loop starts at the first un-played note.
+              while (
+                nextEvalIdxRef.current < displayedNotes.length &&
+                results.has(nextEvalIdxRef.current)
+              ) {
+                nextEvalIdxRef.current += 1;
+              }
             }
           }
         }
