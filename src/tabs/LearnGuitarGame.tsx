@@ -13,6 +13,7 @@ import type { Song, Difficulty, ScoreState } from '../game/types';
 import { BackingSynth } from '../game/BackingSynth';
 import { MicCapture } from '../game/MicCapture';
 import { detectPitch, centsBetween } from '../game/PitchDetectorJS';
+import { detectPolyphonicPitches } from '../game/PolyphonicDetectorJS';
 import { loadSettings, saveSettings } from '../game/songSettings';
 import { simplifyForKids } from '../game/simplify';
 import CountdownOverlay from '../game/components/CountdownOverlay';
@@ -335,7 +336,7 @@ export default function LearnGuitarGame() {
           // re-pluck spike still beats it.
           recentRmsRef.current = prevBaseline * 0.75 + snap.rms * 0.25;
         }
-        let detectedFreq = 0;
+        let detectedPitches: Array<{ frequency: number; confidence: number }> = [];
         const inRefractory = now - lastHitAtRef.current < REFRACTORY_MS;
         if (
           snap &&
@@ -343,8 +344,13 @@ export default function LearnGuitarGame() {
           !requireSilenceRef.current &&
           !inRefractory
         ) {
-          const r = detectPitch(snap.samples, snap.sampleRate, profile.minPitchHz, profile.maxPitchHz);
-          if (r.confidence > 0.4) detectedFreq = r.frequency;
+          detectedPitches = detectPolyphonicPitches(
+            snap.samples,
+            snap.sampleRate,
+            profile.minPitchHz,
+            profile.maxPitchHz,
+            3
+          );
         }
 
         // Walk forward over upcoming notes, scoring within timing window
@@ -390,38 +396,48 @@ export default function LearnGuitarGame() {
             continue;
           }
 
-          // Inside the window: did we detect the right pitch? For chords
+          // Inside the window: did we detect the right pitch(es)? For chords
           // (multiple un-played notes sharing the same time), accept ANY
           // member's pitch — the user can pluck any string of the chord
-          // and we score the matching one. Without this, the detector
-          // would compare only against the first array member, even when
-          // the user played a different chord tone (e.g. the 5th instead
-          // of the root). The picked-member's index becomes the actual
-          // scored idx; loop continues from there.
-          if (detectedFreq > 0) {
-            let bestMatchIdx = -1;
-            let bestMatchCents = pitchTol;
-            for (
-              let j = i;
-              j < displayedNotes.length && displayedNotes[j].time === n.time;
-              j++
-            ) {
-              if (results.has(j)) continue;
-              const cj = Math.abs(centsBetween(detectedFreq, displayedNotes[j].frequency));
-              if (cj < bestMatchCents) {
-                bestMatchCents = cj;
-                bestMatchIdx = j;
+          // and we score the matching one. With polyphonic detection, we can
+          // now handle multiple simultaneous pitches (e.g., a strummed triad).
+          // For each detected pitch, find the best matching chord member.
+          if (detectedPitches.length > 0) {
+            let anyHitThisFrame = false;
+            for (const detectedPitch of detectedPitches) {
+              const detectedFreq = detectedPitch.frequency;
+              let bestMatchIdx = -1;
+              let bestMatchCents = pitchTol;
+              for (
+                let j = i;
+                j < displayedNotes.length && displayedNotes[j].time === n.time;
+                j++
+              ) {
+                if (results.has(j)) continue;
+                const cj = Math.abs(centsBetween(detectedFreq, displayedNotes[j].frequency));
+                if (cj < bestMatchCents) {
+                  bestMatchCents = cj;
+                  bestMatchIdx = j;
+                }
+              }
+              if (bestMatchIdx >= 0) {
+                const hitIdx = bestMatchIdx;
+                results.set(hitIdx, 'hit');
+                resultsChanged = true;
+                newScore.hits += 1;
+                newScore.combo += 1;
+                newScore.bestCombo = Math.max(newScore.bestCombo, newScore.combo);
+                newScore.score += 100 + 10 * newScore.combo;
+                scoreChanged = true;
+                // Stamp the wall-clock time so NoteRain can render a brief
+                // hit-burst at this index over the next ~500 ms.
+                hitAtRef.current.set(hitIdx, now);
+                anyHitThisFrame = true;
               }
             }
-            if (bestMatchIdx >= 0) {
-              const hitIdx = bestMatchIdx;
-              results.set(hitIdx, 'hit');
-              resultsChanged = true;
-              newScore.hits += 1;
-              newScore.combo += 1;
-              newScore.bestCombo = Math.max(newScore.bestCombo, newScore.combo);
-              newScore.score += 100 + 10 * newScore.combo;
-              scoreChanged = true;
+            // Attack detection/refractory applies only to the first pitch
+            // in this frame to avoid multiple triggers from a single strum.
+            if (anyHitThisFrame && !requireSilenceRef.current) {
               // Lock the gate AND start the refractory timer. Anchor the
               // baselines at the hit's RMS so the very next frame compares
               // sustained ringing against this level (not pre-hit silence).
@@ -429,9 +445,6 @@ export default function LearnGuitarGame() {
               peakRmsSinceHitRef.current = snap?.rms ?? 0;
               recentRmsRef.current = snap?.rms ?? 0;
               lastHitAtRef.current = now;
-              // Stamp the wall-clock time so NoteRain can render a brief
-              // hit-burst at this index over the next ~500 ms.
-              hitAtRef.current.set(hitIdx, now);
               // Advance nextEvalIdxRef past contiguously-hit chord members
               // so the next frame's loop starts at the first un-played note.
               while (
