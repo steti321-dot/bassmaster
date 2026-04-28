@@ -24,6 +24,14 @@ interface NoteRainProps {
   hitWindowMs?: number;
 }
 
+interface CoinParticle {
+  x: number; y: number;
+  vx: number; vy: number;
+  age: number;
+  lifetime: number;
+  size: number;
+}
+
 /** Hook: measure a DOM element's size, updates on resize. */
 function useElementSize<T extends HTMLElement>(): [React.RefObject<T>, { width: number; height: number }] {
   const ref = useRef<T>(null);
@@ -45,22 +53,23 @@ function useElementSize<T extends HTMLElement>(): [React.RefObject<T>, { width: 
   return [ref, size];
 }
 
-// All sizes are computed from the measured container so the canvas always fits
-// the available window space.
-// Hit line is intentionally well below the middle: more vertical airtime for
-// upcoming chips, smaller post-hit margin (the bottom region just needs to
-// host the hit-line bloom + brief fade + small string labels).
 const HIT_LINE_FRACTION = 0.88;
-const TOP_SCALE = 0.45; // chip size at horizon
-const BOTTOM_SCALE = 1.0; // chip size at the hit line
-// Chips are flat poker-chip ellipses, not circles. ry/rx ratio = how flat they look.
-// Lower = flatter (more "lying down"), so they don't visually overlap each other vertically.
+const TOP_SCALE = 0.45;
+const BOTTOM_SCALE = 1.0;
 const CHIP_FLATNESS = 0.34;
-// How long a chip lingers (and fades) after the head crosses the hit line, in ms.
-// Short values = chips disappear quickly so they don't clutter the played-area.
 const HIT_LINGER_MS = 90;
-// How long the post-hit burst (expanding green ring) lasts, in real-time ms.
 const HIT_BURST_MS = 480;
+const COIN_GRAVITY = 700;   // px/s²
+const COIN_INTERVAL = 75;   // ms between coin spawns per sustained note
+
+/** Bezier "flame tongue" path: wide at base, narrows to a tip. */
+function flamePath(cx: number, base: number, r: number, h: number, lean: number): string {
+  return (
+    `M ${cx - r} ${base}` +
+    ` Q ${cx + lean} ${base - h * 0.55} ${cx} ${base - h}` +
+    ` Q ${cx + lean * 0.4} ${base - h * 0.55} ${cx + r} ${base} Z`
+  );
+}
 
 export default function NoteRain({
   instrument,
@@ -74,29 +83,25 @@ export default function NoteRain({
   const [containerRef, { width: totalWidth, height: stageHeight }] = useElementSize<HTMLDivElement>();
   const numStrings = instrument.tuningsHz.length;
 
-  // Compute column dimensions to fill available width
-  const usableWidth = totalWidth - 60; // outer padding
+  // Coin particle state — mutated in-place each render (game-loop pattern)
+  const coinsRef    = useRef<CoinParticle[]>([]);
+  const lastEmitRef = useRef<Map<number, number>>(new Map());
+  const prevNowRef  = useRef(performance.now());
+
+  const usableWidth = totalWidth - 60;
   const columnGap = Math.max(8, usableWidth * 0.018);
   const columnWidth = (usableWidth - columnGap * (numStrings - 1)) / numStrings;
   const baseLeftX = 30;
   const stageCenterX = totalWidth / 2;
 
-  // Chip sizing: smaller than the column so consecutive chips never visually crowd.
-  // Capped at an absolute max so chips stay readable but never gigantic on huge windows.
   const baseBulbRadius = Math.min(columnWidth * 0.36, 56);
 
-  // Perspective horizon sits above the visible area so notes "come from a distance".
   const railTopY = 0;
   const perspectiveHorizonY = -stageHeight * 0.6;
   const hitLineY = stageHeight * HIT_LINE_FRACTION;
   const fallDistance = hitLineY;
   const pixelsPerMs = fallDistance / (fallDurationSec * 1000);
 
-  /** Compute (x, scale) for a note at vertical position y.
-   *
-   * Column layout: lowest pitch on the LEFT, highest pitch on the RIGHT —
-   * matches Rocksmith / Guitar Hero convention. Internally `stringIdx` is
-   * still 0=highest, so we mirror it into the visible column index here. */
   function project(stringIdx: number, y: number): { x: number; scale: number } {
     const colIdx = numStrings - 1 - stringIdx;
     const t = Math.max(0, Math.min(1, (hitLineY - y) / (hitLineY - perspectiveHorizonY)));
@@ -110,17 +115,43 @@ export default function NoteRain({
   const visibleNotes = notes
     .map((n, i) => ({ note: n, idx: i }))
     .filter(({ note }) => {
-      // Note is visible if its [head, tail] time range overlaps the rain's
-      // visible window (currentTimeMs - HIT_LINGER_MS .. currentTimeMs +
-      // fallDurationSec*1000 + grace). Long-sustain notes — like Four-Chord
-      // strums whose duration exceeds fallDuration — used to vanish here
-      // because the old check required the TAIL to already be inside the
-      // window AND the HEAD to still be inside it, an empty intersection
-      // for any note longer than the rain's fall window.
       const dtHead = note.time - currentTimeMs;
       const dtTail = note.time + note.duration - currentTimeMs;
       return dtTail > -HIT_LINGER_MS && dtHead < fallDurationSec * 1000 + 200;
     });
+
+  // ── Coin physics + emission (game-loop side-effect in render body) ────────
+  const nowWall = performance.now();
+  const dt = Math.min(50, nowWall - prevNowRef.current);
+  prevNowRef.current = nowWall;
+
+  // Advance existing coins
+  for (const c of coinsRef.current) {
+    c.age += dt;
+    c.x   += c.vx * dt / 1000;
+    c.y   += c.vy * dt / 1000;
+    c.vy  += COIN_GRAVITY * dt / 1000;
+  }
+  coinsRef.current = coinsRef.current.filter(c => c.age < c.lifetime);
+
+  // Emit from each currently-sustained hit note
+  for (const { note, idx } of visibleNotes) {
+    if (noteResults.get(idx) !== 'hit') continue;
+    if (note.time + note.duration <= currentTimeMs) continue;
+    const last = lastEmitRef.current.get(idx) ?? 0;
+    if (nowWall - last >= COIN_INTERVAL) {
+      lastEmitRef.current.set(idx, nowWall);
+      coinsRef.current.push({
+        x:        totalWidth - 16 - Math.random() * 28,
+        y:        hitLineY   -  4 - Math.random() * 16,
+        vx:       (Math.random() - 0.5) * 80,
+        vy:       -(220 + Math.random() * 180),
+        age:      0,
+        lifetime: 900 + Math.random() * 350,
+        size:     7 + Math.random() * 3,
+      });
+    }
+  }
 
   return (
     <div className="note-rain" ref={containerRef}>
@@ -128,120 +159,104 @@ export default function NoteRain({
         width={totalWidth}
         height={stageHeight}
         viewBox={`0 0 ${totalWidth} ${stageHeight}`}
-        preserveAspectRatio="xMidYMid meet"
-        className="rain-svg"
+        style={{ fontFamily: 'inherit' }}
       >
-        {/* Perspective floor — dark gradient with subtle cyan glow at horizon */}
         <defs>
-          <linearGradient id="floor-gradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(0, 245, 255, 0.04)" />
-            <stop offset="100%" stopColor="rgba(0, 245, 255, 0.0)" />
-          </linearGradient>
+          <radialGradient id="floor-gradient" cx="50%" cy="100%" r="60%">
+            <stop offset="0%" stopColor="rgba(0,245,255,0.18)" />
+            <stop offset="100%" stopColor="rgba(0,245,255,0)" />
+          </radialGradient>
           <radialGradient id="hit-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(0, 245, 255, 0.5)" />
-            <stop offset="100%" stopColor="rgba(0, 245, 255, 0)" />
+            <stop offset="0%" stopColor="rgba(0,245,255,0.55)" />
+            <stop offset="100%" stopColor="rgba(0,245,255,0)" />
           </radialGradient>
         </defs>
-        <rect x={0} y={0} width={totalWidth} height={stageHeight} fill="url(#floor-gradient)" />
 
-        {/* Horizontal "depth" grid lines — magenta near horizon, cyan near hit line */}
-        {[0.92, 0.78, 0.62, 0.42, 0.22, 0.08].map((t, i) => {
-          const y = railTopY + (hitLineY - railTopY) * (1 - t);
-          const color = t > 0.6 ? 'rgba(255, 68, 255, 0.18)' : 'rgba(0, 245, 255, 0.22)';
+        {/* Floor gradient */}
+        <rect x={0} y={hitLineY} width={totalWidth} height={stageHeight - hitLineY}
+              fill="url(#floor-gradient)" />
+
+        {/* Depth grid lines — subtle horizontal dashes converging toward horizon */}
+        {[0.18, 0.32, 0.46, 0.60, 0.74, 0.87].map((frac, gi) => {
+          const y = hitLineY * frac;
+          const left  = project(numStrings - 1, y);
+          const right = project(0, y);
+          const xL = Math.min(left.x,  right.x) - baseBulbRadius * left.scale;
+          const xR = Math.max(right.x, left.x)  + baseBulbRadius * right.scale;
           return (
-            <line
-              key={`depth-${i}`}
-              x1={10}
-              y1={y}
-              x2={totalWidth - 10}
-              y2={y}
-              stroke={color}
-              strokeWidth={0.8}
-              strokeDasharray="3 7"
-            />
+            <line key={`grid-${gi}`}
+              x1={xL} y1={y} x2={xR} y2={y}
+              stroke={gi < 3 ? 'rgba(255,68,255,0.07)' : 'rgba(0,245,255,0.07)'}
+              strokeWidth={0.8} strokeDasharray="4 6" />
           );
         })}
 
-        {/* Column "rails" converging to the horizon. Labels sit BELOW each
-            rail at the wide end so the label-x lines up with the rail-x.
-            Smaller font than the original (16 vs 28) — combined with the
-            lowered hit line, the bottom strip is compact (~12 % of stage). */}
+        {/* Column rails (perspective lines from hit line toward horizon) */}
         {Array.from({ length: numStrings }).map((_, s) => {
-          const top = project(s, railTopY);
           const bottom = project(s, hitLineY);
-          const c = instrument.stringColors[s];
-          const labelY = Math.min(stageHeight - 6, hitLineY + 18);
+          const top    = project(s, railTopY);
+          const colIdx = numStrings - 1 - s;
+          const label  = instrument.stringLabels[s];
+          const lcolor = instrument.stringColors[s];
           return (
-            <g key={`col-${s}`}>
+            <g key={`rail-${s}`}>
               <line
-                x1={top.x}
-                y1={railTopY}
-                x2={bottom.x}
-                y2={hitLineY}
-                stroke={c}
-                strokeWidth={1.6}
-                strokeOpacity={0.45}
-                style={{ filter: `drop-shadow(0 0 4px ${c})` }}
+                x1={bottom.x} y1={hitLineY}
+                x2={top.x}    y2={railTopY}
+                stroke={lcolor}
+                strokeOpacity={0.22}
+                strokeWidth={1.2}
               />
+              {/* String label at the bottom (below hit line) */}
               <text
                 x={bottom.x}
-                y={labelY}
+                y={hitLineY + 16}
                 textAnchor="middle"
-                fontSize={16}
-                fontWeight={800}
-                fill={c}
-                style={{
-                  filter: `drop-shadow(0 0 5px ${c})`,
-                  letterSpacing: '0.08em',
-                }}
+                fontSize={11}
+                fontWeight={700}
+                fill={lcolor}
+                style={{ filter: `drop-shadow(0 0 4px ${lcolor})` }}
               >
-                {instrument.stringLabels[s]}
+                {label}
               </text>
             </g>
           );
         })}
 
-        {/* Hit line — bright cyan with bloom */}
-        <ellipse
-          cx={totalWidth / 2}
-          cy={hitLineY}
-          rx={totalWidth * 0.6}
-          ry={28}
-          fill="url(#hit-glow)"
-        />
-        <line
-          x1={0}
-          y1={hitLineY}
-          x2={totalWidth}
-          y2={hitLineY}
-          stroke="#00f5ff"
-          strokeWidth={2}
-          style={{ filter: 'drop-shadow(0 0 8px #00f5ff)' }}
-        />
-        <line
-          x1={0}
-          y1={hitLineY + 2}
-          x2={totalWidth}
-          y2={hitLineY + 2}
-          stroke="#00f5ff"
-          strokeOpacity={0.3}
-          strokeWidth={6}
-        />
+        {/* Hit line */}
+        {(() => {
+          const leftProj  = project(numStrings - 1, hitLineY);
+          const rightProj = project(0, hitLineY);
+          const xL = leftProj.x  - baseBulbRadius * 1.1;
+          const xR = rightProj.x + baseBulbRadius * 1.1;
+          return (
+            <g>
+              {/* Wide glow behind the line */}
+              <rect
+                x={xL} y={hitLineY - 14}
+                width={xR - xL} height={28}
+                fill="url(#hit-glow)"
+                rx={4}
+              />
+              {/* The line itself */}
+              <line
+                x1={xL} y1={hitLineY}
+                x2={xR} y2={hitLineY}
+                stroke="var(--cy-cyan)"
+                strokeWidth={2.2}
+                style={{ filter: 'drop-shadow(0 0 6px rgba(0,245,255,0.9))' }}
+              />
+            </g>
+          );
+        })()}
 
-        {/* Falling bulbs (sorted back-to-front so closer bulbs render on top) */}
+        {/* Falling bulbs (sorted back-to-front) */}
         {[...visibleNotes]
-          .sort((a, b) => a.note.time - b.note.time) // farther = earlier in array → drawn first
+          .sort((a, b) => a.note.time - b.note.time)
           .reverse()
           .map(({ note, idx }) => {
-            // Head = onset hits the line at note.time
-            // Tail = end of duration hits the line at note.time + duration
             const dtHead = note.time - currentTimeMs;
             const dtTail = note.time + note.duration - currentTimeMs;
-            // Clamp both endpoints at the hit line. While the note is held
-            // (dtHead < 0 < dtTail), the head sits AT the hit line and the
-            // tail descends toward it — the stripe shortens in place rather
-            // than sliding off the bottom of the rain. Once dtTail < 0 the
-            // whole stripe is anchored at the hit line, then fades.
             const yHead = hitLineY - Math.max(0, dtHead) * pixelsPerMs;
             const yTail = hitLineY - Math.max(0, dtTail) * pixelsPerMs;
 
@@ -249,32 +264,18 @@ export default function NoteRain({
             const tailProj = project(note.string, yTail);
             const scale = headProj.scale;
 
-            // Offset chip + stripe BESIDE the string line, not directly on top of it,
-            // so the colored string rail stays visible behind the note.
-            // Lower-half strings lean right of their column, upper-half lean left —
-            // gives the eye a clear association of chip → string.
             const halfStrings = numStrings / 2;
             const offsetSign = note.string < halfStrings ? +1 : -1;
             const sideOffset = baseBulbRadius * 0.55 * scale * offsetSign;
             const xHead = headProj.x + sideOffset;
             const xTail = tailProj.x + sideOffset * (tailProj.scale / scale);
 
-            // Chip colored by PITCH CLASS so consecutive notes at different
-            // frets are visibly different (even on the same string). String
-            // identity is still readable from the rail/label colors behind.
             const noteMidi = (instrument.midiTunings[note.string] ?? 0) + note.fret;
             const color = pitchClassColor(noteMidi);
             const result = noteResults.get(idx);
 
             let stroke = color;
             let fillOpacity = 0.96;
-            // Three states for an unplayed chip:
-            //   approaching → subtle stripe (dtHead > +window).
-            //   hittable    → bolder colour + thicker stroke + brighter
-            //                 glow ("play me now" cue). True when the head
-            //                 is inside the timing window, OR (post-onset)
-            //                 the note is still sustaining.
-            //   post-result → green for hit / red for miss.
             const isHittable =
               !result &&
               ((dtHead < hitWindowMs && dtHead > -hitWindowMs) ||
@@ -287,9 +288,6 @@ export default function NoteRain({
               fillOpacity = 0.3;
             }
 
-            // Fade out only after the entire note is past — i.e. the tail
-            // has crossed the hit line. During sustain the stripe stays at
-            // full opacity but shrinks (head clamped, tail descending).
             let opacityFactor = 1;
             if (dtTail < 0) {
               opacityFactor = Math.max(0, 1 + dtTail / HIT_LINGER_MS);
@@ -300,14 +298,8 @@ export default function NoteRain({
             const rxTail = baseBulbRadius * tailProj.scale;
             const ryHead = rxHead * CHIP_FLATNESS;
 
-            // Stripe-only rendering: the chip ellipse is gone, the fret number
-            // sits inside the trapezoid. Very short notes (e.g., 1/16 at fast
-            // tempo) would shrink the stripe below readable height, so we
-            // enforce a minimum height equal to the fret-number's font size.
             const minStripeH = Math.max(22, ryHead * 1.6);
             const naturalH = yHead - yTail;
-            // If the natural stripe is too short, push the tail upward so
-            // the visual length covers the minimum. Note timing is unchanged.
             const yTailDraw = Math.min(yTail, yHead - minStripeH);
             const tailDrawProj = naturalH < minStripeH
               ? project(note.string, yTailDraw)
@@ -315,32 +307,22 @@ export default function NoteRain({
             const xTailDraw = tailDrawProj.x + sideOffset * (tailDrawProj.scale / scale);
             const rxTailDraw = baseBulbRadius * tailDrawProj.scale;
 
-            // Trapezoidal stripe body (head at bottom, tail at top, follows column perspective)
             const stripePath =
               `M ${xHead - rxHead * 0.62} ${yHead} ` +
               `L ${xHead + rxHead * 0.62} ${yHead} ` +
               `L ${xTailDraw + rxTailDraw * 0.62} ${yTailDraw} ` +
               `L ${xTailDraw - rxTailDraw * 0.62} ${yTailDraw} Z`;
 
-            // Centre the fret number within the stripe.
-            // For very long notes the digit will scroll down with the stripe
-            // — that's the trade we're making for cleaner short-note layout.
             const textY = (yHead + yTailDraw) / 2;
             const textX = (xHead + xTailDraw) / 2;
             const textSize = Math.max(11, Math.min(ryHead * 1.4, (yHead - yTailDraw) * 0.55));
 
-            // Subtle perspective tilt — only a fraction of the rail's full
-            // angle so the digit follows the lane without looking laid flat.
-            const railTop = project(note.string, 0);
+            const railTop    = project(note.string, 0);
             const railBottom = project(note.string, hitLineY);
             const fullTiltDeg =
               Math.atan2(railTop.x - railBottom.x, hitLineY) * (180 / Math.PI);
             const tiltDeg = fullTiltDeg * 0.4;
 
-            // Hittable chips get a "play me now" boost: bolder fill,
-            // thicker stroke, and a wider cyber glow halo. Approaching
-            // chips stay subtle so the eye is drawn to whatever's at the
-            // hit line right now.
             const stripeFillOpacity =
               (isHittable ? 0.55 : 0.32) * fillOpacity;
             const stripeStrokeWidth = Math.max(
@@ -350,6 +332,18 @@ export default function NoteRain({
             const stripeGlow = isHittable
               ? `drop-shadow(0 0 ${10 * scale}px ${stroke})`
               : 'none';
+
+            // Flame parameters (only computed when note is actively sustaining)
+            const isHit      = result === 'hit';
+            const isSustaining = isHit && dtTail > 0;
+            const flameH = baseBulbRadius * 1.4 * scale;
+            const flameR = baseBulbRadius * 0.45 * scale;
+            const flameT = nowWall / 1000;
+            const lean = [
+              Math.sin(flameT * 4.1 + idx)         * flameR * 0.50,
+              Math.sin(flameT * 5.7 + idx + 1.3)   * flameR * 0.35,
+              Math.sin(flameT * 7.2 + idx + 2.6)   * flameR * 0.20,
+            ];
 
             return (
               <g key={`note-${idx}`} className="bulb" style={{ color }} opacity={opacityFactor}>
@@ -369,9 +363,7 @@ export default function NoteRain({
                   strokeWidth={stripeStrokeWidth}
                   strokeLinejoin="round"
                 />
-                {/* Fret number — bright white with a dark outline + colored
-                    glow. Reads on every pitch colour and matches the cyber
-                    aesthetic. Tilted slightly toward the column's perspective. */}
+                {/* Fret number */}
                 <text
                   x={textX}
                   y={textY}
@@ -391,14 +383,28 @@ export default function NoteRain({
                 >
                   {note.fret}
                 </text>
+                {/* Flame — three layered bezier tongues that flicker while sustaining */}
+                {isSustaining && (
+                  <g pointerEvents="none">
+                    <path
+                      d={flamePath(xHead, hitLineY, flameR * 1.10, flameH,        lean[0])}
+                      fill="#ff3300" opacity={0.70}
+                    />
+                    <path
+                      d={flamePath(xHead, hitLineY, flameR * 0.85, flameH * 0.72, lean[1])}
+                      fill="#ff8800" opacity={0.75}
+                    />
+                    <path
+                      d={flamePath(xHead, hitLineY, flameR * 0.55, flameH * 0.45, lean[2])}
+                      fill="#ffe000" opacity={0.85}
+                    />
+                  </g>
+                )}
               </g>
             );
           })}
 
-        {/* Hit bursts — bright green expanding rings centred on the hit
-            line for each freshly-scored note. Lives on top of the chips
-            and is independent of chip visibility (fades over ~480 ms in
-            real time, even after the chip itself has scrolled past). */}
+        {/* Hit bursts — expanding green rings on freshly-scored notes */}
         {hitAt && [...hitAt.entries()].map(([idx, ts]) => {
           const note = notes[idx];
           if (!note) return null;
@@ -410,29 +416,49 @@ export default function NoteRain({
           const sideOffset = baseBulbRadius * 0.55 * offsetSign;
           const cx = bottom.x + sideOffset;
           const cy = hitLineY;
-          // 0 → 1 progress
           const p = age / HIT_BURST_MS;
           const r = baseBulbRadius * (0.5 + 2.5 * p);
           const opacity = (1 - p) * 0.9;
           return (
             <g key={`burst-${idx}`} pointerEvents="none">
               <circle
-                cx={cx}
-                cy={cy}
-                r={r}
-                fill="none"
-                stroke="#3dff7a"
+                cx={cx} cy={cy} r={r}
+                fill="none" stroke="#3dff7a"
                 strokeWidth={3 * (1 - p) + 1}
                 opacity={opacity}
                 style={{ filter: 'drop-shadow(0 0 8px #3dff7a)' }}
               />
               <circle
-                cx={cx}
-                cy={cy}
+                cx={cx} cy={cy}
                 r={baseBulbRadius * (0.7 - 0.7 * p)}
                 fill="#3dff7a"
                 opacity={opacity * 0.6}
                 style={{ filter: 'drop-shadow(0 0 12px #3dff7a)' }}
+              />
+            </g>
+          );
+        })}
+
+        {/* Coin fountain — gold coins arc upward from the right edge while a
+            note is sustained. Physics are stepped each render frame via refs. */}
+        {coinsRef.current.map((c, ci) => {
+          const fadeIn  = Math.min(1, c.age / 80);
+          const fadeOut = c.age > c.lifetime - 250
+            ? (c.lifetime - c.age) / 250 : 1;
+          const opacity = fadeIn * fadeOut;
+          if (opacity <= 0) return null;
+          return (
+            <g key={`coin-${ci}`} pointerEvents="none">
+              <circle
+                cx={c.x} cy={c.y} r={c.size}
+                fill="#ffd700" opacity={opacity}
+                style={{ filter: 'drop-shadow(0 0 4px #ffaa00)' }}
+              />
+              {/* Shine highlight */}
+              <circle
+                cx={c.x - c.size * 0.3} cy={c.y - c.size * 0.3}
+                r={c.size * 0.3}
+                fill="rgba(255,255,220,0.75)" opacity={opacity}
               />
             </g>
           );
