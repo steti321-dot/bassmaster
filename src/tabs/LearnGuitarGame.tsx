@@ -53,6 +53,10 @@ export default function LearnGuitarGame() {
   const [monitorMuted, setMonitorMuted] = useState(false);
   const [noiseSuppress, setNoiseSuppress] = useState(false);
   const [noteResults, setNoteResults] = useState<Map<number, 'hit' | 'miss'>>(new Map());
+  // Wall-clock timestamp (performance.now()) of when each hit was scored —
+  // used by NoteRain to render a brief expanding-ring burst on each fresh
+  // hit. Re-uses the same map as a ref to avoid extra re-renders.
+  const hitAtRef = useRef<Map<number, number>>(new Map());
 
   // Refs for the realtime scoring loop (avoid stale closures)
   const scoreRef = useRef<ScoreState>(INITIAL_SCORE);
@@ -205,6 +209,7 @@ export default function LearnGuitarGame() {
   useEffect(() => {
     nextEvalIdxRef.current = 0;
     setNoteResults(new Map());
+    hitAtRef.current = new Map();
     setScore(INITIAL_SCORE);
   }, [displayedNotes]);
 
@@ -324,11 +329,15 @@ export default function LearnGuitarGame() {
         }
         let detectedFreq = 0;
         const inRefractory = now - lastHitAtRef.current < REFRACTORY_MS;
+        // Training Mode bypasses the silence/refractory gates: the clock is
+        // frozen on the current note, and the for-loop below breaks after
+        // the first scored note, so multiple-detect-doesn't-double-score.
+        // The gate's anti-repeat protection is only useful for normal play.
+        const gatesActive = !isWaitingRef.current;
         if (
           snap &&
           snap.rms > RMS_GATE &&
-          !requireSilenceRef.current &&
-          !inRefractory
+          (!gatesActive || (!requireSilenceRef.current && !inRefractory))
         ) {
           const r = detectPitch(snap.samples, snap.sampleRate, profile.minPitchHz, profile.maxPitchHz);
           if (r.confidence > 0.4) detectedFreq = r.frequency;
@@ -384,6 +393,9 @@ export default function LearnGuitarGame() {
               peakRmsSinceHitRef.current = snap?.rms ?? 0;
               recentRmsRef.current = snap?.rms ?? 0;
               lastHitAtRef.current = now;
+              // Stamp the wall-clock time so NoteRain can render a brief
+              // hit-burst at this index over the next ~500 ms.
+              hitAtRef.current.set(i, now);
               if (i === nextEvalIdxRef.current) nextEvalIdxRef.current = i + 1;
             }
           }
@@ -466,6 +478,7 @@ export default function LearnGuitarGame() {
     // Reset scoring so next play starts clean
     setScore(INITIAL_SCORE);
     setNoteResults(new Map());
+    hitAtRef.current = new Map();
     nextEvalIdxRef.current = 0;
   };
 
@@ -481,6 +494,7 @@ export default function LearnGuitarGame() {
     setSong(null);
     setScore(INITIAL_SCORE);
     setNoteResults(new Map());
+    hitAtRef.current = new Map();
     nextEvalIdxRef.current = 0;
   };
 
@@ -491,6 +505,7 @@ export default function LearnGuitarGame() {
     setCurrentTimeMs(0);
     setScore(INITIAL_SCORE);
     setNoteResults(new Map());
+    hitAtRef.current = new Map();
     nextEvalIdxRef.current = 0;
     setGamePhase('countdown');
   };
@@ -622,6 +637,7 @@ export default function LearnGuitarGame() {
             // Clear stale results past the new position so they don't flash
             // green/red when we resume.
             setNoteResults(new Map());
+            hitAtRef.current = new Map();
           }}
         />
         <div className="rain-column">
@@ -631,6 +647,7 @@ export default function LearnGuitarGame() {
             currentTimeMs={currentTimeMs}
             fallDurationSec={fallDurationSec}
             noteResults={noteResults}
+            hitAt={hitAtRef.current}
           />
           <FretboardMini
             instrument={profile}

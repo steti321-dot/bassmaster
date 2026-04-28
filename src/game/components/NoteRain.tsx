@@ -15,6 +15,9 @@ interface NoteRainProps {
   fallDurationSec: number;
   /** For each note (by index), latest result: 'hit', 'miss', or null if pending. */
   noteResults: Map<number, 'hit' | 'miss'>;
+  /** Wall-clock timestamp of when each note was hit. Used to render a
+   *  brief expanding-ring burst on each fresh hit. */
+  hitAt?: Map<number, number>;
 }
 
 /** Hook: measure a DOM element's size, updates on resize. */
@@ -52,6 +55,8 @@ const CHIP_FLATNESS = 0.34;
 // How long a chip lingers (and fades) after the head crosses the hit line, in ms.
 // Short values = chips disappear quickly so they don't clutter the played-area.
 const HIT_LINGER_MS = 90;
+// How long the post-hit burst (expanding green ring) lasts, in real-time ms.
+const HIT_BURST_MS = 480;
 
 export default function NoteRain({
   instrument,
@@ -59,6 +64,7 @@ export default function NoteRain({
   currentTimeMs,
   fallDurationSec,
   noteResults,
+  hitAt,
 }: NoteRainProps) {
   const [containerRef, { width: totalWidth, height: stageHeight }] = useElementSize<HTMLDivElement>();
   const numStrings = instrument.tuningsHz.length;
@@ -257,9 +263,12 @@ export default function NoteRain({
 
             let stroke = color;
             let fillOpacity = 0.96;
+            // Bright green for hits, red for misses. Hit fillOpacity is
+            // bumped (vs. miss) so the chip stays visible during its burst
+            // animation rather than fading out immediately.
             if (result === 'hit') {
-              stroke = '#2ecc71';
-              fillOpacity = 0.45;
+              stroke = '#3dff7a';
+              fillOpacity = 0.7;
             } else if (result === 'miss') {
               stroke = '#e74c3c';
               fillOpacity = 0.3;
@@ -357,6 +366,49 @@ export default function NoteRain({
               </g>
             );
           })}
+
+        {/* Hit bursts — bright green expanding rings centred on the hit
+            line for each freshly-scored note. Lives on top of the chips
+            and is independent of chip visibility (fades over ~480 ms in
+            real time, even after the chip itself has scrolled past). */}
+        {hitAt && [...hitAt.entries()].map(([idx, ts]) => {
+          const note = notes[idx];
+          if (!note) return null;
+          const age = performance.now() - ts;
+          if (age < 0 || age > HIT_BURST_MS) return null;
+          const bottom = project(note.string, hitLineY);
+          const halfStrings = numStrings / 2;
+          const offsetSign = note.string < halfStrings ? +1 : -1;
+          const sideOffset = baseBulbRadius * 0.55 * offsetSign;
+          const cx = bottom.x + sideOffset;
+          const cy = hitLineY;
+          // 0 → 1 progress
+          const p = age / HIT_BURST_MS;
+          const r = baseBulbRadius * (0.5 + 2.5 * p);
+          const opacity = (1 - p) * 0.9;
+          return (
+            <g key={`burst-${idx}`} pointerEvents="none">
+              <circle
+                cx={cx}
+                cy={cy}
+                r={r}
+                fill="none"
+                stroke="#3dff7a"
+                strokeWidth={3 * (1 - p) + 1}
+                opacity={opacity}
+                style={{ filter: 'drop-shadow(0 0 8px #3dff7a)' }}
+              />
+              <circle
+                cx={cx}
+                cy={cy}
+                r={baseBulbRadius * (0.7 - 0.7 * p)}
+                fill="#3dff7a"
+                opacity={opacity * 0.6}
+                style={{ filter: 'drop-shadow(0 0 12px #3dff7a)' }}
+              />
+            </g>
+          );
+        })}
       </svg>
     </div>
   );
