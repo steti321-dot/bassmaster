@@ -66,8 +66,8 @@ export default function FilePicker({ onFilePicked, onSongDirect }: FilePickerPro
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!/\.(gp[3-5])$/i.test(file.name)) {
-      setError(`${file.name} is not a recognized Guitar Pro file (.gp3, .gp4, .gp5).`);
+    if (!/\.gp[x3-9]?$/i.test(file.name)) {
+      setError(`${file.name} is not a recognized Guitar Pro file (.gp / .gp3–.gp8 / .gpx).`);
       return;
     }
 
@@ -131,7 +131,7 @@ export default function FilePicker({ onFilePicked, onSongDirect }: FilePickerPro
     try {
       const { data, filename } = await gprotabDownload(result.url);
       // Default to .gp5 if filename has no Guitar Pro extension
-      const safeName = /\.gp[3-5]$/i.test(filename)
+      const safeName = /\.gp[x3-9]?$/i.test(filename)
         ? filename
         : `${result.artist} - ${result.title}.gp5`.replace(/[\\/:*?"<>|]/g, '_');
       await saveRecentFile(safeName, data);
@@ -307,7 +307,7 @@ export default function FilePicker({ onFilePicked, onSongDirect }: FilePickerPro
             <input
               ref={fileInputRef}
               type="file"
-              accept=".gp3,.gp4,.gp5"
+              accept=".gp,.gp3,.gp4,.gp5,.gp6,.gp7,.gp8,.gpx"
               onChange={handleFile}
               style={{ display: 'none' }}
             />
@@ -315,7 +315,7 @@ export default function FilePicker({ onFilePicked, onSongDirect }: FilePickerPro
               className="import-btn"
               onClick={() => fileInputRef.current?.click()}
             >
-              📁 Open Guitar Pro file (.gp3 / .gp4 / .gp5)
+              📁 Open Guitar Pro file (.gp · .gp3–.gp8 · .gpx)
             </button>
             <p className="picker-hint">
               Drag &amp; drop also works. Files stay on your device — nothing is uploaded.
@@ -343,7 +343,7 @@ export default function FilePicker({ onFilePicked, onSongDirect }: FilePickerPro
               </button>
             </form>
             <p className="picker-hint">
-              Paste a direct link to a .gp / .gp4 / .gp5 file. CORS-blocked URLs route through the proxy automatically.
+              Paste a direct link to a .gp / .gp4–.gp8 / .gpx file. CORS-blocked URLs route through the proxy automatically.
             </p>
           </div>
         )}

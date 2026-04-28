@@ -28,7 +28,7 @@ function deriveFilename(url: string): string {
   try {
     const u = new URL(url);
     const last = u.pathname.split('/').filter(Boolean).pop() ?? '';
-    if (/\.(gp[3-5])$/i.test(last)) return decodeURIComponent(last);
+    if (/\.gp[x3-9]?$/i.test(last)) return decodeURIComponent(last);
   } catch {}
   return 'tab.gp5';
 }
@@ -37,14 +37,17 @@ function magicCheck(buf: Uint8Array): void {
   if (buf.byteLength < 32) {
     throw new Error('Response too small to be a Guitar Pro file.');
   }
-  const head = new TextDecoder('latin1').decode(buf.subarray(1, 19));
-  if (!head.startsWith(GP_MAGIC)) {
+  // GP3/4/5: byte 0 is string length, bytes 1–18 = "FICHIER GUITAR PRO"
+  const gp345 = new TextDecoder('latin1').decode(buf.subarray(1, 19));
+  // GP6/7/8 (.gpx / .gp): BCFS or BCFZ container (zip-like)
+  const gp678 = new TextDecoder('latin1').decode(buf.subarray(0, 4));
+  if (!gp345.startsWith(GP_MAGIC) && gp678 !== 'BCFS' && gp678 !== 'BCFZ') {
     const preview = new TextDecoder('utf-8', { fatal: false })
       .decode(buf.subarray(0, 60))
       .replace(/\s+/g, ' ');
     throw new Error(
       `URL did not return a Guitar Pro file (got "${preview.slice(0, 40)}…"). ` +
-      `Make sure you're pasting a direct link to a .gp/.gp4/.gp5 file.`,
+      `Make sure you're pasting a direct link to a .gp / .gp4 / .gp5 / .gpx file.`,
     );
   }
 }
