@@ -1,0 +1,12 @@
+{
+  "advanced_settings": "Configuración avanzada",
+  "close_settings": "Cerrar configuración",
+  "latency_offset": "Desplazamiento de latencia",
+  "pitch_tolerance": "Tolerancia de tono",
+  "reset_to_zero": "Restablecer a 0",
+  "use_preset": "Usar preset {{difficulty}} (±{{cents}} ¢)",
+  "custom": "Personalizado",
+  "settings_save_per_song": "La configuración se guarda automáticamente por canción.",
+  "latency_hint": "Compensa el retardo de ida y vuelta de la interfaz de audio / micrófono. Los valores positivos desplazan la ventana de tiempo antes (tu audio llega tarde).",
+  "pitch_tolerance_hint": "Mayor = más permisivo (las notas casi correctas aún cuentan). Menor = estricto (solo la afinación exacta puntúa)."
+}

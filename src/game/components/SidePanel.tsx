@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import './SidePanel.css';
 import type { GameNote } from '../types';
 import type { InstrumentProfile } from '../Instrument';
@@ -46,6 +47,7 @@ export default function SidePanel({
   onSeek,
   noteResults,
 }: SidePanelProps) {
+  const { t } = useTranslation(['game']);
   // First un-played note in the future (with small grace).
   const currentIdx = notes.findIndex(
     (n, idx) => !noteResults?.has(idx) && n.time > currentTimeMs - 50,
@@ -156,7 +158,7 @@ export default function SidePanel({
             value={Math.min(currentTimeMs, totalTimeMs)}
             onChange={(e) => onSeek(parseFloat(e.target.value))}
             className="wheel-scrub-input"
-            title="Drag to seek"
+            title={t('game:draggable_seek')}
           />
           <div className="wheel-scrub-times">
             <span>{formatTime(currentTimeMs)}</span>

@@ -1,0 +1,22 @@
+{
+  "title": "Audio in Note",
+  "input_file": "📁 File",
+  "input_youtube": "▶️ YouTube",
+  "input_mic": "🎤 Microfono",
+  "drop_zone_hint": "Trascina audio/video qui — oppure",
+  "browse": "Sfoglia",
+  "process": "Elabora",
+  "start_recording": "🔴 Avvia registrazione",
+  "stop_transcribe": "⏹ Stop e trascrivi",
+  "cancel": "Annulla",
+  "mic_hint": "Suona la tua parte nel microfono — alla fine premi stop e inizia la trascrizione.",
+  "instrument_label": "Strumento",
+  "guitar": "🎸 Chitarra",
+  "bass": "🎸 Basso",
+  "detection_label": "Rilevamento",
+  "detection_ai": "⭐ IA",
+  "detection_mono": "Mono",
+  "detection_chords": "Accordi",
+  "suppress_drums": "Sopprimere batteria",
+  "processing": "Elaborazione audio… {{progress}}%"
+}

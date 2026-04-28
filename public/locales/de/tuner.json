@@ -1,0 +1,22 @@
+{
+  "tuner": "Stimmgerät",
+  "listening_for_note": "Höre zu… spiel eine Note",
+  "press_start": "Start drücken",
+  "start_tuner": "Stimmgerät starten",
+  "stop": "Stopp",
+  "closest_string": "Nächste Saite:",
+  "flat": "zu tief",
+  "sharp": "zu hoch",
+  "noise_gate": "Rauschunterdrückung",
+  "microphone_status": "Mikrofonsstatus",
+  "preset_bass": "Bass",
+  "preset_bass_drop_d": "Bass · Drop D",
+  "preset_guitar": "Gitarre",
+  "preset_guitar_drop_d": "Gitarre · Drop D",
+  "calibrate": "Kalibrieren",
+  "mic_live": "🟢 aktiv",
+  "mic_denied": "🔴 verweigert",
+  "mic_asking": "🟡 …",
+  "mic_ready": "⚪ bereit",
+  "hint": "Zupf eine Leersaite — das Stimmgerät zeigt die Note, die nächste Standardstimmungs-Saite und ob du zu tief oder zu hoch bist. Ziel: ±5 ¢ (die Nadel wird grün)."
+}

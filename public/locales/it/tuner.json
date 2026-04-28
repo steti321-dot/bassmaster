@@ -1,0 +1,22 @@
+{
+  "tuner": "Accordatore",
+  "listening_for_note": "In ascolto… suona una nota",
+  "press_start": "Premi Avvia",
+  "start_tuner": "Avvia accordatore",
+  "stop": "Stop",
+  "closest_string": "Corda più vicina:",
+  "flat": "bemolle",
+  "sharp": "diesis",
+  "noise_gate": "Riduzione del rumore",
+  "microphone_status": "Stato microfono",
+  "preset_bass": "Basso",
+  "preset_bass_drop_d": "Basso · Drop D",
+  "preset_guitar": "Chitarra",
+  "preset_guitar_drop_d": "Chitarra · Drop D",
+  "calibrate": "Calibra",
+  "mic_live": "🟢 attivo",
+  "mic_denied": "🔴 negato",
+  "mic_asking": "🟡 …",
+  "mic_ready": "⚪ pronto",
+  "hint": "Pizzica una corda a vuoto — l'accordatore mostra quale nota è, la corda di accordatura standard più vicina e se sei troppo basso/alto. Punta a ±5 ¢ (l'ago diventa verde)."
+}

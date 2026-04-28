@@ -1,0 +1,22 @@
+{
+  "tuner": "Accordeur",
+  "listening_for_note": "Écoute… jouez une note",
+  "press_start": "Appuyez sur Démarrer",
+  "start_tuner": "Démarrer l'accordeur",
+  "stop": "Arrêter",
+  "closest_string": "Corde la plus proche :",
+  "flat": "bémol",
+  "sharp": "dièse",
+  "noise_gate": "Réducteur de bruit",
+  "microphone_status": "État du microphone",
+  "preset_bass": "Basse",
+  "preset_bass_drop_d": "Basse · Drop D",
+  "preset_guitar": "Guitare",
+  "preset_guitar_drop_d": "Guitare · Drop D",
+  "calibrate": "Calibrer",
+  "mic_live": "🟢 actif",
+  "mic_denied": "🔴 refusé",
+  "mic_asking": "🟡 …",
+  "mic_ready": "⚪ prêt",
+  "hint": "Pincez une corde à vide — l'accordeur affiche la note, la corde d'accordage standard la plus proche, et si vous êtes trop bas/haut. Visez ±5 ¢ (l'aiguille devient verte)."
+}

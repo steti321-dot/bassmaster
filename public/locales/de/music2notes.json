@@ -1,0 +1,22 @@
+{
+  "title": "Audio zu Noten",
+  "input_file": "📁 Datei",
+  "input_youtube": "▶️ YouTube",
+  "input_mic": "🎤 Mikrofon",
+  "drop_zone_hint": "Audio/Video hierher ziehen — oder",
+  "browse": "Durchsuchen",
+  "process": "Verarbeiten",
+  "start_recording": "🔴 Aufnahme starten",
+  "stop_transcribe": "⏹ Stopp & transkribieren",
+  "cancel": "Abbrechen",
+  "mic_hint": "Spiel deinen Part ins Mikrofon — drücke danach Stop und die Transkription beginnt.",
+  "instrument_label": "Instrument",
+  "guitar": "🎸 Gitarre",
+  "bass": "🎸 Bass",
+  "detection_label": "Erkennung",
+  "detection_ai": "⭐ KI",
+  "detection_mono": "Mono",
+  "detection_chords": "Akkorde",
+  "suppress_drums": "Schlagzeug unterdrücken",
+  "processing": "Audio wird verarbeitet… {{progress}}%"
+}

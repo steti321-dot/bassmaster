@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './LearnGuitarGame.css';
 import FilePicker from '../game/components/FilePicker';
 import TrackPicker from '../game/components/TrackPicker';
@@ -40,6 +41,7 @@ function freqToNoteName(hz: number): string {
  * shows upcoming notes by string/fret, has play/pause controls. No mic/scoring yet.
  */
 export default function LearnGuitarGame() {
+  const { t } = useTranslation(['game', 'common']);
   const [pickedFile, setPickedFile] = useState<PickedFile | null>(null);
   const [song, setSong] = useState<Song | null>(null);
   const [gamePhase, setGamePhase] = useState<GamePhase>('idle');
@@ -871,12 +873,12 @@ export default function LearnGuitarGame() {
             noteResults={noteResults}
           />
         </div>
-        {isWaiting && <div className="wait-overlay">🎯 Play this note…</div>}
+        {isWaiting && <div className="wait-overlay">{t('game:waiting_for_note')}</div>}
       </div>
 
       <div className="game-footer-bar">
         <button className="back-btn" onClick={handleBackToTracks}>
-          ← Track setup
+          {t('game:track_setup_back')}
         </button>
 
         <div className="backing-controls" title="Backing track volume">
@@ -896,7 +898,7 @@ export default function LearnGuitarGame() {
             onChange={(e) => setBackingVolume(parseFloat(e.target.value))}
             className="vol-slider"
           />
-          <span className="vol-label">Backing</span>
+          <span className="vol-label">{t('game:backing')}</span>
         </div>
 
         <div
@@ -924,7 +926,7 @@ export default function LearnGuitarGame() {
             className="vol-slider"
           />
           <span className="vol-label">
-            Mic
+            {t('game:mic')}
             {monitorVolume > 0 && !monitorMuted && (
               <span className="headphones-warn" title="Use headphones to avoid feedback">
                 {' '}🎧
@@ -934,10 +936,10 @@ export default function LearnGuitarGame() {
         </div>
 
         <span className={`mic-status mic-${micStatus}`}>
-          {micStatus === 'live' && '🟢 mic live'}
-          {micStatus === 'denied' && '🔴 mic denied'}
-          {micStatus === 'requesting' && '🟡 mic asking…'}
-          {micStatus === 'idle' && (micEnabled ? '⚪ mic ready' : '⚫ mic off')}
+          {micStatus === 'live' && t('game:mic_live')}
+          {micStatus === 'denied' && t('game:mic_denied')}
+          {micStatus === 'requesting' && t('game:mic_asking')}
+          {micStatus === 'idle' && (micEnabled ? t('game:mic_ready') : t('game:mic_off'))}
         </span>
 
         {/* Mic debug strip — only shown when mic is live */}
@@ -978,7 +980,7 @@ export default function LearnGuitarGame() {
             checked={noiseSuppress}
             onChange={(e) => setNoiseSuppress(e.target.checked)}
           />
-          <span>Suppress room noise</span>
+          <span>{t('game:suppress_room_noise')}</span>
         </label>
 
         <button

@@ -1,0 +1,18 @@
+{
+  "calibration": "CALIBRACIÓN",
+  "step_1_latency": "PASO 1 — LATENCIA (OPCIONAL)",
+  "step_2_noise_floor": "PASO 2 — NIVEL DE RUIDO",
+  "step_3_low_e": "PASO 3 — CUERDA MI GRAVE",
+  "step_4_high_string": "PASO 4 — CUERDA AGUDA",
+  "calibration_complete": "✓ CALIBRACIÓN COMPLETA",
+  "tap_button_in_time": "Toca el botón al ritmo de los clics",
+  "listening_for_signal": "Esperando señal…",
+  "signal_detected": "✓ Señal detectada",
+  "play_low_e_string": "Toca la cuerda Mi grave (o la cuerda abierta más baja)",
+  "play_high_string": "Toca la cuerda aguda (o la cuerda abierta más alta)",
+  "ready_to_calibrate": "Listo para calibrar. Pulsa Iniciar cuando estés listo para tocar.",
+  "calibration_saved": "Calibración guardada",
+  "skip": "Saltar",
+  "apply": "Aplicar",
+  "cancel": "Cancelar"
+}

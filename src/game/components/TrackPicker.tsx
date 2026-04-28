@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './SongPicker.css';
 import { inspectGpFile, parseGpFile } from '../Gp4Reader';
 import type { GpFileSummary } from '../Gp4Reader';
@@ -22,6 +23,7 @@ interface TrackPickerProps {
  * Restores last selection from per-song settings if available.
  */
 export default function TrackPicker({ file, onBack, onSongReady }: TrackPickerProps) {
+  const { t } = useTranslation(['common']);
   const [summary, setSummary] = useState<GpFileSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [playerIdx, setPlayerIdx] = useState<number | null>(null);
@@ -93,11 +95,11 @@ export default function TrackPicker({ file, onBack, onSongReady }: TrackPickerPr
   if (!summary) {
     return (
       <div className="song-picker">
-        <h2>Loading…</h2>
+        <h2>{t('common:loading')}</h2>
         {error && <div className="picker-error">{error}</div>}
         <div className="picker-actions">
           <button className="back-btn" onClick={onBack}>
-            ← Back to song selection
+            {t('common:back_to_song_selection')}
           </button>
         </div>
       </div>
@@ -107,7 +109,7 @@ export default function TrackPicker({ file, onBack, onSongReady }: TrackPickerPr
   const tracks = summary.tracks;
   return (
     <div className="song-picker">
-      <h2>Set up your session</h2>
+      <h2>{t('common:session_setup')}</h2>
       <div className="picker-section">
         <h3>{summary.title || file.name}</h3>
         <p className="picker-subtitle">
@@ -119,10 +121,10 @@ export default function TrackPicker({ file, onBack, onSongReady }: TrackPickerPr
 
       <div className="picker-section">
         <div className="setup-table-header">
-          <span className="col-play">Play</span>
-          <span className="col-back">Backing</span>
-          <span className="col-name">Track</span>
-          <span className="col-badge">Type</span>
+          <span className="col-play">{t('common:play')}</span>
+          <span className="col-back">{t('common:backing')}</span>
+          <span className="col-name">{t('common:track')}</span>
+          <span className="col-badge">{t('common:type')}</span>
         </div>
         <ul className="setup-list">
           {tracks.map((t) => {
@@ -206,14 +208,14 @@ export default function TrackPicker({ file, onBack, onSongReady }: TrackPickerPr
 
       <div className="picker-actions">
         <button className="back-btn" onClick={onBack}>
-          ← Back to song selection
+          {t('common:back_to_song_selection')}
         </button>
         <button
           className="start-btn"
           onClick={handleStart}
           disabled={playerIdx === null}
         >
-          ▶ Start
+          {t('common:start_game')}
         </button>
       </div>
 

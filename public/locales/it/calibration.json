@@ -1,0 +1,18 @@
+{
+  "calibration": "CALIBRAZIONE",
+  "step_1_latency": "PASSO 1 — LATENZA (OPZIONALE)",
+  "step_2_noise_floor": "PASSO 2 — LIVELLO DI RUMORE",
+  "step_3_low_e": "PASSO 3 — CORDA MI BASSA",
+  "step_4_high_string": "PASSO 4 — CORDA ALTA",
+  "calibration_complete": "✓ CALIBRAZIONE COMPLETATA",
+  "tap_button_in_time": "Premi il pulsante a tempo con i clic",
+  "listening_for_signal": "In attesa del segnale…",
+  "signal_detected": "✓ Segnale rilevato",
+  "play_low_e_string": "Suona la corda Mi bassa (o la corda aperta più bassa)",
+  "play_high_string": "Suona la corda alta (o la corda aperta più alta)",
+  "ready_to_calibrate": "Pronto per la calibrazione. Premi Avvia quando sei pronto a suonare.",
+  "calibration_saved": "Calibrazione salvata",
+  "skip": "Salta",
+  "apply": "Applica",
+  "cancel": "Annulla"
+}

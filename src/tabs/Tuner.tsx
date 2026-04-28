@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './Tuner.css';
 import { MicCapture } from '../game/MicCapture';
 import { detectPitch, centsBetween } from '../game/PitchDetectorJS';
@@ -55,6 +56,7 @@ function midiToFreq(midi: number): number {
  * mapping it to the closest open string of the chosen instrument.
  */
 export default function Tuner() {
+  const { t } = useTranslation(['tuner']);
   const [preset, setPreset] = useState<TuningPreset>('bass');
   const [running, setRunning] = useState(false);
   const [micStatus, setMicStatus] = useState<'idle' | 'requesting' | 'live' | 'denied'>('idle');
@@ -268,7 +270,7 @@ export default function Tuner() {
     <div className="tuner-screen">
       <div className="tuner-card">
         <header className="tuner-header">
-          <h2>Tuner</h2>
+          <h2>{t('tuner:tuner')}</h2>
           <div className="instrument-toggle">
             {(Object.keys(PRESETS) as TuningPreset[]).map((p) => (
               <button
@@ -281,7 +283,7 @@ export default function Tuner() {
                   .map((m) => `${['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][((m % 12) + 12) % 12]}${Math.floor(m / 12) - 1}`)
                   .join(' ')}
               >
-                {PRESETS[p].label}
+                {t(`tuner:preset_${p.replace(/-/g, '_')}` as any)}
               </button>
             ))}
           </div>
@@ -296,8 +298,8 @@ export default function Tuner() {
             {reading
               ? `${reading.frequency.toFixed(1)} Hz`
               : running
-                ? 'Listening… play a note'
-                : 'Press Start'}
+                ? t('tuner:listening_for_note')
+                : t('tuner:press_start')}
           </div>
         </div>
 
@@ -306,7 +308,7 @@ export default function Tuner() {
           <div className="needle-target">
             {reading ? (
               <>
-                Closest string:{' '}
+                {t('tuner:closest_string')}{' '}
                 <span
                   className="closest-string"
                   style={{ color: profile.stringColors[reading.closestString.idx] }}
@@ -341,8 +343,8 @@ export default function Tuner() {
             )}
           </div>
           <div className="needle-labels">
-            <span>flat</span>
-            <span>sharp</span>
+            <span>{t('tuner:flat')}</span>
+            <span>{t('tuner:sharp')}</span>
           </div>
         </div>
 
@@ -383,19 +385,19 @@ export default function Tuner() {
         <div className="tuner-controls">
           {!running ? (
             <button className="big-start-btn" onClick={handleStart}>
-              ▶ Start tuner
+              {t('tuner:start_tuner')}
             </button>
           ) : (
             <button className="big-stop-btn" onClick={handleStop}>
-              ⏹ Stop
+              {t('tuner:stop')}
             </button>
           )}
 
-          <span className={`mic-status mic-${micStatus}`} title="Microphone status">
-            {micStatus === 'live' && '🟢 live'}
-            {micStatus === 'denied' && '🔴 denied'}
-            {micStatus === 'requesting' && '🟡 …'}
-            {micStatus === 'idle' && '⚪ ready'}
+          <span className={`mic-status mic-${micStatus}`} title={t('tuner:microphone_status')}>
+            {micStatus === 'live' && t('tuner:mic_live')}
+            {micStatus === 'denied' && t('tuner:mic_denied')}
+            {micStatus === 'requesting' && t('tuner:mic_asking')}
+            {micStatus === 'idle' && t('tuner:mic_ready')}
           </span>
 
           <label className="ns-toggle" title="Suppress fans / HVAC / room hum (may attenuate sustained notes)">
@@ -404,7 +406,7 @@ export default function Tuner() {
               checked={noiseSuppress}
               onChange={(e) => setNoiseSuppress(e.target.checked)}
             />
-            <span>Noise gate</span>
+            <span>{t('tuner:noise_gate')}</span>
           </label>
 
           {running && (
@@ -417,11 +419,7 @@ export default function Tuner() {
           )}
         </div>
 
-        <p className="tuner-hint">
-          Pluck an open string — the tuner shows which note it is, the closest
-          standard-tuning string, and how flat/sharp you are. Aim for ±5 ¢ (the
-          needle turns green).
-        </p>
+        <p className="tuner-hint">{t('tuner:hint')}</p>
       </div>
     </div>
   );

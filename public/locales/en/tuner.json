@@ -1,0 +1,22 @@
+{
+  "tuner": "Tuner",
+  "listening_for_note": "Listening… play a note",
+  "press_start": "Press Start",
+  "start_tuner": "Start tuner",
+  "stop": "Stop",
+  "closest_string": "Closest string:",
+  "flat": "flat",
+  "sharp": "sharp",
+  "noise_gate": "Noise gate",
+  "microphone_status": "Microphone status",
+  "preset_bass": "Bass",
+  "preset_bass_drop_d": "Bass · Drop D",
+  "preset_guitar": "Guitar",
+  "preset_guitar_drop_d": "Guitar · Drop D",
+  "calibrate": "Calibrate",
+  "mic_live": "🟢 live",
+  "mic_denied": "🔴 denied",
+  "mic_asking": "🟡 …",
+  "mic_ready": "⚪ ready",
+  "hint": "Pluck an open string — the tuner shows which note it is, the closest standard-tuning string, and how flat/sharp you are. Aim for ±5 ¢ (the needle turns green)."
+}

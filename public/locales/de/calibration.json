@@ -1,0 +1,18 @@
+{
+  "calibration": "KALIBRIERUNG",
+  "step_1_latency": "SCHRITT 1 — LATENZ (OPTIONAL)",
+  "step_2_noise_floor": "SCHRITT 2 — RAUSCHPEGEL",
+  "step_3_low_e": "SCHRITT 3 — TIEFE E-SAITE",
+  "step_4_high_string": "SCHRITT 4 — HOHE SAITE",
+  "calibration_complete": "✓ KALIBRIERUNG ABGESCHLOSSEN",
+  "tap_button_in_time": "Drücke den Knopf im Takt der Klicks",
+  "listening_for_signal": "Warte auf Signal…",
+  "signal_detected": "✓ Signal erkannt",
+  "play_low_e_string": "Spiel die tiefe E-Saite (oder niedrigste Leersaite)",
+  "play_high_string": "Spiel die hohe Saite (oder höchste Leersaite)",
+  "ready_to_calibrate": "Bereit zur Kalibrierung. Drücke Start, wenn du bereit bist zu spielen.",
+  "calibration_saved": "Kalibrierung gespeichert",
+  "skip": "Überspringen",
+  "apply": "Übernehmen",
+  "cancel": "Abbrechen"
+}

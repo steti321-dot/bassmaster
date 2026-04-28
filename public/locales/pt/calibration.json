@@ -1,0 +1,18 @@
+{
+  "calibration": "CALIBRAÇÃO",
+  "step_1_latency": "PASSO 1 — LATÊNCIA (OPCIONAL)",
+  "step_2_noise_floor": "PASSO 2 — NÍVEL DE RUÍDO",
+  "step_3_low_e": "PASSO 3 — CORDA MI GRAVE",
+  "step_4_high_string": "PASSO 4 — CORDA AGUDA",
+  "calibration_complete": "✓ CALIBRAÇÃO CONCLUÍDA",
+  "tap_button_in_time": "Toque o botão no ritmo dos cliques",
+  "listening_for_signal": "Aguardando sinal…",
+  "signal_detected": "✓ Sinal detectado",
+  "play_low_e_string": "Toque a corda Mi grave (ou a corda aberta mais baixa)",
+  "play_high_string": "Toque a corda aguda (ou a corda aberta mais alta)",
+  "ready_to_calibrate": "Pronto para calibrar. Pressione Iniciar quando estiver pronto para tocar.",
+  "calibration_saved": "Calibração salva",
+  "skip": "Pular",
+  "apply": "Aplicar",
+  "cancel": "Cancelar"
+}

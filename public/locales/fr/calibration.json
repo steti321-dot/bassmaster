@@ -1,0 +1,18 @@
+{
+  "calibration": "CALIBRATION",
+  "step_1_latency": "ÉTAPE 1 — LATENCE (OPTIONNEL)",
+  "step_2_noise_floor": "ÉTAPE 2 — NIVEAU DE BRUIT",
+  "step_3_low_e": "ÉTAPE 3 — CORDE MI GRAVE",
+  "step_4_high_string": "ÉTAPE 4 — CORDE AIGUË",
+  "calibration_complete": "✓ CALIBRATION TERMINÉE",
+  "tap_button_in_time": "Tapez le bouton en rythme avec les clics",
+  "listening_for_signal": "En attente du signal…",
+  "signal_detected": "✓ Signal détecté",
+  "play_low_e_string": "Jouez la corde Mi grave (ou la corde ouverte la plus basse)",
+  "play_high_string": "Jouez la corde aiguë (ou la corde ouverte la plus haute)",
+  "ready_to_calibrate": "Prêt à calibrer. Appuyez sur Démarrer quand vous êtes prêt à jouer.",
+  "calibration_saved": "Calibration sauvegardée",
+  "skip": "Passer",
+  "apply": "Appliquer",
+  "cancel": "Annuler"
+}

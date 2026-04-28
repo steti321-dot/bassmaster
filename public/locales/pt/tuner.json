@@ -1,0 +1,22 @@
+{
+  "tuner": "Afinador",
+  "listening_for_note": "Ouvindo… toque uma nota",
+  "press_start": "Pressione Iniciar",
+  "start_tuner": "Iniciar afinador",
+  "stop": "Parar",
+  "closest_string": "Corda mais próxima:",
+  "flat": "bemol",
+  "sharp": "sustenido",
+  "noise_gate": "Supressor de ruído",
+  "microphone_status": "Status do microfone",
+  "preset_bass": "Baixo",
+  "preset_bass_drop_d": "Baixo · Drop D",
+  "preset_guitar": "Guitarra",
+  "preset_guitar_drop_d": "Guitarra · Drop D",
+  "calibrate": "Calibrar",
+  "mic_live": "🟢 ativo",
+  "mic_denied": "🔴 negado",
+  "mic_asking": "🟡 …",
+  "mic_ready": "⚪ pronto",
+  "hint": "Dedilhe uma corda solta — o afinador mostra qual nota é, a corda de afinação padrão mais próxima e se você está muito baixo/alto. Mire em ±5 ¢ (a agulha fica verde)."
+}

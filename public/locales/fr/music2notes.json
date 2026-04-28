@@ -1,0 +1,22 @@
+{
+  "title": "Audio en Notes",
+  "input_file": "📁 Fichier",
+  "input_youtube": "▶️ YouTube",
+  "input_mic": "🎤 Micro",
+  "drop_zone_hint": "Glissez audio/vidéo ici — ou",
+  "browse": "Parcourir",
+  "process": "Traiter",
+  "start_recording": "🔴 Démarrer l'enregistrement",
+  "stop_transcribe": "⏹ Arrêter et transcrire",
+  "cancel": "Annuler",
+  "mic_hint": "Jouez votre partie dans le micro — à la fin, appuyez sur arrêter et la transcription commence.",
+  "instrument_label": "Instrument",
+  "guitar": "🎸 Guitare",
+  "bass": "🎸 Basse",
+  "detection_label": "Détection",
+  "detection_ai": "⭐ IA",
+  "detection_mono": "Mono",
+  "detection_chords": "Accords",
+  "suppress_drums": "Supprimer la batterie",
+  "processing": "Traitement audio… {{progress}}%"
+}

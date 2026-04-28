@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { processAudio } from '../services/audioService';
 import { downloadAudio, isValidYouTubeUrl, getVideoInfo } from '../services/youtubeService';
 import { MicRecorder } from '../services/micRecorder';
@@ -52,6 +53,7 @@ function friendlyErrorMessage(err: unknown): string {
 }
 
 export default function Upload({ onProcessingStart, onProgressUpdate, onAudioReady }: UploadProps) {
+  const { t } = useTranslation(['music2notes']);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [inputMode, setInputMode] = useState<InputMode>('file');
@@ -232,7 +234,7 @@ export default function Upload({ onProcessingStart, onProgressUpdate, onAudioRea
   return (
     <div className="upload-container">
       <div className="upload-card">
-        <h2>Audio to Notes</h2>
+        <h2>{t('music2notes:title')}</h2>
 
         <div className="input-mode-toggle">
           <button
@@ -240,21 +242,21 @@ export default function Upload({ onProcessingStart, onProgressUpdate, onAudioRea
             onClick={() => setInputMode('file')}
             disabled={loading || recording}
           >
-            📁 File
+            {t('music2notes:input_file')}
           </button>
           <button
             className={`mode-btn ${inputMode === 'youtube' ? 'active' : ''}`}
             onClick={() => setInputMode('youtube')}
             disabled={loading || recording}
           >
-            ▶️ YouTube
+            {t('music2notes:input_youtube')}
           </button>
           <button
             className={`mode-btn ${inputMode === 'mic' ? 'active' : ''}`}
             onClick={() => setInputMode('mic')}
             disabled={loading}
           >
-            🎤 Mic
+            {t('music2notes:input_mic')}
           </button>
         </div>
 
@@ -284,13 +286,13 @@ export default function Upload({ onProcessingStart, onProgressUpdate, onAudioRea
                 disabled={loading}
                 style={{ display: 'none' }}
               />
-              <p>Drag & drop audio/video — or</p>
+              <p>{t('music2notes:drop_zone_hint')}</p>
               <button
                 className="browse-btn"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={loading}
               >
-                Browse
+                {t('music2notes:browse')}
               </button>
               <p className="formats">MP3, M4A, WAV, FLAC, OGG, MP4</p>
             </div>
@@ -314,7 +316,7 @@ export default function Upload({ onProcessingStart, onProgressUpdate, onAudioRea
               onClick={handleYoutubeSubmit}
               disabled={loading || !youtubeUrl.trim()}
             >
-              Process
+              {t('music2notes:process')}
             </button>
           </div>
         )}
@@ -327,15 +329,15 @@ export default function Upload({ onProcessingStart, onProgressUpdate, onAudioRea
                 onClick={handleStartRecording}
                 disabled={loading}
               >
-                🔴 Start recording
+                {t('music2notes:start_recording')}
               </button>
             ) : (
               <div className="mic-recording-row">
                 <button className="mic-stop-btn" onClick={handleStopAndProcess}>
-                  ⏹ Stop &amp; transcribe
+                  {t('music2notes:stop_transcribe')}
                 </button>
                 <button className="mic-cancel-btn" onClick={handleCancelRecording}>
-                  Cancel
+                  {t('music2notes:cancel')}
                 </button>
                 <span className="mic-time">{formatRecordedTime(recordedSec)}</span>
                 <div className="mic-level">
@@ -346,9 +348,7 @@ export default function Upload({ onProcessingStart, onProgressUpdate, onAudioRea
                 </div>
               </div>
             )}
-            <p className="mic-hint">
-              Play your part into the mic — at the end, hit stop and the transcriber runs over it.
-            </p>
+            <p className="mic-hint">{t('music2notes:mic_hint')}</p>
           </div>
         )}
 
@@ -356,27 +356,27 @@ export default function Upload({ onProcessingStart, onProgressUpdate, onAudioRea
 
         <div className="settings-row">
           <div className="settings-group">
-            <span className="settings-label">Instrument</span>
+            <span className="settings-label">{t('music2notes:instrument_label')}</span>
             <div className="settings-buttons">
               <button
                 className={`inst-btn ${instrument === 'guitar' ? 'active' : ''}`}
                 onClick={() => setInstrument('guitar')}
                 disabled={loading || recording}
               >
-                🎸 Guitar
+                {t('music2notes:guitar')}
               </button>
               <button
                 className={`inst-btn ${instrument === 'bass' ? 'active' : ''}`}
                 onClick={() => setInstrument('bass')}
                 disabled={loading || recording}
               >
-                🎸 Bass
+                {t('music2notes:bass')}
               </button>
             </div>
           </div>
 
           <div className="settings-group">
-            <span className="settings-label">Detection</span>
+            <span className="settings-label">{t('music2notes:detection_label')}</span>
             <div className="settings-buttons">
               <button
                 className={`inst-btn ${detectionMode === 'ai' ? 'active' : ''}`}
@@ -384,7 +384,7 @@ export default function Upload({ onProcessingStart, onProgressUpdate, onAudioRea
                 disabled={loading || recording}
                 title="Spotify Basic Pitch — best quality"
               >
-                ⭐ AI
+                {t('music2notes:detection_ai')}
               </button>
               <button
                 className={`inst-btn ${detectionMode === 'mono' ? 'active' : ''}`}
@@ -392,7 +392,7 @@ export default function Upload({ onProcessingStart, onProgressUpdate, onAudioRea
                 disabled={loading || recording}
                 title="YIN single-note tracker — fastest"
               >
-                Mono
+                {t('music2notes:detection_mono')}
               </button>
               <button
                 className={`inst-btn ${detectionMode === 'chords' ? 'active' : ''}`}
@@ -400,7 +400,7 @@ export default function Upload({ onProcessingStart, onProgressUpdate, onAudioRea
                 disabled={loading || recording}
                 title="FFT polyphonic — picks up harmonics"
               >
-                Chords
+                {t('music2notes:detection_chords')}
               </button>
             </div>
           </div>
@@ -412,7 +412,7 @@ export default function Upload({ onProcessingStart, onProgressUpdate, onAudioRea
               onChange={(e) => setCleanDrums(e.target.checked)}
               disabled={loading || recording}
             />
-            <span>Suppress drums</span>
+            <span>{t('music2notes:suppress_drums')}</span>
           </label>
         </div>
       </div>

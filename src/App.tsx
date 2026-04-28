@@ -1,4 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
+import { useTranslation } from 'react-i18next';
 import './App.css';
 import LearnGuitarGame from './tabs/LearnGuitarGame';
 import Tuner from './tabs/Tuner';
@@ -17,14 +18,14 @@ const Music2Notes = IS_WEB_BUILD
 
 const SHARE_URL = 'https://tinyurl.com/bassmaster52';
 
-async function handleShare() {
+async function handleShare(linkCopiedMsg: string) {
   // Web Share API on mobile gives the proper share sheet (Messages,
   // WhatsApp, etc). Desktop browsers fall back to clipboard copy.
   if (typeof navigator !== 'undefined' && (navigator as any).share) {
     try {
       await (navigator as any).share({
         title: 'Bassmaster Workbench',
-        text: 'Free practice tool for bass &amp; guitar — try it!',
+        text: 'Free practice tool for bass & guitar — try it!',
         url: SHARE_URL,
       });
       return;
@@ -34,18 +35,21 @@ async function handleShare() {
   }
   try {
     await navigator.clipboard.writeText(SHARE_URL);
-    alert('Link copied to clipboard!');
+    alert(linkCopiedMsg);
   } catch {
-    // Last resort: open the share URL in a new tab so the user can
-    // copy it from the address bar.
     window.open(SHARE_URL, '_blank');
   }
 }
 
 export default function App() {
+  const { t, i18n } = useTranslation(['common']);
   const [activeTab, setActiveTab] = useState<Tab>(
     IS_WEB_BUILD ? 'learn-guitar' : 'music2notes',
   );
+
+  const handleLanguageChange = async (lng: string) => {
+    await i18n.changeLanguage(lng);
+  };
 
   return (
     <div className="app">
@@ -58,7 +62,7 @@ export default function App() {
                 className={`tab-btn ${activeTab === 'music2notes' ? 'active' : ''}`}
                 onClick={() => setActiveTab('music2notes')}
               >
-                🎵 Audio to Notes
+                {t('common:tab_audio_to_notes')}
               </button>
             )}
             <button
@@ -66,15 +70,32 @@ export default function App() {
               onClick={() => setActiveTab('tuner')}
               title="Tune up before practicing"
             >
-              🎚️ Tuner
+              {t('common:tab_tuner')}
             </button>
             <button
               className={`tab-btn ${activeTab === 'learn-guitar' ? 'active' : ''}`}
               onClick={() => setActiveTab('learn-guitar')}
             >
-              🎮 Learn Guitar Game
+              {t('common:tab_learn_guitar')}
             </button>
           </nav>
+
+          <div className="header-actions">
+            <select
+              id="lang-select"
+              value={i18n.language}
+              onChange={(e) => handleLanguageChange(e.target.value)}
+              className="lang-select"
+              title="Choose your language"
+            >
+              <option value="en">English</option>
+              <option value="de">Deutsch</option>
+              <option value="fr">Français</option>
+              <option value="es">Español</option>
+              <option value="it">Italiano</option>
+              <option value="pt">Português</option>
+            </select>
+          </div>
         </div>
       </header>
 
@@ -90,25 +111,24 @@ export default function App() {
 
       <footer className="app-footer">
         <p>
-          All audio processing happens locally • No data is uploaded
+          {t('common:footer_privacy')}
           <span className="footer-sep">•</span>
           <a
             className="donate-link"
             href="https://ko-fi.com/bassmaster"
             target="_blank"
             rel="noreferrer"
-            title="Help buy Stefan and his AI sidekick a domain to host this on"
           >
-            ☕ Buy us a domain
+            {t('common:footer_buy_domain')}
           </a>
           <span className="footer-sep">•</span>
           <button
             type="button"
             className="share-link"
-            onClick={handleShare}
+            onClick={() => handleShare(t('common:share_link_copied'))}
             title={`Share ${SHARE_URL}`}
           >
-            🔗 Share
+            {t('common:footer_share')}
           </button>
         </p>
       </footer>

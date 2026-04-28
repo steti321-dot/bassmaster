@@ -1,0 +1,22 @@
+{
+  "tuner": "Afinador",
+  "listening_for_note": "Escuchando… toca una nota",
+  "press_start": "Pulsar Iniciar",
+  "start_tuner": "Iniciar afinador",
+  "stop": "Detener",
+  "closest_string": "Cuerda más cercana:",
+  "flat": "bemol",
+  "sharp": "sostenido",
+  "noise_gate": "Supresor de ruido",
+  "microphone_status": "Estado del micrófono",
+  "preset_bass": "Bajo",
+  "preset_bass_drop_d": "Bajo · Drop D",
+  "preset_guitar": "Guitarra",
+  "preset_guitar_drop_d": "Guitarra · Drop D",
+  "calibrate": "Calibrar",
+  "mic_live": "🟢 activo",
+  "mic_denied": "🔴 denegado",
+  "mic_asking": "🟡 …",
+  "mic_ready": "⚪ listo",
+  "hint": "Pulsa una cuerda al aire — el afinador muestra qué nota es, la cuerda de afinación estándar más cercana y si estás demasiado bajo/alto. Apunta a ±5 ¢ (la aguja se vuelve verde)."
+}

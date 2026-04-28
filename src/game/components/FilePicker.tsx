@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './SongPicker.css';
 import { listRecentFiles, loadRecentFile, removeRecentFile, saveRecentFile } from '../recentFiles';
 import type { RecentFile } from '../recentFiles';
@@ -29,6 +30,7 @@ interface FilePickerProps {
  * the user can re-open without re-browsing.
  */
 export default function FilePicker({ onFilePicked, onSongDirect }: FilePickerProps) {
+  const { t } = useTranslation(['common']);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [recents, setRecents] = useState<RecentFile[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -164,7 +166,7 @@ export default function FilePicker({ onFilePicked, onSongDirect }: FilePickerPro
 
   return (
     <div className="song-picker">
-      <h2>Pick a song to practice</h2>
+      <h2>{t('common:pick_a_song')}</h2>
 
       {/* Search bar — always visible at the top. Results appear below it. */}
       {hasGprotabApi && (
@@ -182,7 +184,7 @@ export default function FilePicker({ onFilePicked, onSongDirect }: FilePickerPro
               disabled={searching || !searchQuery.trim()}
               className="gprotab-search-btn"
             >
-              {searching ? '…' : 'Search'}
+              {searching ? '…' : t('common:search')}
             </button>
           </form>
           {searchResults.length > 0 && (
@@ -217,7 +219,7 @@ export default function FilePicker({ onFilePicked, onSongDirect }: FilePickerPro
             className={`picker-tab ${tab === 'demo' ? 'active' : ''}`}
             onClick={() => setTab('demo')}
           >
-            ⭐ Demo
+            {t('common:tab_demo')}
           </button>
         )}
         <button
@@ -227,7 +229,7 @@ export default function FilePicker({ onFilePicked, onSongDirect }: FilePickerPro
           className={`picker-tab ${tab === 'recent' ? 'active' : ''}`}
           onClick={() => setTab('recent')}
         >
-          🕒 Recent {recents.length > 0 ? `(${recents.length})` : ''}
+          {t('common:tab_recent')} {recents.length > 0 ? `(${recents.length})` : ''}
         </button>
         <button
           type="button"
@@ -236,7 +238,7 @@ export default function FilePicker({ onFilePicked, onSongDirect }: FilePickerPro
           className={`picker-tab ${tab === 'files' ? 'active' : ''}`}
           onClick={() => setTab('files')}
         >
-          📁 Files
+          {t('common:tab_files')}
         </button>
         <button
           type="button"
@@ -245,7 +247,7 @@ export default function FilePicker({ onFilePicked, onSongDirect }: FilePickerPro
           className={`picker-tab ${tab === 'web' ? 'active' : ''}`}
           onClick={() => setTab('web')}
         >
-          🔗 Web URL
+          {t('common:tab_web_url')}
         </button>
       </div>
 

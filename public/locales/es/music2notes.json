@@ -1,0 +1,22 @@
+{
+  "title": "Audio a Notas",
+  "input_file": "📁 Archivo",
+  "input_youtube": "▶️ YouTube",
+  "input_mic": "🎤 Micrófono",
+  "drop_zone_hint": "Arrastra audio/vídeo aquí — o",
+  "browse": "Examinar",
+  "process": "Procesar",
+  "start_recording": "🔴 Iniciar grabación",
+  "stop_transcribe": "⏹ Detener y transcribir",
+  "cancel": "Cancelar",
+  "mic_hint": "Toca tu parte en el micrófono — al final, pulsa detener y comienza la transcripción.",
+  "instrument_label": "Instrumento",
+  "guitar": "🎸 Guitarra",
+  "bass": "🎸 Bajo",
+  "detection_label": "Detección",
+  "detection_ai": "⭐ IA",
+  "detection_mono": "Mono",
+  "detection_chords": "Acordes",
+  "suppress_drums": "Suprimir batería",
+  "processing": "Procesando audio… {{progress}}%"
+}

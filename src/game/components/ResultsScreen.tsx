@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import './ResultsScreen.css';
 import type { ScoreState, GameNote } from '../types';
 import type { InstrumentProfile } from '../Instrument';
@@ -28,6 +29,7 @@ export default function ResultsScreen({
   onPlayAgain,
   onBackToTracks,
 }: ResultsScreenProps) {
+  const { t } = useTranslation(['game', 'common']);
   const accuracy = totalNotes > 0 ? Math.round((score.hits / totalNotes) * 100) : 0;
   const tier = accuracy >= 85 ? 'gold' : accuracy >= 60 ? 'silver' : 'bronze';
 
@@ -47,40 +49,40 @@ export default function ResultsScreen({
   return (
     <div className="results-backdrop">
       <div className="results-card">
-        <h2 className="results-title">Done!</h2>
+        <h2 className="results-title">{t('game:done')}</h2>
         <p className="results-song">{songTitle}</p>
 
         <div className={`accuracy-circle accuracy-${tier}`}>
           <div className="accuracy-pct">{accuracy}%</div>
-          <div className="accuracy-label">Accuracy</div>
+          <div className="accuracy-label">{t('game:accuracy')}</div>
         </div>
 
         <div className="results-stats">
           <div className="result-stat">
-            <div className="result-label">Hits</div>
+            <div className="result-label">{t('game:hits')}</div>
             <div className="result-value hits">
               {score.hits}
               <span className="of-total">/ {totalNotes}</span>
             </div>
           </div>
           <div className="result-stat">
-            <div className="result-label">Misses</div>
+            <div className="result-label">{t('game:misses')}</div>
             <div className="result-value misses">{score.misses}</div>
           </div>
           <div className="result-stat">
-            <div className="result-label">Best combo</div>
+            <div className="result-label">{t('game:best_combo')}</div>
             <div className={`result-value combo ${score.bestCombo >= 10 ? 'big' : ''}`}>
               ×{score.bestCombo}
             </div>
           </div>
           <div className="result-stat">
-            <div className="result-label">Score</div>
+            <div className="result-label">{t('game:score')}</div>
             <div className="result-value score">{score.score}</div>
           </div>
         </div>
 
         <div className="per-string-section">
-          <h3>Per string</h3>
+          <h3>{t('game:per_string')}</h3>
           <ul className="per-string-list">
             {perString.map((row, idx) => {
               if (row.total === 0) return null;
@@ -113,10 +115,10 @@ export default function ResultsScreen({
 
         <div className="results-actions">
           <button className="back-btn" onClick={onBackToTracks}>
-            ← Track setup
+            ← {t('game:track_setup')}
           </button>
           <button className="play-again-btn" onClick={onPlayAgain}>
-            ▶ Play again
+            ▶ {t('game:play_again')}
           </button>
         </div>
       </div>

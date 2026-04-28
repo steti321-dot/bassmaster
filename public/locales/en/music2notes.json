@@ -1,0 +1,22 @@
+{
+  "title": "Audio to Notes",
+  "input_file": "📁 File",
+  "input_youtube": "▶️ YouTube",
+  "input_mic": "🎤 Mic",
+  "drop_zone_hint": "Drag & drop audio/video — or",
+  "browse": "Browse",
+  "process": "Process",
+  "start_recording": "🔴 Start recording",
+  "stop_transcribe": "⏹ Stop & transcribe",
+  "cancel": "Cancel",
+  "mic_hint": "Play your part into the mic — at the end, hit stop and the transcriber runs over it.",
+  "instrument_label": "Instrument",
+  "guitar": "🎸 Guitar",
+  "bass": "🎸 Bass",
+  "detection_label": "Detection",
+  "detection_ai": "⭐ AI",
+  "detection_mono": "Mono",
+  "detection_chords": "Chords",
+  "suppress_drums": "Suppress drums",
+  "processing": "Processing audio… {{progress}}%"
+}

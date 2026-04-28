@@ -1,0 +1,12 @@
+{
+  "advanced_settings": "Advanced settings",
+  "close_settings": "Close settings",
+  "latency_offset": "Latency offset",
+  "pitch_tolerance": "Pitch tolerance",
+  "reset_to_zero": "Reset to 0",
+  "use_preset": "Use {{difficulty}} preset (±{{cents}} ¢)",
+  "custom": "Custom",
+  "settings_save_per_song": "Settings save per-song automatically.",
+  "latency_hint": "Compensates for audio interface / mic round-trip delay. Positive values shift the timing window earlier (your audio arrives late).",
+  "pitch_tolerance_hint": "Higher = more forgiving (almost-correct notes still register). Lower = strict (only spot-on intonation scores)."
+}

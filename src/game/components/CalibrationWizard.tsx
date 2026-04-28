@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './CalibrationWizard.css';
 import { MicCapture } from '../MicCapture';
 import { detectPolyphonicPitches } from '../PolyphonicDetectorJS';
@@ -44,6 +45,7 @@ const WARMUP       = 2;
 const SCORED_TAPS  = 4;
 
 export default function CalibrationWizard({ onApply, onClose }: Props) {
+  const { t } = useTranslation(['calibration', 'common']);
   const [step, setStep]           = useState<Step>('intro');
   const [noiseFloor, setNoiseFloor] = useState(0);
   const [lowHz,  setLowHz]        = useState(0);
@@ -268,7 +270,7 @@ export default function CalibrationWizard({ onApply, onClose }: Props) {
 
         {/* Header */}
         <div className="cal-header">
-          <h2 className="cal-title">CALIBRATION</h2>
+          <h2 className="cal-title">{t('calibration:calibration')}</h2>
           <button className="cal-close" onClick={onClose} aria-label="Close">✕</button>
         </div>
 
@@ -303,7 +305,7 @@ export default function CalibrationWizard({ onApply, onClose }: Props) {
         {/* ── silence ── */}
         {step === 'silence' && (
           <div className="cal-body">
-            <div className="cal-step-label">STEP 2 — NOISE FLOOR</div>
+            <div className="cal-step-label">{t('calibration:step_2_noise_floor')}</div>
             <p className="cal-lead">Stay quiet — don't touch your instrument.</p>
             <div className="cal-progress-track">
               <div className="cal-progress-bar" style={{ width: `${progress * 100}%` }} />
@@ -315,7 +317,7 @@ export default function CalibrationWizard({ onApply, onClose }: Props) {
         {/* ── low string ── */}
         {step === 'low' && (
           <div className="cal-body">
-            <div className="cal-step-label">STEP 3 — LOW E STRING</div>
+            <div className="cal-step-label">{t('calibration:step_3_low_e')}</div>
             <p className="cal-lead">
               Play your open <strong>low E string</strong> and hold it.
               <br /><span className="cal-hint">Guitar: E2 (82 Hz) · Bass: E1 (41 Hz)</span>
@@ -338,7 +340,7 @@ export default function CalibrationWizard({ onApply, onClose }: Props) {
         {/* ── high string ── */}
         {step === 'high' && (
           <div className="cal-body">
-            <div className="cal-step-label">STEP 4 — HIGH STRING</div>
+            <div className="cal-step-label">{t('calibration:step_4_high_string')}</div>
             {instrument !== 'unknown' && (
               <div className="cal-detected-badge">Detected: {instrument.toUpperCase()}</div>
             )}

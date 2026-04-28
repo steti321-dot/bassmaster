@@ -1,0 +1,12 @@
+{
+  "advanced_settings": "Impostazioni avanzate",
+  "close_settings": "Chiudi impostazioni",
+  "latency_offset": "Offset di latenza",
+  "pitch_tolerance": "Tolleranza intonazione",
+  "reset_to_zero": "Azzera",
+  "use_preset": "Usa preset {{difficulty}} (±{{cents}} ¢)",
+  "custom": "Personalizzato",
+  "settings_save_per_song": "Le impostazioni vengono salvate automaticamente per canzone.",
+  "latency_hint": "Compensa il ritardo di andata e ritorno dell'interfaccia audio / microfono. I valori positivi anticipano la finestra temporale (il tuo audio arriva in ritardo).",
+  "pitch_tolerance_hint": "Più alto = più indulgente (le note quasi corrette contano ancora). Più basso = rigoroso (solo l'intonazione precisa conta)."
+}

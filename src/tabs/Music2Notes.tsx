@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Upload from '../pages/Upload';
 import Editor from '../pages/Editor';
 
@@ -25,6 +26,7 @@ interface ConversionResult {
  * Flow: Upload (file or YouTube) → Processing → Editor (preview + export GP4).
  */
 export default function Music2Notes() {
+  const { t } = useTranslation(['music2notes']);
   const [state, setState] = useState<AppState>('upload');
   const [result, setResult] = useState<ConversionResult | null>(null);
   const [progress, setProgress] = useState(0);
@@ -76,7 +78,7 @@ export default function Music2Notes() {
       {state === 'processing' && (
         <div className="processing">
           <div className="spinner"></div>
-          <p>Processing audio... {progress}%</p>
+          <p>{t('music2notes:processing', { progress })}</p>
           <div className="progress-bar">
             <div className="progress-fill" style={{ width: `${progress}%` }}></div>
           </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './HUD.css';
 import type { ScoreState, Difficulty } from '../types';
 
@@ -43,6 +44,7 @@ export default function HUD({
   waitMode,
   onWaitModeChange,
 }: HUDProps) {
+  const { t } = useTranslation(['game', 'common']);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const optionsRef = useRef<HTMLDivElement>(null);
 
@@ -74,15 +76,15 @@ export default function HUD({
 
       <div className="hud-section hud-stats">
         <div className="stat">
-          <div className="stat-label">Score</div>
+          <div className="stat-label">{t('game:score')}</div>
           <div className="stat-value">{score.score}</div>
         </div>
         <div className="stat">
-          <div className="stat-label">Combo</div>
+          <div className="stat-label">{t('game:combo')}</div>
           <div className="stat-value combo">×{score.combo}</div>
         </div>
         <div className="stat">
-          <div className="stat-label">Accuracy</div>
+          <div className="stat-label">{t('game:accuracy')}</div>
           <div className="stat-value">
             {score.hits + score.misses > 0
               ? `${Math.round((score.hits / (score.hits + score.misses)) * 100)}%`
@@ -93,20 +95,20 @@ export default function HUD({
 
       <div className="hud-section hud-controls">
         {isPlaying ? (
-          <button className="hud-btn pause" onClick={onPause}>⏸ Pause</button>
+          <button className="hud-btn pause" onClick={onPause}>{t('common:pause_button')}</button>
         ) : (
-          <button className="hud-btn play" onClick={onPlay}>▶ Play</button>
+          <button className="hud-btn play" onClick={onPlay}>{t('common:play_button')}</button>
         )}
-        <button className="hud-btn stop" onClick={onStop}>⏹ Stop</button>
+        <button className="hud-btn stop" onClick={onStop}>{t('common:stop_button')}</button>
 
         <div className="hud-options" ref={optionsRef}>
           <button
             className={`hud-options-btn ${optionsOpen ? 'open' : ''} ${triggerSummary.length ? 'has-active' : ''}`}
             onClick={() => setOptionsOpen((v) => !v)}
-            title="Game options — speed, difficulty, Kids Mode, Training Mode"
+            title={t('common:options_title')}
             aria-expanded={optionsOpen}
           >
-            ⚙ Options
+            ⚙ {t('common:options_title')}
             {triggerSummary.length > 0 && (
               <span className="hud-options-summary">{triggerSummary.join(' ')}</span>
             )}
@@ -122,7 +124,7 @@ export default function HUD({
               />
               <div className="hud-options-popover" role="dialog">
               <div className="hud-option-row">
-                <span className="hud-option-label">Speed</span>
+                <span className="hud-option-label">{t('common:speed_label')}</span>
                 <div className="speed-group">
                   {RATE_PRESETS.map((rate) => (
                     <button
@@ -137,35 +139,35 @@ export default function HUD({
               </div>
 
               <div className="hud-option-row">
-                <span className="hud-option-label">Difficulty</span>
+                <span className="hud-option-label">{t('common:difficulty_label')}</span>
                 <select
                   className="difficulty-select"
                   value={difficulty}
                   onChange={(e) => onDifficultyChange(e.target.value as Difficulty)}
                   disabled={isPlaying}
                 >
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="strict">Strict</option>
+                  <option value="easy">{t('common:difficulty_easy')}</option>
+                  <option value="medium">{t('common:difficulty_medium')}</option>
+                  <option value="strict">{t('common:difficulty_strict')}</option>
                 </select>
               </div>
 
               <div className="hud-option-row">
-                <span className="hud-option-label">Modes</span>
+                <span className="hud-option-label">{t('common:modes_label')}</span>
                 <div className="hud-option-toggles">
                   <button
                     className={`kids-btn ${kidsMode ? 'active' : ''}`}
                     onClick={() => onKidsModeChange(!kidsMode)}
-                    title="Kids Mode — chord reduction + 0–5 fret only"
+                    title={t('common:kids_mode_title')}
                   >
-                    🧒 Kids
+                    {t('common:kids_mode')}
                   </button>
                   <button
                     className={`wait-btn ${waitMode ? 'active' : ''}`}
                     onClick={() => onWaitModeChange(!waitMode)}
-                    title="Training Mode — song pauses on each note until you play it"
+                    title={t('common:training_mode_title')}
                   >
-                    🎯 Training
+                    {t('common:training_mode')}
                   </button>
                 </div>
               </div>

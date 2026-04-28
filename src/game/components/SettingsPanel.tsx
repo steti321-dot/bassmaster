@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import './SettingsPanel.css';
 import { DIFFICULTIES } from '../types';
 import type { Difficulty } from '../types';
@@ -27,6 +28,7 @@ export default function SettingsPanel({
   customPitchToleranceCents,
   onCustomPitchToleranceChange,
 }: SettingsPanelProps) {
+  const { t } = useTranslation(['settings', 'common']);
   if (!open) return null;
   const presetCents = DIFFICULTIES[difficulty].pitchToleranceCents;
   const usingCustom = customPitchToleranceCents !== undefined;
@@ -36,8 +38,8 @@ export default function SettingsPanel({
       <div className="settings-backdrop" onClick={onClose} />
       <aside className="settings-drawer">
         <header className="settings-header">
-          <h2>Advanced settings</h2>
-          <button className="close-btn" onClick={onClose} aria-label="Close settings">
+          <h2>{t('settings:advanced_settings')}</h2>
+          <button className="close-btn" onClick={onClose} aria-label={t('settings:close_settings')}>
             ✕
           </button>
         </header>
@@ -45,7 +47,7 @@ export default function SettingsPanel({
         <section className="settings-section">
           <label className="settings-row">
             <div className="settings-row-head">
-              <span className="settings-label">Latency offset</span>
+              <span className="settings-label">{t('settings:latency_offset')}</span>
               <span className="settings-value">{latencyOffsetMs > 0 ? '+' : ''}{latencyOffsetMs} ms</span>
             </div>
             <input
@@ -57,16 +59,13 @@ export default function SettingsPanel({
               onChange={(e) => onLatencyOffsetChange(parseInt(e.target.value, 10))}
               className="settings-slider"
             />
-            <p className="settings-hint">
-              Compensates for audio interface / mic round-trip delay. Positive
-              values shift the timing window earlier (your audio arrives late).
-            </p>
+            <p className="settings-hint">{t('settings:latency_hint')}</p>
             <button
               className="reset-link"
               onClick={() => onLatencyOffsetChange(0)}
               disabled={latencyOffsetMs === 0}
             >
-              Reset to 0
+              {t('settings:reset_to_zero')}
             </button>
           </label>
         </section>
@@ -74,7 +73,7 @@ export default function SettingsPanel({
         <section className="settings-section">
           <label className="settings-row">
             <div className="settings-row-head">
-              <span className="settings-label">Pitch tolerance</span>
+              <span className="settings-label">{t('settings:pitch_tolerance')}</span>
               <span className="settings-value">
                 ±{usingCustom ? customPitchToleranceCents : presetCents} ¢
               </span>
@@ -87,7 +86,7 @@ export default function SettingsPanel({
                   checked={!usingCustom}
                   onChange={() => onCustomPitchToleranceChange(undefined)}
                 />
-                Use {difficulty} preset (±{presetCents} ¢)
+                {t('settings:use_preset', { difficulty, cents: presetCents })}
               </label>
               <label className="settings-mini">
                 <input
@@ -96,7 +95,7 @@ export default function SettingsPanel({
                   checked={usingCustom}
                   onChange={() => onCustomPitchToleranceChange(presetCents)}
                 />
-                Custom
+                {t('settings:custom')}
               </label>
             </div>
             <input
@@ -111,16 +110,13 @@ export default function SettingsPanel({
               className="settings-slider"
               disabled={!usingCustom}
             />
-            <p className="settings-hint">
-              Higher = more forgiving (almost-correct notes still register).
-              Lower = strict (only spot-on intonation scores).
-            </p>
+            <p className="settings-hint">{t('settings:pitch_tolerance_hint')}</p>
           </label>
         </section>
 
         <footer className="settings-footer">
           <span className="settings-foot-note">
-            Settings save per-song automatically.
+            {t('settings:settings_save_per_song')}
           </span>
         </footer>
       </aside>

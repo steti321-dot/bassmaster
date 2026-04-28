@@ -1,0 +1,18 @@
+{
+  "calibration": "CALIBRATION",
+  "step_1_latency": "STEP 1 — LATENCY (OPTIONAL)",
+  "step_2_noise_floor": "STEP 2 — NOISE FLOOR",
+  "step_3_low_e": "STEP 3 — LOW E STRING",
+  "step_4_high_string": "STEP 4 — HIGH STRING",
+  "calibration_complete": "✓ CALIBRATION COMPLETE",
+  "tap_button_in_time": "Tap the button in time with the clicks",
+  "listening_for_signal": "Listening for signal…",
+  "signal_detected": "✓ Signal detected",
+  "play_low_e_string": "Play low E string (or lowest open string)",
+  "play_high_string": "Play high string (or highest open string)",
+  "ready_to_calibrate": "Ready to calibrate. Press Start when you're ready to play.",
+  "calibration_saved": "Calibration saved",
+  "skip": "Skip",
+  "apply": "Apply",
+  "cancel": "Cancel"
+}
