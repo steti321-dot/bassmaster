@@ -146,3 +146,53 @@ export function fretToHz(profile: InstrumentProfile, stringIdx: number, fret: nu
   if (open === undefined) return 0;
   return open * Math.pow(2, fret / 12);
 }
+
+/**
+ * Derive a chord symbol from a group of simultaneous GameNotes.
+ *
+ * Uses the lowest-pitched note as root, collects unique pitch-class intervals,
+ * and matches against common chord patterns.  Returns strings like "Em", "G",
+ * "Dsus4", "Cmaj7", "A5" (power chord) or a bare note name for single notes.
+ * Returns "" when the group is empty.
+ */
+export function deriveChordName(
+  notes: { string: number; fret: number }[],
+  instrument: InstrumentProfile,
+): string {
+  if (notes.length === 0) return '';
+
+  const midiPitches = notes
+    .map(n => (instrument.midiTunings[n.string] ?? 0) + n.fret)
+    .filter(m => m > 0);
+  if (midiPitches.length === 0) return '';
+
+  // Lowest MIDI note = bass note = root
+  let bassNote = midiPitches[0];
+  for (const m of midiPitches) if (m < bassNote) bassNote = m;
+  const root = ((bassNote % 12) + 12) % 12;
+
+  if (midiPitches.length === 1) return NOTE_NAMES[root];
+
+  // Unique semitone intervals from root (mod 12)
+  const intervals = new Set(midiPitches.map(m => ((m - bassNote) % 12 + 12) % 12));
+  const has = (n: number) => intervals.has(n);
+
+  // Match most-specific patterns first
+  let quality: string;
+  if      (has(4) && has(7) && has(11)) quality = 'maj7';
+  else if (has(4) && has(7) && has(10)) quality = '7';
+  else if (has(3) && has(7) && has(11)) quality = 'mM7';
+  else if (has(3) && has(7) && has(10)) quality = 'm7';
+  else if (has(3) && has(6) && has(10)) quality = 'm7b5';
+  else if (has(3) && has(6) && has(9))  quality = 'dim7';
+  else if (has(4) && has(7))            quality = '';      // major triad
+  else if (has(3) && has(7))            quality = 'm';     // minor triad
+  else if (has(3) && has(6))            quality = 'dim';
+  else if (has(4) && has(8))            quality = 'aug';
+  else if (has(5) && has(7))            quality = 'sus4';
+  else if (has(2) && has(7))            quality = 'sus2';
+  else if (has(7))                      quality = '5';     // power chord
+  else                                  quality = '';      // unrecognised
+
+  return `${NOTE_NAMES[root]}${quality}`;
+}

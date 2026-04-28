@@ -21,14 +21,31 @@
   height: auto;
 }
 
+.fretboard-mini-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 4px;
+  padding: 0 2px;
+  min-height: 1.2em;
+}
+
+.fretboard-mini-chord {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--cy-cyan);
+  text-shadow: 0 0 8px rgba(0, 245, 255, 0.65);
+  line-height: 1;
+}
+
 .fretboard-mini-eta {
-  text-align: center;
   font-size: 0.68rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--cy-text-muted);
   font-variant-numeric: tabular-nums;
-  margin-top: 2px;
+  line-height: 1;
 }
 
 @media (max-width: 768px) {
@@ -39,8 +56,11 @@
     padding: 6px 8px 8px;
   }
 
+  .fretboard-mini-chord {
+    font-size: 1.05rem;
+  }
+
   .fretboard-mini-eta {
     font-size: 0.7rem;
-    margin-top: 4px;
   }
 }

@@ -8,7 +8,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './FretboardMini.css';
 import type { InstrumentProfile } from '../Instrument';
-import { pitchClassColor } from '../Instrument';
+import { pitchClassColor, deriveChordName } from '../Instrument';
 import type { GameNote } from '../types';
 
 interface FretboardMiniProps {
@@ -88,6 +88,8 @@ export default function FretboardMini({
       : etaMs > 0
         ? `in ${(etaMs / 1000).toFixed(1)}s`
         : 'now';
+
+  const chordName = deriveChordName(group, instrument);
 
   return (
     <div ref={containerRef} className="fretboard-mini" aria-label="Upcoming chord">
@@ -172,8 +174,11 @@ export default function FretboardMini({
           );
         })}
       </svg>
-      <div className="fretboard-mini-eta">
-        {group.length > 1 ? `chord · ${etaLabel}` : etaLabel}
+      <div className="fretboard-mini-meta">
+        <span className="fretboard-mini-chord">{chordName}</span>
+        <span className="fretboard-mini-eta">
+          {group.length > 1 ? `chord · ${etaLabel}` : etaLabel}
+        </span>
       </div>
     </div>
   );
