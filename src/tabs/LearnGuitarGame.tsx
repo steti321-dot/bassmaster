@@ -368,7 +368,18 @@ export default function LearnGuitarGame() {
             continue;
           }
 
-          if (dt > cfg.timingWindowMs) {
+          // Late-hit grace: while the chip's stripe is still visibly active
+          // above the hit line (i.e. we're still inside the note's sustain
+          // duration), accept a hit even past the strict onset-timing
+          // window. Difficulty controls how generous:
+          //   easy   → full sustain hittable (any time during the note)
+          //   medium → half the sustain
+          //   strict → no late grace (just the onset timing window)
+          const lateGraceFactor =
+            difficultyRef.current === 'easy' ? 1 :
+            difficultyRef.current === 'medium' ? 0.5 : 0;
+          const lateLimit = cfg.timingWindowMs + lateGraceFactor * n.duration;
+          if (dt > lateLimit) {
             // Window passed without detection → miss
             results.set(i, 'miss');
             resultsChanged = true;
