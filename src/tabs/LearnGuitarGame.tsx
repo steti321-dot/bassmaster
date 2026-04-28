@@ -691,6 +691,7 @@ export default function LearnGuitarGame() {
             fallDurationSec={fallDurationSec}
             noteResults={noteResults}
             hitAt={hitAtRef.current}
+            hitWindowMs={DIFFICULTIES[difficulty].timingWindowMs}
           />
           <FretboardMini
             instrument={profile}

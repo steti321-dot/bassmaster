@@ -18,6 +18,10 @@ interface NoteRainProps {
   /** Wall-clock timestamp of when each note was hit. Used to render a
    *  brief expanding-ring burst on each fresh hit. */
   hitAt?: Map<number, number>;
+  /** Onset timing window in ms (the difficulty's pitch-acceptance window).
+   *  Used to highlight chips whose head is currently inside the
+   *  scoreable region — the user gets a visual "play me NOW" cue. */
+  hitWindowMs?: number;
 }
 
 /** Hook: measure a DOM element's size, updates on resize. */
@@ -65,6 +69,7 @@ export default function NoteRain({
   fallDurationSec,
   noteResults,
   hitAt,
+  hitWindowMs = 250,
 }: NoteRainProps) {
   const [containerRef, { width: totalWidth, height: stageHeight }] = useElementSize<HTMLDivElement>();
   const numStrings = instrument.tuningsHz.length;
@@ -263,9 +268,17 @@ export default function NoteRain({
 
             let stroke = color;
             let fillOpacity = 0.96;
-            // Bright green for hits, red for misses. Hit fillOpacity is
-            // bumped (vs. miss) so the chip stays visible during its burst
-            // animation rather than fading out immediately.
+            // Three states for an unplayed chip:
+            //   approaching → subtle stripe (dtHead > +window).
+            //   hittable    → bolder colour + thicker stroke + brighter
+            //                 glow ("play me now" cue). True when the head
+            //                 is inside the timing window, OR (post-onset)
+            //                 the note is still sustaining.
+            //   post-result → green for hit / red for miss.
+            const isHittable =
+              !result &&
+              ((dtHead < hitWindowMs && dtHead > -hitWindowMs) ||
+                (dtHead < -hitWindowMs && dtTail > 0));
             if (result === 'hit') {
               stroke = '#3dff7a';
               fillOpacity = 0.7;
@@ -324,21 +337,36 @@ export default function NoteRain({
               Math.atan2(railTop.x - railBottom.x, hitLineY) * (180 / Math.PI);
             const tiltDeg = fullTiltDeg * 0.4;
 
+            // Hittable chips get a "play me now" boost: bolder fill,
+            // thicker stroke, and a wider cyber glow halo. Approaching
+            // chips stay subtle so the eye is drawn to whatever's at the
+            // hit line right now.
+            const stripeFillOpacity =
+              (isHittable ? 0.55 : 0.32) * fillOpacity;
+            const stripeStrokeWidth = Math.max(
+              1.6,
+              (isHittable ? 3.4 : 2.4) * scale,
+            );
+            const stripeGlow = isHittable
+              ? `drop-shadow(0 0 ${10 * scale}px ${stroke})`
+              : 'none';
+
             return (
               <g key={`note-${idx}`} className="bulb" style={{ color }} opacity={opacityFactor}>
                 {/* Stripe body */}
                 <path
                   d={stripePath}
                   fill={color}
-                  fillOpacity={0.32 * fillOpacity}
+                  fillOpacity={stripeFillOpacity}
                   stroke="none"
+                  style={{ filter: stripeGlow }}
                 />
                 <path
                   d={stripePath}
                   fill="none"
                   stroke={stroke}
-                  strokeOpacity={0.95}
-                  strokeWidth={Math.max(1.6, 2.4 * scale)}
+                  strokeOpacity={isHittable ? 1 : 0.95}
+                  strokeWidth={stripeStrokeWidth}
                   strokeLinejoin="round"
                 />
                 {/* Fret number — bright white with a dark outline + colored
