@@ -161,21 +161,33 @@ Deploys ~50 lines of code that re-implement the Electron main process's `gprotab
 
 ## Status / roadmap
 
-Shipped (v1):
+### Shipped
 
-- Tuner with drop-D presets, octave-snap stabilization
-- Note-rain game with chord-color stripes, perspective tilt, side wheel
-- Kids Mode (chord reduction + 0–5 fret window + same-string smoothing)
-- Training Mode (clock freezes per note until played)
-- gprotab.net + paste-URL + drag-drop file inputs
-- Audio-to-Notes desktop pipeline (Mic / File / YouTube)
-- GH Pages deploy
+- Tuner with drop-D presets, octave-snap stabilization, calmer needle (median filter, hold-time, throttled UI updates)
+- Note-rain game with **per-pitch-class color stripes**, perspective-tilted fret digit, **3-state stripe phases** (approaching → hittable → hit/miss), expanding green hit-burst, **head-clamped sustain** so long notes shrink in place, top-anchored string labels with lowered hit bar (~18 % more chip airtime)
+- **FretboardMini** strip below the rain — 12 frets with inlay markers, colored dots for the upcoming chord/note
+- Compact **chip-style SidePanel** wheel (past / current / future)
+- **Kids Mode**: chord reduction (power-chord → root, full-chord → 5th, dim/sus → root fallback), position remap to 0–5 frets, same-string smoothing across notes
+- **Training Mode**: clock freezes per note until you play it, with a tuned silence/attack gate (1.2× threshold + 1.2 s safety net) so soft re-plucks during sustain still register
+- **Chord-any-member scoring**: pluck any visible chord member, scorer picks the closest match
+- **Late-hit grace per difficulty** — Easy accepts hits any time the chip is still active
+- File sources: drag & drop, paste URL (proxied), gprotab.net search, four built-in **Quick Start** songs (Twinkle Twinkle, Smoke on the Water rhythm, The Four Chords, Queen — Another One Bites the Dust)
+- Audio-to-Notes desktop pipeline (Mic / File / YouTube → Rust transcribe + Basic Pitch ML)
+- **GH Pages** static deploy + **Cloudflare Worker** CORS proxy (free tier, no auth)
+- Mobile-responsive layout end-to-end (collapsed SidePanel row, modal HUD options, scaled chips, fits iPhone-portrait)
+- Footer ☕ Ko-fi donate link + 🔗 Share button (Web Share API + clipboard fallback)
 
-Tracked for future iterations (see `~/.claude/projects/.../memory/`):
+### Open / next up
 
-- Power-chord vs full-chord refinement (root vs 5th instead of plain "lowest pitch")
-- Vite migration off the deprecated CRA toolchain
-- More aggressive string-smoothing in Kids Mode v2
+- **Polyphonic chord recognition** — current pitch detector (YIN) is monophonic, so a strummed chord only registers one tone per pluck. A polyphonic detector (FFT pitch-peak picking, or a small ML model like Spotify's Basic Pitch run incrementally) would let "play the C chord" score in one motion instead of three separate plucks.
+- **Strum vs pick discrimination** — RMS-envelope shape analysis to detect whether the user strummed multiple strings simultaneously, so we can score the whole chord as one event in that case.
+- **Vite migration** off the deprecated CRA toolchain — drops `--legacy-peer-deps`, ~10× faster builds, modern peer-dep ranges (~half day).
+- **Session replays** — record per-note hit/miss + timing into a small JSON, let the player review the run.
+- **Shareable song URLs** — encode chosen file + settings into the URL hash so you can share a configured song link.
+- **Custom song library beyond IndexedDB** — opt-in account → cloud-saved stash that survives across browsers / devices.
+- More chord-policy refinements — sus2/sus4 prefer the suspended tone, V7→I cadences favour leading-tone resolution, jazz extensions, etc.
+
+Memory notes for the active iteration ideas live under `~/.claude/projects/.../memory/`.
 
 ---
 
