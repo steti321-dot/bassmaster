@@ -8,34 +8,32 @@ export interface DetectedPitch {
 export interface PolyphonicDetectorConfig {
   fftSize?: number;
   maxPitches?: number;
-  confidenceThreshold?: number;
-  harmonicRatioThreshold?: number;
 }
 
+// 1 semitone in frequency ratio — minimum separation between returned peaks.
+// Prevents picking up spectral leakage (same note smeared across adjacent bins)
+// without filtering real chord tones (smallest chord interval is a minor 2nd ≈ 5.9%).
+const ONE_SEMITONE_RATIO = 1 - 1 / Math.pow(2, 1 / 12); // ≈ 0.0561
+
 class PolyphonicDetector {
-  private fftSize: number;
-  public maxPitches: number;
-  private confidenceThreshold: number;
-  private harmonicRatioThreshold: number;
-  private fft: FFT;
-  private hannWindow: Float32Array;
+  public readonly maxPitches: number;
+  private readonly fftSize: number;
+  private readonly fft: FFT;
+  private readonly hannWindow: Float32Array;
 
   constructor(config: PolyphonicDetectorConfig = {}) {
-    this.fftSize = config.fftSize || 8192;
-    this.maxPitches = config.maxPitches || 3;
-    this.confidenceThreshold = config.confidenceThreshold || 0.4;
-    this.harmonicRatioThreshold = config.harmonicRatioThreshold || 0.6;
-
+    this.fftSize = config.fftSize || 16384;
+    this.maxPitches = config.maxPitches || 6;
     this.fft = new FFT(this.fftSize);
-    this.hannWindow = this.createHannWindow(this.fftSize);
+    this.hannWindow = this.buildHannWindow(this.fftSize);
   }
 
-  private createHannWindow(size: number): Float32Array {
-    const window = new Float32Array(size);
+  private buildHannWindow(size: number): Float32Array {
+    const w = new Float32Array(size);
     for (let i = 0; i < size; i++) {
-      window[i] = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (size - 1)));
+      w[i] = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (size - 1)));
     }
-    return window;
+    return w;
   }
 
   detect(
@@ -44,166 +42,101 @@ class PolyphonicDetector {
     minFreq: number,
     maxFreq: number
   ): DetectedPitch[] {
-    // Zero-pad and apply window
-    const paddedSamples = new Float32Array(this.fftSize);
-    const windowedSamples = new Float32Array(this.fftSize);
-
+    // Window samples and zero-pad to fftSize
+    const windowed = new Float32Array(this.fftSize);
     const copyLen = Math.min(samples.length, this.fftSize);
     for (let i = 0; i < copyLen; i++) {
-      windowedSamples[i] = samples[i] * this.hannWindow[i];
+      windowed[i] = samples[i] * this.hannWindow[i];
     }
 
-    // Compute FFT (real FFT via interleaved input)
     const spectrum = this.fft.createComplexArray();
-    this.fft.realTransform(spectrum, windowedSamples);
+    this.fft.realTransform(spectrum, windowed);
 
-    // Convert to magnitude spectrum
-    const magnitudes = this.computeMagnitudes(spectrum);
-
-    // Find peaks in the frequency range
-    const peaks = this.findPeaks(magnitudes, sampleRate, minFreq, maxFreq);
-
-    // Filter out harmonics
-    const fundamentals = this.filterHarmonics(peaks, sampleRate);
-
-    // Score confidence and sort
-    const scored = fundamentals.map((peak) => ({
-      frequency: peak.frequency,
-      confidence: peak.confidence,
-    }));
-
-    scored.sort((a, b) => b.confidence - a.confidence);
-    return scored.slice(0, this.maxPitches);
-  }
-
-  private computeMagnitudes(spectrum: any): Float32Array {
-    const magnitudes = new Float32Array(spectrum.length / 2);
-    for (let i = 0; i < magnitudes.length; i++) {
-      const real = spectrum[2 * i];
-      const imag = spectrum[2 * i + 1];
-      magnitudes[i] = Math.sqrt(real * real + imag * imag);
-    }
-    return magnitudes;
-  }
-
-  private findPeaks(
-    magnitudes: Float32Array,
-    sampleRate: number,
-    minFreq: number,
-    maxFreq: number
-  ): Array<{ bin: number; frequency: number; magnitude: number }> {
+    const numBins = this.fftSize / 2;
+    const magnitudes = this.computeMagnitudes(spectrum, numBins);
     const binFreq = sampleRate / this.fftSize;
     const minBin = Math.ceil(minFreq / binFreq);
-    const maxBin = Math.floor(maxFreq / binFreq);
+    const maxBin = Math.floor(Math.min(maxFreq / binFreq, numBins - 2));
 
-    const noiseFloor = this.estimateNoiseFloor(magnitudes) * 0.1; // 10% of noise floor
-    const maxMagnitude = Math.max(...magnitudes);
+    // 30th-percentile magnitude as noise floor — more robust than median when
+    // a full 6-string strum fills many bins with real energy.
+    const noiseFloor = this.percentileMag(magnitudes, minBin, maxBin, 0.30);
 
-    const peaks: Array<{
-      bin: number;
-      frequency: number;
-      magnitude: number;
-    }> = [];
-
-    for (let bin = minBin + 1; bin < maxBin - 1; bin++) {
+    // Collect all local maxima above the noise floor with parabolic interpolation
+    const peaks: Array<{ frequency: number; magnitude: number }> = [];
+    for (let bin = minBin + 1; bin < maxBin; bin++) {
       const mag = magnitudes[bin];
-
-      // Local maximum check
-      if (
-        mag > magnitudes[bin - 1] &&
-        mag > magnitudes[bin + 1] &&
-        mag > noiseFloor
-      ) {
-        // Sub-bin interpolation (parabolic)
+      if (mag > magnitudes[bin - 1] && mag > magnitudes[bin + 1] && mag > noiseFloor) {
         const left = magnitudes[bin - 1];
-        const center = mag;
         const right = magnitudes[bin + 1];
-
-        const delta = 0.5 * ((right - left) / (2 * center - left - right));
-        const interpBin = bin + delta;
-
-        const frequency = interpBin * binFreq;
-        peaks.push({
-          bin: interpBin,
-          frequency,
-          magnitude: mag,
-        });
+        const denom = 2 * mag - left - right;
+        const delta = denom !== 0 ? 0.5 * (right - left) / denom : 0;
+        peaks.push({ frequency: (bin + delta) * binFreq, magnitude: mag });
       }
     }
 
-    return peaks;
-  }
+    // Sort by magnitude descending
+    peaks.sort((a, b) => b.magnitude - a.magnitude);
 
-  private estimateNoiseFloor(magnitudes: Float32Array): number {
-    // Use the median as a robust noise floor estimate
-    const sorted = Array.from(magnitudes).sort((a, b) => a - b);
-    const medianIdx = Math.floor(sorted.length / 2);
-    return sorted[medianIdx];
-  }
-
-  private filterHarmonics(
-    peaks: Array<{ bin: number; frequency: number; magnitude: number }>,
-    sampleRate: number
-  ): Array<{ frequency: number; confidence: number }> {
-    const binFreq = sampleRate / this.fftSize;
-    const fundamentals: Array<{
-      frequency: number;
-      confidence: number;
-    }> = [];
-
-    const isProbablyHarmonic = (peakBin: number, otherPeaks: Array<number>) => {
-      for (const otherBin of otherPeaks) {
-        const ratio = peakBin / otherBin;
-        // Check if this peak is a harmonic (2x, 3x, 4x, 5x) of another peak
-        for (let h = 2; h <= 5; h++) {
-          if (Math.abs(ratio - h) < 0.15) {
-            return true; // Likely a harmonic
-          }
-        }
-      }
-      return false;
-    };
-
-    const allBins = peaks.map((p) => p.bin);
-    const maxMagnitude = Math.max(0.1, ...peaks.map((p) => p.magnitude));
-
+    // Greedy minimum-separation selection:
+    // Pick the strongest peak, then skip any remaining peak within 1 semitone
+    // of an already-selected peak.  This removes spectral leakage duplicates
+    // without ever filtering octave/5th chord tones (which are further apart).
+    // We intentionally do NOT apply harmonic filtering here — chord tones
+    // (e.g. E2 + E4 in a full strum) are at exact harmonic ratios and would
+    // be incorrectly removed by a ratio-based filter.  The game's scoring loop
+    // already acts as the harmonic filter: it only awards hits for frequencies
+    // that match a note in the current song.
+    const selected: Array<{ frequency: number; magnitude: number }> = [];
     for (const peak of peaks) {
-      const otherBins = allBins.filter((b) => Math.abs(b - peak.bin) > 1);
-
-      // Check if stronger fundamental exists at 1/2, 1/3, or 1/4 freq
-      let isFundamental = true;
-      for (let divisor = 2; divisor <= 4; divisor++) {
-        const lowerBin = peak.bin / divisor;
-        const closestBin = otherBins.reduce((closest, bin) =>
-          Math.abs(bin - lowerBin) < Math.abs(closest - lowerBin) ? bin : closest
-        );
-
-        const relatedPeak = peaks.find((p) => Math.abs(p.bin - closestBin) < 0.5);
-        if (
-          Math.abs(closestBin - lowerBin) < 1 &&
-          relatedPeak &&
-          relatedPeak.magnitude >= peak.magnitude * this.harmonicRatioThreshold
-        ) {
-          isFundamental = false;
-          break;
-        }
-      }
-
-      if (isFundamental && !isProbablyHarmonic(peak.bin, otherBins)) {
-        const confidence =
-          Math.min(1.0, peak.magnitude / maxMagnitude) *
-          Math.max(0.3, 1 - Math.abs(peak.bin % 1)); // Interpolation smoothness factor
-        fundamentals.push({
-          frequency: peak.frequency,
-          confidence,
-        });
-      }
+      const tooClose = selected.some(
+        s =>
+          Math.abs(s.frequency - peak.frequency) <
+          Math.min(s.frequency, peak.frequency) * ONE_SEMITONE_RATIO
+      );
+      if (!tooClose) selected.push(peak);
+      if (selected.length >= this.maxPitches) break;
     }
 
-    return fundamentals;
+    // Normalize confidence relative to noise floor so that weaker treble
+    // strings aren't gated out solely because bass strings dominate.
+    let maxMag = noiseFloor + 1e-8;
+    for (const p of selected) if (p.magnitude > maxMag) maxMag = p.magnitude;
+    const scale = maxMag - noiseFloor;
+
+    return selected.map(p => ({
+      frequency: p.frequency,
+      confidence: Math.min(1, (p.magnitude - noiseFloor) / scale),
+    }));
+  }
+
+  private computeMagnitudes(spectrum: any, numBins: number): Float32Array {
+    const mag = new Float32Array(numBins);
+    for (let i = 0; i < numBins; i++) {
+      const re = spectrum[2 * i];
+      const im = spectrum[2 * i + 1];
+      mag[i] = Math.sqrt(re * re + im * im);
+    }
+    return mag;
+  }
+
+  // Compute the Nth percentile magnitude within [minBin, maxBin] using a
+  // partial sort. Avoids the call-stack overflow from Math.max(...Float32Array)
+  // on 16k-element arrays.
+  private percentileMag(
+    magnitudes: Float32Array,
+    minBin: number,
+    maxBin: number,
+    pct: number
+  ): number {
+    const slice: number[] = [];
+    for (let i = minBin; i <= maxBin; i++) slice.push(magnitudes[i]);
+    slice.sort((a, b) => a - b);
+    return slice[Math.floor(pct * (slice.length - 1))];
   }
 }
 
+// Module-level singleton; recreated only when maxPitches changes.
 let detector: PolyphonicDetector | null = null;
 
 export function detectPolyphonicPitches(
@@ -211,31 +144,17 @@ export function detectPolyphonicPitches(
   sampleRate: number,
   minFreq: number,
   maxFreq: number,
-  maxPitches: number = 3
+  maxPitches = 6
 ): DetectedPitch[] {
-  if (!detector) {
-    detector = new PolyphonicDetector({
-      fftSize: 8192,
-      maxPitches,
-      confidenceThreshold: 0.4,
-      harmonicRatioThreshold: 0.6,
-    });
+  if (!detector || detector.maxPitches !== maxPitches) {
+    detector = new PolyphonicDetector({ fftSize: 16384, maxPitches });
   }
-
-  // Update detector config if maxPitches changed
-  if (detector.maxPitches !== maxPitches) {
-    detector = new PolyphonicDetector({
-      fftSize: 8192,
-      maxPitches,
-      confidenceThreshold: 0.4,
-      harmonicRatioThreshold: 0.6,
-    });
-  }
-
-  const results = detector.detect(samples, sampleRate, minFreq, maxFreq);
-
-  // Filter by confidence threshold
-  return results.filter((pitch) => pitch.confidence >= 0.4);
+  // Threshold 0.2 allows weaker high-e strings to register; the scoring loop
+  // still requires frequency proximity to an expected note, so false positives
+  // from low-confidence noise don't produce incorrect game hits.
+  return detector
+    .detect(samples, sampleRate, minFreq, maxFreq)
+    .filter(p => p.confidence >= 0.2);
 }
 
 export function createPolyphonicDetector(

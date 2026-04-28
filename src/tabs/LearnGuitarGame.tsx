@@ -349,7 +349,7 @@ export default function LearnGuitarGame() {
             snap.sampleRate,
             profile.minPitchHz,
             profile.maxPitchHz,
-            3
+            6
           );
         }
 
