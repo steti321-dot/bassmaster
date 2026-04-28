@@ -8,6 +8,24 @@
   position: relative; /* for absolutely-positioned overlays */
 }
 
+.calibrate-btn {
+  background: rgba(45, 255, 139, 0.07);
+  border: 1px solid rgba(45, 255, 139, 0.35);
+  color: #2dff8b;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.calibrate-btn:hover {
+  background: rgba(45, 255, 139, 0.18);
+  box-shadow: 0 0 8px rgba(45, 255, 139, 0.35);
+}
+
 .gear-btn {
   background: rgba(0, 245, 255, 0.06);
   border: 1px solid var(--cy-border);
@@ -267,6 +285,57 @@
 .mic-status.mic-requesting {
   color: var(--cy-orange);
   text-shadow: 0 0 6px rgba(255, 157, 0, 0.5);
+}
+
+/* ── Mic debug strip ─────────────────────────────────────────────────────── */
+.mic-debug-strip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(0, 245, 255, 0.18);
+  border-radius: 4px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+}
+
+.mic-debug-gate {
+  font-size: 0.65rem;
+  flex-shrink: 0;
+  min-width: 1ch;
+}
+
+/* RMS level bar container */
+.mic-debug-rms {
+  position: relative;
+  width: 40px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.mic-debug-rms-bar {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: linear-gradient(90deg, #2dff8b 0%, #fff066 60%, #ff2860 100%);
+  border-radius: 3px;
+  transition: width 60ms linear;
+}
+
+.mic-debug-no-pitch {
+  color: var(--cy-text-muted);
+}
+
+.mic-debug-pitch {
+  color: var(--cy-cyan);
+  font-weight: 700;
+  font-size: 0.68rem;
+  padding: 0 2px;
 }
 
 .phase-note {

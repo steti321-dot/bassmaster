@@ -60,7 +60,10 @@ export class MicCapture {
     this.source = this.ctx.createMediaStreamSource(this.stream);
 
     this.analyser = this.ctx.createAnalyser();
-    this.analyser.fftSize = 4096; // ~93 ms at 44.1 kHz
+    // 16384 samples (~372 ms at 44.1 kHz) — required by the polyphonic FFT
+    // detector so that adjacent semitones are resolvable even on bass (E1=41 Hz,
+    // where two semitones differ by only ~2.4 Hz; 44100/16384 ≈ 2.7 Hz/bin).
+    this.analyser.fftSize = 16384;
     this.analyser.smoothingTimeConstant = 0;
     this.buffer = new Float32Array(this.analyser.fftSize);
 
@@ -97,12 +100,15 @@ export class MicCapture {
     // Cast: TS's strict types complain about Float32Array<ArrayBufferLike> vs <ArrayBuffer>
     this.analyser.getFloatTimeDomainData(this.buffer as Float32Array<ArrayBuffer>);
 
-    // Compute RMS to gate out near-silence
+    // Compute RMS over the most recent 512 samples (~12 ms) so the attack gate
+    // responds snappily even though the buffer holds 372 ms for the FFT.
+    const rmsWindow = 512;
+    const rmsStart = this.buffer.length - rmsWindow;
     let sumSq = 0;
-    for (let i = 0; i < this.buffer.length; i++) {
+    for (let i = rmsStart; i < this.buffer.length; i++) {
       sumSq += this.buffer[i] * this.buffer[i];
     }
-    const rms = Math.sqrt(sumSq / this.buffer.length);
+    const rms = Math.sqrt(sumSq / rmsWindow);
 
     return {
       samples: this.buffer,
