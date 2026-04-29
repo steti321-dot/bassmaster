@@ -21,7 +21,7 @@
   "synth_quality_simple_label": "Simple",
   "synth_quality_simple_desc": "Sintetizador integrado · sin descarga",
   "synth_quality_medium_label": "Media",
-  "synth_quality_medium_desc": "SONiVOX GM · 4 MB · instrumentos realistas",
+  "synth_quality_medium_desc": "SONiVOX GM · 1.3 MB · instrumentos realistas",
   "synth_quality_included": "Incluido · sin descarga",
   "synth_quality_high_label": "Alta",
   "synth_quality_download": "Descargar {{size}} MB",

@@ -12,8 +12,8 @@ export interface SoundFontDef {
 export const MEDIUM_SOUNDFONT: SoundFontDef = {
   key: 'sf2-sonivox',
   url: `${process.env.PUBLIC_URL || ''}/soundfont/sonivox.sf2`,
-  sizeMb: 4,
-  label: 'SONiVOX GM (4 MB)',
+  sizeMb: 1.3,
+  label: 'SONiVOX GM (1.3 MB)',
 };
 
 // Downloadable GM banks. The user picks one via a combo-box in Setup.
