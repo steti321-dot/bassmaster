@@ -15,5 +15,17 @@
   "start_mic_test": "Start",
   "stop_mic_test": "Stop",
   "default_noise_suppress": "Suppress room noise by default",
-  "default_noise_suppress_hint": "Applied to new game and tuner sessions. Each session can still toggle locally."
+  "default_noise_suppress_hint": "Applied to new game and tuner sessions. Each session can still toggle locally.",
+  "synth_quality_section": "🔊 Backing Synth Quality",
+  "synth_quality_hint": "Choose the sound quality for backing tracks. Larger soundfonts are downloaded once and cached.",
+  "synth_quality_simple_label": "Simple",
+  "synth_quality_simple_desc": "Built-in synthesizer · no download",
+  "synth_quality_medium_label": "Medium",
+  "synth_quality_medium_desc": "8 MB · Creative GM soundfont — realistic instruments",
+  "synth_quality_high_label": "High · Creative 28 MB",
+  "synth_quality_high_desc": "28 MB · Creative GM soundfont — highest quality",
+  "synth_quality_download": "Download {{size}} MB",
+  "synth_quality_downloading": "Downloading…",
+  "synth_quality_cached": "✓ Cached",
+  "synth_quality_download_error": "Download failed — try again"
 }

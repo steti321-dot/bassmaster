@@ -3,22 +3,19 @@ import ReactDOM from 'react-dom/client';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
-import HttpBackend from 'i18next-http-backend';
 import App from './App';
+import { resources } from './locales';
 
 i18n
-  .use(HttpBackend)
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
+    resources,
     fallbackLng: 'en',
     defaultNS: 'common',
-    ns: ['common', 'tuner', 'game', 'calibration', 'setup'],
+    ns: ['common', 'tuner', 'game', 'calibration', 'setup', 'music2notes'],
     nsSeparator: ':',
     keySeparator: ':',
-    backend: {
-      loadPath: './locales/{{lng}}/{{ns}}.json',
-    },
     detection: {
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
@@ -28,7 +25,8 @@ i18n
       escapeValue: false,
     },
     react: {
-      useSuspense: true,
+      // Resources are synchronous now, so Suspense isn't needed.
+      useSuspense: false,
     },
   });
 
@@ -37,8 +35,6 @@ const root = ReactDOM.createRoot(
 );
 root.render(
   <React.StrictMode>
-    <React.Suspense fallback={<div className="loading">Loading translations...</div>}>
-      <App />
-    </React.Suspense>
+    <App />
   </React.StrictMode>
 );

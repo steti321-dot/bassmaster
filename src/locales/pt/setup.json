@@ -15,5 +15,17 @@
   "start_mic_test": "Iniciar",
   "stop_mic_test": "Parar",
   "default_noise_suppress": "Suprimir ruído ambiente por padrão",
-  "default_noise_suppress_hint": "Aplicado às novas sessões de jogo e afinador. Cada sessão pode alternar localmente."
+  "default_noise_suppress_hint": "Aplicado às novas sessões de jogo e afinador. Cada sessão pode alternar localmente.",
+  "synth_quality_section": "🔊 Qualidade do sintetizador de acompanhamento",
+  "synth_quality_hint": "Escolha a qualidade de som para as faixas de acompanhamento. Soundfonts maiores são baixadas uma vez e armazenadas em cache.",
+  "synth_quality_simple_label": "Simples",
+  "synth_quality_simple_desc": "Sintetizador integrado · sem download",
+  "synth_quality_medium_label": "Médio",
+  "synth_quality_medium_desc": "8 MB · Soundfont GM Creative — instrumentos realistas",
+  "synth_quality_high_label": "Alta · Creative 28 MB",
+  "synth_quality_high_desc": "28 MB · Soundfont GM Creative — melhor qualidade",
+  "synth_quality_download": "Baixar {{size}} MB",
+  "synth_quality_downloading": "Baixando…",
+  "synth_quality_cached": "✓ Em cache",
+  "synth_quality_download_error": "Falha no download — tente novamente"
 }
