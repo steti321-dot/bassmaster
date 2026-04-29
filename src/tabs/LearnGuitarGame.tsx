@@ -97,6 +97,12 @@ export default function LearnGuitarGame() {
   scoreRef.current = score;
   const noteResultsRef = useRef<Map<number, 'hit' | 'miss'>>(noteResults);
   noteResultsRef.current = noteResults;
+  const songRef = useRef<typeof song>(null);
+  songRef.current = song;
+  const pickedFileRef = useRef<typeof pickedFile>(null);
+  pickedFileRef.current = pickedFile;
+  const enabledBackingRef = useRef(enabledBacking);
+  enabledBackingRef.current = enabledBacking;
   const nextEvalIdxRef = useRef<number>(0);
   const difficultyRef = useRef<Difficulty>(difficulty);
   difficultyRef.current = difficulty;
@@ -249,8 +255,13 @@ export default function LearnGuitarGame() {
       const next = new AlphaTabSynth(bytes);
       synthRef.current = next;
       prev.dispose();
-      // If we already have a song loaded, feed it to the new synth
-      // (handled by the song-change effect below via synthRef.current)
+      // If the song was already parsed before the soundfont finished loading,
+      // feed it to the new synth now (the song-change effect already fired).
+      const s = songRef.current;
+      const f = pickedFileRef.current;
+      if (s && f) {
+        next.loadScore?.(f.bytes, s.playerTrackIndex, enabledBackingRef.current);
+      }
     })();
   }, []); // intentionally runs once on mount
 
