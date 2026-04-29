@@ -25,7 +25,10 @@ interface CacheEntry {
 
 async function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
+    // Version 2: some users had lgg-cache upgraded to v2 by an earlier build
+    // of soundfontCache (which has since moved to its own DB). Open at v2 so
+    // existing browsers aren't hit with a VersionError downgrade.
+    const req = indexedDB.open(DB_NAME, 2);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(STORE)) {

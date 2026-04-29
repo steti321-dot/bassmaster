@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import './CalibrationWizard.css';
 import { MicCapture } from '../MicCapture';
 import { detectPolyphonicPitches } from '../PolyphonicDetectorJS';
@@ -237,9 +237,7 @@ export default function CalibrationWizard({ onApply, onClose }: Props) {
   const instrument: 'guitar' | 'bass' | 'unknown' =
     lowHz > 0 && lowHz < 62 ? 'bass' : lowHz >= 62 && lowHz < 120 ? 'guitar' : 'unknown';
 
-  const highStringLabel =
-    instrument === 'guitar' ? 'high e string (thinnest)' :
-    instrument === 'bass'   ? 'G string (thinnest)'      : 'thinnest string';
+  const highStringLabel = t(`calibration:high_string_${instrument}`);
 
   const signalPeak      = lowPeak > 0 && highPeak > 0
     ? Math.min(lowPeak, highPeak) : Math.max(lowPeak, highPeak);
@@ -288,16 +286,16 @@ export default function CalibrationWizard({ onApply, onClose }: Props) {
         {/* ── intro ── */}
         {step === 'intro' && (
           <div className="cal-body">
-            <p className="cal-lead">Let us measure your setup in 4 quick steps so the game can detect your notes reliably.</p>
+            <p className="cal-lead">{t('calibration:intro_lead')}</p>
             <ul className="cal-checklist">
-              <li>⏱ Optional tap test for latency</li>
-              <li>🔇 Measure background noise (3 s)</li>
-              <li>🎸 Play your open <strong>low E</strong> string</li>
-              <li>🎸 Play your open <strong>high string</strong></li>
+              <li>{t('calibration:intro_step1')}</li>
+              <li>{t('calibration:intro_step2')}</li>
+              <li>{t('calibration:intro_step3')}</li>
+              <li>{t('calibration:intro_step4')}</li>
             </ul>
-            <p className="cal-hint">Have your instrument in your hands. The tap test is first — then put it down briefly for the noise step.</p>
+            <p className="cal-hint">{t('calibration:intro_hint')}</p>
             <button className="cal-btn cal-btn--primary" onClick={() => setStep('tap')}>
-              Start calibration
+              {t('calibration:start_calibration')}
             </button>
           </div>
         )}
@@ -306,7 +304,7 @@ export default function CalibrationWizard({ onApply, onClose }: Props) {
         {step === 'silence' && (
           <div className="cal-body">
             <div className="cal-step-label">{t('calibration:step_2_noise_floor')}</div>
-            <p className="cal-lead">Stay quiet — don't touch your instrument.</p>
+            <p className="cal-lead">{t('calibration:silence_lead')}</p>
             <div className="cal-progress-track">
               <div className="cal-progress-bar" style={{ width: `${progress * 100}%` }} />
             </div>
@@ -319,8 +317,8 @@ export default function CalibrationWizard({ onApply, onClose }: Props) {
           <div className="cal-body">
             <div className="cal-step-label">{t('calibration:step_3_low_e')}</div>
             <p className="cal-lead">
-              Play your open <strong>low E string</strong> and hold it.
-              <br /><span className="cal-hint">Guitar: E2 (82 Hz) · Bass: E1 (41 Hz)</span>
+              <Trans i18nKey="calibration:low_lead" components={{ strong: <strong /> }} />
+              <br /><span className="cal-hint">{t('calibration:low_hint')}</span>
             </p>
             <SignalMeter rms={liveRms} noiseFloor={noiseFloor} />
             {liveHz > 0 && (
@@ -332,7 +330,7 @@ export default function CalibrationWizard({ onApply, onClose }: Props) {
               </div>
             )}
             {progress === 0 && liveRms < Math.max(noiseFloor * 4, 0.004) && (
-              <p className="cal-hint cal-hint--waiting">Waiting for signal…</p>
+              <p className="cal-hint cal-hint--waiting">{t('calibration:waiting_for_signal')}</p>
             )}
           </div>
         )}
@@ -342,15 +340,11 @@ export default function CalibrationWizard({ onApply, onClose }: Props) {
           <div className="cal-body">
             <div className="cal-step-label">{t('calibration:step_4_high_string')}</div>
             {instrument !== 'unknown' && (
-              <div className="cal-detected-badge">Detected: {instrument.toUpperCase()}</div>
+              <div className="cal-detected-badge">{t('calibration:detected_instrument', { instrument: instrument.toUpperCase() })}</div>
             )}
             <p className="cal-lead">
-              Play your open <strong>{highStringLabel}</strong> and hold it.
-              <br /><span className="cal-hint">
-                {instrument === 'guitar' ? 'Guitar: high e (E4 = 329 Hz)' :
-                 instrument === 'bass'   ? 'Bass: G string (G2 = 98 Hz)' :
-                 'Thinnest string'}
-              </span>
+              <Trans i18nKey="calibration:high_lead" values={{ string: highStringLabel }} components={{ strong: <strong /> }} />
+              <br /><span className="cal-hint">{t(`calibration:high_hint_${instrument}`)}</span>
             </p>
             <SignalMeter rms={liveRms} noiseFloor={noiseFloor} />
             {liveHz > 0 && (
@@ -362,7 +356,7 @@ export default function CalibrationWizard({ onApply, onClose }: Props) {
               </div>
             )}
             {progress === 0 && liveRms < Math.max(noiseFloor * 4, 0.004) && (
-              <p className="cal-hint cal-hint--waiting">Waiting for signal…</p>
+              <p className="cal-hint cal-hint--waiting">{t('calibration:waiting_for_signal')}</p>
             )}
           </div>
         )}
@@ -370,8 +364,8 @@ export default function CalibrationWizard({ onApply, onClose }: Props) {
         {/* ── tap ── */}
         {step === 'tap' && (
           <div className="cal-body">
-            <div className="cal-step-label">STEP 1 — LATENCY (OPTIONAL)</div>
-            <p className="cal-lead">Tap the button in time with the clicks.</p>
+            <div className="cal-step-label">{t('calibration:step_1_latency')}</div>
+            <p className="cal-lead">{t('calibration:tap_button_in_time')}</p>
             <div className="cal-tap-beats">
               {Array.from({ length: SCORED_TAPS }).map((_, i) => (
                 <div key={i} className={`cal-tap-beat ${tapBeats.includes(i) ? 'cal-tap-beat--flash' : ''} ${i < tapCount ? 'cal-tap-beat--hit' : ''}`} />
@@ -383,11 +377,11 @@ export default function CalibrationWizard({ onApply, onClose }: Props) {
               onKeyDown={(e) => { if (e.code === 'Space') { e.preventDefault(); handleTap(); } }}
               autoFocus
             >
-              TAP
+              {t('calibration:tap_btn')}
               <span className="cal-tap-count">{tapCount} / {SCORED_TAPS}</span>
             </button>
             <button className="cal-btn cal-btn--ghost" onClick={() => { setLatencyMs(0); setStep('silence'); }}>
-              Skip this step
+              {t('calibration:skip_step')}
             </button>
           </div>
         )}
@@ -395,49 +389,49 @@ export default function CalibrationWizard({ onApply, onClose }: Props) {
         {/* ── done ── */}
         {step === 'done' && (
           <div className="cal-body">
-            <div className="cal-step-label">✓ CALIBRATION COMPLETE</div>
+            <div className="cal-step-label">{t('calibration:calibration_complete')}</div>
             <table className="cal-results">
               <tbody>
                 <tr>
-                  <td>Instrument</td>
+                  <td>{t('calibration:result_instrument')}</td>
                   <td className="cal-val">{instrument === 'unknown' ? '?' : instrument.toUpperCase()}</td>
                 </tr>
                 <tr>
-                  <td>Low string</td>
+                  <td>{t('calibration:result_low_string')}</td>
                   <td className="cal-val">{freqLabel(lowHz)}</td>
                 </tr>
                 <tr>
-                  <td>High string</td>
+                  <td>{t('calibration:result_high_string')}</td>
                   <td className="cal-val">{freqLabel(highHz)}</td>
                 </tr>
                 <tr>
-                  <td>Noise floor</td>
+                  <td>{t('calibration:result_noise_floor')}</td>
                   <td className="cal-val">{(noiseFloor * 100).toFixed(2)} %</td>
                 </tr>
                 <tr>
-                  <td>Signal peak</td>
+                  <td>{t('calibration:result_signal_peak')}</td>
                   <td className="cal-val">{(signalPeak * 100).toFixed(2)} %</td>
                 </tr>
                 <tr>
-                  <td>RMS gate</td>
+                  <td>{t('calibration:result_rms_gate')}</td>
                   <td className="cal-val">{(rmsGate * 100).toFixed(2)} %</td>
                 </tr>
                 <tr>
-                  <td>Attack floor</td>
+                  <td>{t('calibration:result_attack_floor')}</td>
                   <td className="cal-val">{(attackFloor * 100).toFixed(2)} %</td>
                 </tr>
                 <tr>
-                  <td>Latency offset</td>
-                  <td className="cal-val">{latencyMs > 0 ? '+' : ''}{latencyMs} ms {latencyMs === 0 ? '(skipped)' : ''}</td>
+                  <td>{t('calibration:result_latency_offset')}</td>
+                  <td className="cal-val">{latencyMs > 0 ? '+' : ''}{latencyMs} ms {latencyMs === 0 ? t('calibration:skipped') : ''}</td>
                 </tr>
               </tbody>
             </table>
             <div className="cal-actions">
               <button className="cal-btn cal-btn--primary" onClick={handleApply}>
-                Apply &amp; save
+                {t('calibration:apply_save')}
               </button>
               <button className="cal-btn cal-btn--ghost" onClick={onClose}>
-                Cancel
+                {t('calibration:cancel')}
               </button>
             </div>
           </div>

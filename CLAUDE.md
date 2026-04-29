@@ -71,6 +71,7 @@ GH Pages auto-deploys on push to `main`. Web build excludes `Music2Notes` via `I
 - **Stripe states**: approaching (subtle) → hittable (bold + glow when head ∈ ±window OR sustain still active) → hit (green burst) / miss (red dim).
 - **Note frequencies** in `GameNote` are computed against the file's *actual tuning* (drop-D, 5-string bass, etc.) via `buildProfileFromTuning`.
 - **Look-ahead synth scheduler**: do NOT pre-schedule entire songs into Web Audio — chokes after a few thousand events. Use `BackingSynth.ts`'s 250 ms-tick lookahead.
+- **i18n is mandatory**: Every user-visible string must use `t('namespace:key')` — no hardcoded English in JSX. Locale files live in `src/locales/[lang]/[namespace].json` (en, de, fr, es, it, pt). When adding or changing any UI text, update **all 6** locale files. Use `Trans` from react-i18next for strings that contain HTML tags.
 
 ## What NOT to do
 

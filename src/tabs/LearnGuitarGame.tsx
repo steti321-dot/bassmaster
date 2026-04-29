@@ -11,8 +11,12 @@ import FretboardMini from '../game/components/FretboardMini';
 import { getInstrument, buildProfileFromTuning } from '../game/Instrument';
 import { DIFFICULTIES, INITIAL_SCORE } from '../game/types';
 import type { Song, Difficulty, ScoreState } from '../game/types';
-import { BackingSynth } from '../game/BackingSynth';
+import { SimpleSynth, AlphaTabSynth } from '../game/SynthManager';
+import type { ISynth } from '../game/SynthManager';
 import { MicCapture } from '../game/MicCapture';
+import { loadPrefs } from '../game/userPrefs';
+import { MEDIUM_SOUNDFONT, HIGH_SOUNDFONT_OPTIONS, DEFAULT_HIGH_KEY } from '../game/soundfontManifest';
+import { loadCachedSoundFont, fetchAndCacheSoundFont } from '../game/soundfontCache';
 import { detectPitch, centsBetween } from '../game/PitchDetectorJS';
 import { detectPolyphonicPitches } from '../game/PolyphonicDetectorJS';
 import { loadSettings, saveSettings } from '../game/songSettings';
@@ -21,7 +25,6 @@ import CountdownOverlay from '../game/components/CountdownOverlay';
 import ResultsScreen from '../game/components/ResultsScreen';
 import { loadCalibration } from '../game/calibration';
 import type { CalibrationData } from '../game/calibration';
-import { loadPrefs } from '../game/userPrefs';
 import type { EmbeddedAudioTrack } from '../game/extractGpAudio';
 
 type GamePhase = 'idle' | 'countdown' | 'playing' | 'paused' | 'results';
@@ -216,7 +219,38 @@ export default function LearnGuitarGame() {
   const animationRef = useRef<number | null>(null);
   const playbackRateRef = useRef<number>(1.0);
   playbackRateRef.current = playbackRate;
-  const synthRef = useRef<BackingSynth>(new BackingSynth());
+  const synthRef = useRef<ISynth>(new SimpleSynth());
+
+  // On mount: if the user has a non-simple quality saved and the soundfont is
+  // cached, swap to AlphaTabSynth. Only on mount — quality changes take effect
+  // on the next tab visit.
+  useEffect(() => {
+    const prefs = loadPrefs();
+    const q = prefs.synthQuality;
+    if (q === 'simple') return;
+
+    (async () => {
+      let bytes: Uint8Array | null = null;
+      if (q === 'medium') {
+        bytes = await loadCachedSoundFont(MEDIUM_SOUNDFONT.key);
+        if (!bytes) {
+          // SONiVOX is bundled by the webpack plugin — auto-fetch on first use.
+          try { bytes = await fetchAndCacheSoundFont(MEDIUM_SOUNDFONT.key, MEDIUM_SOUNDFONT.url, () => {}); }
+          catch { return; }
+        }
+      } else {
+        const key = loadPrefs().highSoundFontKey || DEFAULT_HIGH_KEY;
+        bytes = await loadCachedSoundFont(key);
+        if (!bytes) return; // user must explicitly download high-tier fonts
+      }
+      const prev = synthRef.current;
+      const next = new AlphaTabSynth(bytes);
+      synthRef.current = next;
+      prev.dispose();
+      // If we already have a song loaded, feed it to the new synth
+      // (handled by the song-change effect below via synthRef.current)
+    })();
+  }, []); // intentionally runs once on mount
 
   // Keep synth's volume / mute settings in sync with state
   useEffect(() => {
@@ -228,8 +262,7 @@ export default function LearnGuitarGame() {
 
   // Tear down the audio context when the tab unmounts
   useEffect(() => {
-    const synth = synthRef.current;
-    return () => synth.dispose();
+    return () => synthRef.current.dispose();
   }, []);
 
   // Set up / tear down the HTMLAudioElement when embedded audio changes.
@@ -250,6 +283,20 @@ export default function LearnGuitarGame() {
     if (!el) return;
     el.volume = backingMuted ? 0 : backingVolume;
   }, [backingVolume, backingMuted]);
+
+  // For alphaSynth quality: load the GP file into the synth whenever the
+  // song changes. For SimpleSynth this is a no-op (loadScore is undefined).
+  useEffect(() => {
+    if (!song || !pickedFile) return;
+    console.log('[LGG] loadScore effect — synth has loadScore:', !!synthRef.current.loadScore);
+    synthRef.current.loadScore?.(pickedFile.bytes, song.playerTrackIndex, enabledBacking);
+  }, [song]); // re-load when a new song is picked; backing changes handled below
+
+  // Update track muting in the alphaSynth when the user changes backing selection.
+  useEffect(() => {
+    if (!song) return;
+    synthRef.current.setBackingConfig?.(song.playerTrackIndex, enabledBacking);
+  }, [song, enabledBacking]);
 
   // Kids mode: derive a simplified note stream (chord reduction + 0–5 fret
   // remap) from the player track. The same array drives display AND scoring,

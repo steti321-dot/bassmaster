@@ -4,15 +4,25 @@
  * this file is for everything else that's app-wide rather than per-song.
  */
 
+import type { SynthQuality } from './soundfontManifest';
+import { DEFAULT_HIGH_KEY } from './soundfontManifest';
+
 export interface UserPrefs {
   /** Default value for the noise-suppression toggle in new game/tuner sessions. */
   noiseSuppressDefault: boolean;
+  /** Backing-track synthesizer quality. 'simple' = built-in oscillators (default).
+   *  'medium' = SONiVOX (bundled). 'high' = user-selected downloadable SF2. */
+  synthQuality: SynthQuality;
+  /** Key of the selected downloadable SF2 for the 'high' quality tier. */
+  highSoundFontKey: string;
 }
 
 const KEY = 'bassmaster_prefs_v1';
 
 const DEFAULTS: UserPrefs = {
   noiseSuppressDefault: false,
+  synthQuality: 'simple',
+  highSoundFontKey: DEFAULT_HIGH_KEY,
 };
 
 export function loadPrefs(): UserPrefs {

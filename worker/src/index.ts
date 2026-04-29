@@ -62,6 +62,8 @@ async function handleProxy(request: Request, url: URL): Promise<Response> {
   });
   const cd = upstream.headers.get('content-disposition');
   if (cd) (headers as Record<string, string>)['Content-Disposition'] = cd;
+  const cl = upstream.headers.get('content-length');
+  if (cl) (headers as Record<string, string>)['Content-Length'] = cl;
 
   return new Response(upstream.body, { status: 200, headers });
 }
