@@ -62,6 +62,8 @@ export class AlphaTabSynth implements ISynth {
   private muted = false;
   private playerTrackIdx = 0;
   private backingSet = new Set<number>();
+  /** Saved args from start() called before sfReady — replayed when SF loads. */
+  private pendingPlay: { tracks: BackingTrack[]; fromMs: number; rate: number } | null = null;
 
   constructor(sf2Bytes: Uint8Array) {
     console.log(`[AT] constructor sf2=${sf2Bytes.byteLength}`);
@@ -92,6 +94,12 @@ export class AlphaTabSynth implements ISynth {
       this.api.soundFontLoaded.on(() => {
         console.log('[AT] soundFontLoaded ✓');
         this.sfReady = true;
+        if (this.pendingPlay && this.scoreReady) {
+          const p = this.pendingPlay;
+          this.pendingPlay = null;
+          this.fallback.stop();
+          this.start(p.tracks, p.fromMs, p.rate);
+        }
       });
       this.api.scoreLoaded.on(() => {
         console.log('[AT] scoreLoaded ✓');
@@ -100,6 +108,9 @@ export class AlphaTabSynth implements ISynth {
       });
       this.api.error.on((e: any) => {
         console.error('[AT] api.error:', e);
+      });
+      (this.api as any).playerStateChanged?.on?.((s: any) => {
+        console.log('[AT] playerState:', s?.state ?? s);
       });
     } catch (e) {
       console.error('[AT] init failed:', e);
@@ -122,7 +133,12 @@ export class AlphaTabSynth implements ISynth {
   start(tracks: BackingTrack[], fromMs: number, rate: number): void {
     console.log(`[AT] start sfReady=${this.sfReady} scoreReady=${this.scoreReady} fromMs=${fromMs}`);
     if (!this.api || !this.sfReady || !this.scoreReady) {
-      // No GP score loaded (e.g. demo songs) — fall back to oscillator synth.
+      if (this.api && this.scoreReady && !this.sfReady) {
+        // Score ready but soundfont still loading — queue for when SF finishes.
+        console.log('[AT] sfReady=false, queuing play until soundFontLoaded');
+        this.pendingPlay = { tracks, fromMs, rate };
+      }
+      // Fall back to oscillator (demo songs, or SF genuinely unavailable).
       this.fallback.start(tracks, fromMs, rate);
       return;
     }
@@ -147,6 +163,7 @@ export class AlphaTabSynth implements ISynth {
   }
 
   stop(): void {
+    this.pendingPlay = null;
     this.fallback.stop();
     if (!this.api) return;
     try { this.api.pause(); } catch {
