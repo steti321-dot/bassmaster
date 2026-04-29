@@ -5,8 +5,9 @@ import LearnGuitarGame from './tabs/LearnGuitarGame';
 import Tuner from './tabs/Tuner';
 import Setup from './tabs/Setup';
 import About from './tabs/About';
+import Start from './tabs/Start';
 
-type Tab = 'music2notes' | 'tuner' | 'setup' | 'learn-guitar' | 'about';
+type Tab = 'start' | 'music2notes' | 'tuner' | 'setup' | 'learn-guitar' | 'about';
 
 // Audio-to-Notes is Electron-only (Rust transcribe binary + yt-dlp). When the
 // app is built for the web (REACT_APP_BUILD_TARGET=web), we skip it entirely
@@ -46,7 +47,7 @@ async function handleShare(linkCopiedMsg: string) {
 export default function App() {
   const { t } = useTranslation(['common']);
   const [activeTab, setActiveTab] = useState<Tab>(
-    IS_WEB_BUILD ? 'learn-guitar' : 'music2notes',
+    IS_WEB_BUILD ? 'start' : 'music2notes',
   );
 
   return (
@@ -55,6 +56,14 @@ export default function App() {
         <div className="app-header-content">
           <h1>🎸 Bassmaster Workbench</h1>
           <nav className="app-tabs">
+            {IS_WEB_BUILD && (
+              <button
+                className={`tab-btn ${activeTab === 'start' ? 'active' : ''}`}
+                onClick={() => setActiveTab('start')}
+              >
+                {t('common:tab_start')}
+              </button>
+            )}
             {!IS_WEB_BUILD && (
               <button
                 className={`tab-btn ${activeTab === 'music2notes' ? 'active' : ''}`}
@@ -94,6 +103,9 @@ export default function App() {
       </header>
 
       <main className="app-main">
+        {IS_WEB_BUILD && activeTab === 'start' && (
+          <Start onNavigate={(tab) => setActiveTab(tab)} />
+        )}
         {!IS_WEB_BUILD && activeTab === 'music2notes' && Music2Notes && (
           <Suspense fallback={<div className="processing">Loading…</div>}>
             <Music2Notes />

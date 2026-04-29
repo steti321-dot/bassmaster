@@ -21,5 +21,11 @@
   "mic_ready": "⚪ mic ready",
   "mic_off": "⚫ mic off",
   "draggable_seek": "Drag to seek",
-  "upcoming_chord": "Upcoming chord"
+  "upcoming_chord": "Upcoming chord",
+  "start_step1": "Tune your bass or guitar before you play",
+  "start_step2": "Calibrate your mic — set sensitivity and audio latency",
+  "start_step3": "Search and load any Guitar Pro tab",
+  "start_step4": "Play along — your mic scores every note in real time",
+  "start_cta": "Get Started",
+  "start_skip": "Click anywhere to skip"
 }

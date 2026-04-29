@@ -21,5 +21,11 @@
   "mic_ready": "⚪ Mikrofon bereit",
   "mic_off": "⚫ Mikrofon aus",
   "draggable_seek": "Zum Spulen ziehen",
-  "upcoming_chord": "Nächster Akkord"
+  "upcoming_chord": "Nächster Akkord",
+  "start_step1": "Stimme deine Gitarre oder Bass bevor du spielst",
+  "start_step2": "Kalibriere dein Mikrofon — Empfindlichkeit und Latenz einstellen",
+  "start_step3": "Suche und lade ein Guitar-Pro-Tab",
+  "start_step4": "Spiel mit — dein Mikrofon bewertet jede Note in Echtzeit",
+  "start_cta": "Loslegen",
+  "start_skip": "Klicken zum Überspringen"
 }

@@ -21,5 +21,11 @@
   "mic_ready": "⚪ micro prêt",
   "mic_off": "⚫ micro éteint",
   "draggable_seek": "Glisser pour avancer",
-  "upcoming_chord": "Prochain accord"
+  "upcoming_chord": "Prochain accord",
+  "start_step1": "Accordez votre guitare ou basse avant de jouer",
+  "start_step2": "Calibrez votre micro — sensibilité et latence audio",
+  "start_step3": "Recherchez et chargez n'importe quel tab Guitar Pro",
+  "start_step4": "Jouez — votre micro note chaque note en temps réel",
+  "start_cta": "Commencer",
+  "start_skip": "Cliquez pour passer"
 }
