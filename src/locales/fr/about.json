@@ -1,0 +1,20 @@
+{
+  "title": "À propos",
+  "version_section": "Version",
+  "build_web": "Version web",
+  "build_desktop": "Version bureau",
+  "libraries_section": "Bibliothèques tierces",
+  "license_col": "Licence",
+  "description_col": "Description",
+  "electron_only": "Bureau uniquement",
+  "lib_alphatab_desc": "Rendu de partitions et lecture alphaSynth",
+  "lib_react_desc": "Framework d'interface utilisateur",
+  "lib_i18next_desc": "Internationalisation",
+  "lib_basicpitch_desc": "Détection de hauteur audio",
+  "lib_ffmpeg_desc": "Transcodage audio",
+  "lib_ytdlp_desc": "Téléchargements audio YouTube",
+  "lib_bravura_desc": "Police de notation musicale (via alphaTab)",
+  "thanks_section": "Remerciements spéciaux",
+  "thanks_gprotab": "Immense bibliothèque de tablatures GP gratuites",
+  "thanks_guitarpro": "Le format de fichier GP qui rend cette application possible"
+}

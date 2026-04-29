@@ -4,8 +4,9 @@ import './App.css';
 import LearnGuitarGame from './tabs/LearnGuitarGame';
 import Tuner from './tabs/Tuner';
 import Setup from './tabs/Setup';
+import About from './tabs/About';
 
-type Tab = 'music2notes' | 'tuner' | 'setup' | 'learn-guitar';
+type Tab = 'music2notes' | 'tuner' | 'setup' | 'learn-guitar' | 'about';
 
 // Audio-to-Notes is Electron-only (Rust transcribe binary + yt-dlp). When the
 // app is built for the web (REACT_APP_BUILD_TARGET=web), we skip it entirely
@@ -82,6 +83,12 @@ export default function App() {
             >
               {t('common:tab_learn_guitar')}
             </button>
+            <button
+              className={`tab-btn ${activeTab === 'about' ? 'active' : ''}`}
+              onClick={() => setActiveTab('about')}
+            >
+              {t('common:tab_about')}
+            </button>
           </nav>
         </div>
       </header>
@@ -95,6 +102,7 @@ export default function App() {
         {activeTab === 'tuner' && <Tuner />}
         {activeTab === 'setup' && <Setup />}
         {activeTab === 'learn-guitar' && <LearnGuitarGame />}
+        {activeTab === 'about' && <About />}
       </main>
 
       <footer className="app-footer">

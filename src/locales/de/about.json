@@ -1,0 +1,20 @@
+{
+  "title": "Über",
+  "version_section": "Version",
+  "build_web": "Web-Version",
+  "build_desktop": "Desktop-Version",
+  "libraries_section": "Drittanbieter-Bibliotheken",
+  "license_col": "Lizenz",
+  "description_col": "Beschreibung",
+  "electron_only": "Nur Desktop",
+  "lib_alphatab_desc": "Notendarstellung und alphaSynth-Wiedergabe",
+  "lib_react_desc": "Benutzeroberflächen-Framework",
+  "lib_i18next_desc": "Internationalisierung",
+  "lib_basicpitch_desc": "Audio-Tonhöhenerkennung",
+  "lib_ffmpeg_desc": "Audio-Transkodierung",
+  "lib_ytdlp_desc": "YouTube-Audio-Downloads",
+  "lib_bravura_desc": "Musiknotenschrift (über alphaTab)",
+  "thanks_section": "Besonderer Dank",
+  "thanks_gprotab": "Riesige Bibliothek kostenloser GP-Tabulaturen",
+  "thanks_guitarpro": "Das GP-Dateiformat, das diese App ermöglicht"
+}

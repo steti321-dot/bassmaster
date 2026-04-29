@@ -1,0 +1,20 @@
+{
+  "title": "About",
+  "version_section": "Version",
+  "build_web": "Web build",
+  "build_desktop": "Desktop build",
+  "libraries_section": "Third-party libraries",
+  "license_col": "License",
+  "description_col": "Description",
+  "electron_only": "Desktop only",
+  "lib_alphatab_desc": "Music notation rendering and alphaSynth playback",
+  "lib_react_desc": "User interface framework",
+  "lib_i18next_desc": "Internationalisation",
+  "lib_basicpitch_desc": "Audio pitch detection",
+  "lib_ffmpeg_desc": "Audio transcoding",
+  "lib_ytdlp_desc": "YouTube audio downloads",
+  "lib_bravura_desc": "Music notation font (via alphaTab)",
+  "thanks_section": "Special thanks",
+  "thanks_gprotab": "Huge library of free GP tablatures",
+  "thanks_guitarpro": "The GP file format that makes this app possible"
+}

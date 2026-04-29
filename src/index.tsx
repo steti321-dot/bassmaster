@@ -13,7 +13,7 @@ i18n
     resources,
     fallbackLng: 'en',
     defaultNS: 'common',
-    ns: ['common', 'tuner', 'game', 'calibration', 'setup', 'music2notes'],
+    ns: ['common', 'tuner', 'game', 'calibration', 'setup', 'music2notes', 'about'],
     nsSeparator: ':',
     keySeparator: ':',
     detection: {

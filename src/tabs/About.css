@@ -1,0 +1,136 @@
+.about-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-height: 0;
+  padding: 20px 16px;
+  overflow-y: auto;
+}
+
+.about-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(640px, 96vw);
+}
+
+.about-card {
+  background: var(--cy-bg-card);
+  border: 1px solid var(--cy-border);
+  border-top: 2px solid var(--cy-cyan);
+  border-radius: 6px;
+  padding: 20px 24px;
+  box-shadow:
+    0 0 18px rgba(0, 245, 255, 0.12),
+    inset 0 0 40px rgba(0, 245, 255, 0.03);
+}
+
+.about-card-title {
+  margin: 0 0 10px;
+  font-size: 1.25rem;
+  letter-spacing: 0.08em;
+  color: var(--cy-cyan);
+  text-shadow: 0 0 12px rgba(0, 245, 255, 0.55);
+}
+
+.about-version-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.about-version {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.04em;
+}
+
+.about-build-badge {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(0, 245, 255, 0.12);
+  border: 1px solid var(--cy-cyan);
+  color: var(--cy-cyan);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.about-section-title {
+  margin: 0 0 14px;
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cy-cyan);
+  opacity: 0.85;
+}
+
+.about-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.about-table thead tr {
+  border-bottom: 1px solid var(--cy-border);
+}
+
+.about-th {
+  text-align: left;
+  padding: 4px 10px 8px 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 400;
+}
+
+.about-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.about-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.about-lib-name {
+  padding: 8px 12px 8px 0;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.about-lib-name a {
+  color: var(--cy-cyan);
+  text-decoration: none;
+}
+
+.about-lib-name a:hover {
+  text-decoration: underline;
+}
+
+.about-lib-license {
+  padding: 8px 12px 8px 0;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.82rem;
+}
+
+.about-lib-desc {
+  padding: 8px 0;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.about-electron-badge {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: rgba(255, 200, 0, 0.1);
+  border: 1px solid rgba(255, 200, 0, 0.4);
+  color: rgba(255, 200, 0, 0.8);
+  vertical-align: middle;
+  letter-spacing: 0.04em;
+}

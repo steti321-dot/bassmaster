@@ -1,0 +1,20 @@
+{
+  "title": "Acerca de",
+  "version_section": "Versión",
+  "build_web": "Versión web",
+  "build_desktop": "Versión escritorio",
+  "libraries_section": "Bibliotecas de terceros",
+  "license_col": "Licencia",
+  "description_col": "Descripción",
+  "electron_only": "Solo escritorio",
+  "lib_alphatab_desc": "Renderizado de partituras y reproducción alphaSynth",
+  "lib_react_desc": "Framework de interfaz de usuario",
+  "lib_i18next_desc": "Internacionalización",
+  "lib_basicpitch_desc": "Detección de tono de audio",
+  "lib_ffmpeg_desc": "Transcodificación de audio",
+  "lib_ytdlp_desc": "Descargas de audio de YouTube",
+  "lib_bravura_desc": "Fuente de notación musical (vía alphaTab)",
+  "thanks_section": "Agradecimientos especiales",
+  "thanks_gprotab": "Enorme biblioteca de tablaturas GP gratuitas",
+  "thanks_guitarpro": "El formato de archivo GP que hace posible esta aplicación"
+}
