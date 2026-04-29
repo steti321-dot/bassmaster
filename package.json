@@ -15,7 +15,7 @@
     "build:renderer": "craco build",
     "build:electron": "tsc -p tsconfig.electron.json",
     "build:wasm": "wasm-pack build src-wasm --target web --release",
-    "build:web": "cross-env REACT_APP_BUILD_TARGET=web PUBLIC_URL=. craco build",
+    "build:web": "cross-env REACT_APP_BUILD_TARGET=web craco build",
     "deploy:worker": "cd worker && npx wrangler deploy",
     "test": "craco test",
     "eject": "react-scripts eject"
