@@ -117,8 +117,7 @@ export default function Start({ onNavigate }: StartProps) {
     return () => {
       cancelRef.current = true;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // intentionally empty — animation runs once on mount
 
   // Skip — show everything instantly
   const skip = () => {
