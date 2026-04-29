@@ -14,8 +14,6 @@ import type { GameNote } from './types';
 import type { InstrumentKind } from './Instrument';
 import { BackingSynth } from './BackingSynth';
 
-const DEV = process.env.NODE_ENV === 'development';
-
 export type BackingTrack = { notes: GameNote[]; instrument: InstrumentKind; isDrums?: boolean };
 
 export interface ISynth {
@@ -66,7 +64,7 @@ export class AlphaTabSynth implements ISynth {
   private backingSet = new Set<number>();
 
   constructor(sf2Bytes: Uint8Array) {
-    DEV && console.log(`[AT] constructor sf2=${sf2Bytes.byteLength}`);
+    console.log(`[AT] constructor sf2=${sf2Bytes.byteLength}`);
     const blob = new Blob([sf2Bytes.buffer as ArrayBuffer], { type: 'application/octet-stream' });
     this.objectUrl = URL.createObjectURL(blob);
 
@@ -80,13 +78,9 @@ export class AlphaTabSynth implements ISynth {
       // The @coderline/alphatab-webpack plugin copies Bravura to <publicUrl>/font/.
       // alphaTab doesn't auto-detect this path, so we point it explicitly.
       const fontDir = (process.env.PUBLIC_URL || '') + '/font/';
-      DEV && console.log(`[AT] fontDir=${fontDir}`);
+      console.log(`[AT] fontDir=${fontDir}`);
       this.api = new alphaTab.AlphaTabApi(this.container, {
-        core: {
-          logLevel: alphaTab.LogLevel.Warning,
-          fontDirectory: fontDir,
-          useWorkers: false,
-        },
+        core: { logLevel: alphaTab.LogLevel.Warning, fontDirectory: fontDir },
         player: {
           enablePlayer: true,
           soundFont: this.objectUrl,
@@ -96,11 +90,11 @@ export class AlphaTabSynth implements ISynth {
       });
 
       this.api.soundFontLoaded.on(() => {
-        DEV && console.log('[AT] soundFontLoaded ✓');
+        console.log('[AT] soundFontLoaded ✓');
         this.sfReady = true;
       });
       this.api.scoreLoaded.on(() => {
-        DEV && console.log('[AT] scoreLoaded ✓');
+        console.log('[AT] scoreLoaded ✓');
         this.scoreReady = true;
         this.applyTrackMuting();
       });
@@ -126,7 +120,7 @@ export class AlphaTabSynth implements ISynth {
   getContext(): AudioContext | null { return this.ctx; }
 
   start(tracks: BackingTrack[], fromMs: number, rate: number): void {
-    DEV && console.log(`[AT] start sfReady=${this.sfReady} scoreReady=${this.scoreReady} fromMs=${fromMs}`);
+    console.log(`[AT] start sfReady=${this.sfReady} scoreReady=${this.scoreReady} fromMs=${fromMs}`);
     if (!this.api || !this.sfReady || !this.scoreReady) {
       // No GP score loaded (e.g. demo songs) — fall back to oscillator synth.
       this.fallback.start(tracks, fromMs, rate);
@@ -187,7 +181,7 @@ export class AlphaTabSynth implements ISynth {
   // ── AlphaTabSynth-specific ───────────────────────────────────────────────
 
   loadScore(bytes: Uint8Array, playerTrackIdx: number, backingSet: Set<number>): void {
-    DEV && console.log(`[AT] loadScore bytes=${bytes.byteLength} playerTrack=${playerTrackIdx} backing=${[...backingSet]}`);
+    console.log(`[AT] loadScore bytes=${bytes.byteLength} playerTrack=${playerTrackIdx} backing=${[...backingSet]}`);
     if (!this.api) return;
     this.scoreReady = false;
     this.playerTrackIdx = playerTrackIdx;
@@ -208,7 +202,7 @@ export class AlphaTabSynth implements ISynth {
     const tracks = this.api.score.tracks;
     for (let i = 0; i < tracks.length; i++) {
       // Play only backing tracks; mute the player's own track.
-      const shouldPlay = this.backingSet.has(i) && i !== this.playerTrackIdx;
+      const shouldPlay = this.backingSet.has(i);
       try { this.api.changeTrackMute([tracks[i]], !shouldPlay); } catch {}
     }
   }

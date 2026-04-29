@@ -8,7 +8,7 @@ export interface SoundFontDef {
 }
 
 // SONiVOX — ships inside @coderline/alphatab and is copied to /soundfont/ by
-// the alphatab-webpack plugin. Always available; auto-fetched on first use.
+// the alphatab-webpack plugin. Always available; no download needed.
 export const MEDIUM_SOUNDFONT: SoundFontDef = {
   key: 'sf2-sonivox',
   url: `${process.env.PUBLIC_URL || ''}/soundfont/sonivox.sf2`,

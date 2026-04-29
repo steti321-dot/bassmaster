@@ -237,6 +237,7 @@ export default function LearnGuitarGame() {
     const q = prefs.synthQuality;
     if (q === 'simple') return;
 
+    let cancelled = false;
     (async () => {
       let bytes: Uint8Array | null = null;
       if (q === 'medium') {
@@ -251,6 +252,8 @@ export default function LearnGuitarGame() {
         bytes = await loadCachedSoundFont(key);
         if (!bytes) return; // user must explicitly download high-tier fonts
       }
+      // React StrictMode runs effects twice; bail if cleanup already fired.
+      if (cancelled) return;
       const prev = synthRef.current;
       const next = new AlphaTabSynth(bytes);
       synthRef.current = next;
@@ -263,6 +266,7 @@ export default function LearnGuitarGame() {
         next.loadScore?.(f.bytes, s.playerTrackIndex, enabledBackingRef.current);
       }
     })();
+    return () => { cancelled = true; };
   }, []); // intentionally runs once on mount
 
   // Keep synth's volume / mute settings in sync with state
@@ -302,7 +306,7 @@ export default function LearnGuitarGame() {
   useEffect(() => {
     if (!song || !pickedFile) return;
     DEV && console.log('[LGG] loadScore effect — synth has loadScore:', !!synthRef.current.loadScore);
-    synthRef.current.loadScore?.(pickedFile.bytes, song.playerTrackIndex, enabledBacking);
+    synthRef.current.loadScore?.(pickedFile.bytes, song.playerTrackIndex, new Set(song.backingEnabled));
   }, [song]); // re-load when a new song is picked; backing changes handled below
 
   // Update track muting in the alphaSynth when the user changes backing selection.
