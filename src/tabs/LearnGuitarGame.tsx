@@ -27,6 +27,8 @@ import { loadCalibration } from '../game/calibration';
 import type { CalibrationData } from '../game/calibration';
 import type { EmbeddedAudioTrack } from '../game/extractGpAudio';
 
+const DEV = process.env.NODE_ENV === 'development';
+
 type GamePhase = 'idle' | 'countdown' | 'playing' | 'paused' | 'results';
 
 const NOTE_NAMES_DBG = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
@@ -288,7 +290,7 @@ export default function LearnGuitarGame() {
   // song changes. For SimpleSynth this is a no-op (loadScore is undefined).
   useEffect(() => {
     if (!song || !pickedFile) return;
-    console.log('[LGG] loadScore effect — synth has loadScore:', !!synthRef.current.loadScore);
+    DEV && console.log('[LGG] loadScore effect — synth has loadScore:', !!synthRef.current.loadScore);
     synthRef.current.loadScore?.(pickedFile.bytes, song.playerTrackIndex, enabledBacking);
   }, [song]); // re-load when a new song is picked; backing changes handled below
 
@@ -472,7 +474,7 @@ export default function LearnGuitarGame() {
             : detectedPitches.map(p =>
                 `${freqToNoteName(p.frequency)}(${p.frequency.toFixed(0)}Hz,${(p.confidence * 100).toFixed(0)}%)`
               ).join(' ');
-          console.log(`[MIC] ${gateStr} ${rmsStr}${refStr} → ${pitchStr}`);
+          DEV && console.log(`[MIC] ${gateStr} ${rmsStr}${refStr} → ${pitchStr}`);
         }
 
         // Walk forward over upcoming notes, scoring within timing window
@@ -518,7 +520,7 @@ export default function LearnGuitarGame() {
             // The gate was protecting this note; it's resolved now, so open
             // up immediately so the next note's pluck is detectable.
             requireSilenceRef.current = false;
-            console.log(`[MISS] note#${i} ${freqToNoteName(n.frequency)}(${n.frequency.toFixed(0)}Hz) dt=${dt.toFixed(0)}ms lateLimit=${lateLimit.toFixed(0)}ms`);
+            DEV && console.log(`[MISS] note#${i} ${freqToNoteName(n.frequency)}(${n.frequency.toFixed(0)}Hz) dt=${dt.toFixed(0)}ms lateLimit=${lateLimit.toFixed(0)}ms`);
             continue;
           }
 
@@ -567,7 +569,7 @@ export default function LearnGuitarGame() {
                 hitAtRef.current.set(hitIdx, now);
                 anyHitThisFrame = true;
                 const hn = displayedNotes[hitIdx];
-                console.log(`[HIT]  note#${hitIdx} ${freqToNoteName(hn.frequency)}(${hn.frequency.toFixed(0)}Hz) detected@${detectedFreq.toFixed(0)}Hz ±${bestMatchCents.toFixed(0)}¢`);
+                DEV && console.log(`[HIT]  note#${hitIdx} ${freqToNoteName(hn.frequency)}(${hn.frequency.toFixed(0)}Hz) detected@${detectedFreq.toFixed(0)}Hz ±${bestMatchCents.toFixed(0)}¢`);
               }
             }
             // Attack detection/refractory applies only to the first pitch
