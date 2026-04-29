@@ -80,7 +80,11 @@ export class AlphaTabSynth implements ISynth {
       const fontDir = (process.env.PUBLIC_URL || '') + '/font/';
       console.log(`[AT] fontDir=${fontDir}`);
       this.api = new alphaTab.AlphaTabApi(this.container, {
-        core: { logLevel: alphaTab.LogLevel.Warning, fontDirectory: fontDir },
+        core: {
+          logLevel: alphaTab.LogLevel.Warning,
+          fontDirectory: fontDir,
+          useWorkers: false,
+        },
         player: {
           enablePlayer: true,
           soundFont: this.objectUrl,
