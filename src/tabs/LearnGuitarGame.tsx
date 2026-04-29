@@ -258,6 +258,11 @@ export default function LearnGuitarGame() {
       const next = new AlphaTabSynth(bytes);
       synthRef.current = next;
       prev.dispose();
+      // Pre-initialise the AudioContext so getContext() is non-null immediately.
+      // Without this, if the synth swaps between handlePlay's warmUp() call and
+      // React's re-render, the countdown condition (which checks getContext())
+      // evaluates false and the countdown never shows on the first play.
+      next.warmUp();
       // If the song was already parsed before the soundfont finished loading,
       // feed it to the new synth now (the song-change effect already fired).
       const s = songRef.current;
