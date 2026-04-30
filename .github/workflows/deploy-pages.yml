@@ -40,20 +40,17 @@ jobs:
 
       - name: Install dependencies
         # `--ignore-scripts` skips the postinstall yt-dlp setup — that script
-        # downloads a Windows binary which we don't need in the web bundle
+        # downloads a Windows binary we don't need in the web bundle
         # (Audio-to-Notes tab is excluded from REACT_APP_BUILD_TARGET=web).
-        # `--legacy-peer-deps` because react-scripts@5.0.1 ships with stale
-        # peer-dep ranges (TypeScript >=2.7 < anything modern); the same flag
-        # is needed when installing alphatab locally.
-        run: npm ci --ignore-scripts --legacy-peer-deps
+        # We dropped `--legacy-peer-deps` after the Vite migration; the modern
+        # peer-dep tree resolves cleanly on its own.
+        run: npm ci --ignore-scripts
 
       - name: Build web bundle
         env:
           REACT_APP_PROXY_BASE: ${{ secrets.PROXY_BASE_URL }}
-          # CRA treats warnings as errors in CI by default — flip to keep
-          # a few unused-imports from breaking the deploy.
-          CI: 'false'
-        # `build:web` sets REACT_APP_BUILD_TARGET=web and PUBLIC_URL=. itself.
+        # `build:web` sets REACT_APP_BUILD_TARGET=web and runs `vite build`.
+        # vite.config.ts then derives base = '/bassmaster/' for GH Pages.
         run: npm run build:web
 
       - name: Setup Pages

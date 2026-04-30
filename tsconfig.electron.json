@@ -12,6 +12,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "noEmit": false,
+    "isolatedModules": false,
+    "types": [],
     "outDir": "./dist",
     "baseUrl": "./src"
   },

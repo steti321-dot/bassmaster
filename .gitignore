@@ -1,6 +1,17 @@
 node_modules/
 dist/
 build/
+
+# Vite caches
+.vite/
+*.local
+
+# alphaTab-vite stages font + soundfont under public/ during build —
+# they're copied from node_modules at build time, not source assets.
+public/font/
+public/soundfont/
+public/alphatab/
+
 .DS_Store
 *.swp
 *.swo

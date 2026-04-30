@@ -52,7 +52,7 @@ scripts/extract-gp-track.mjs  Tool for adding new built-in songs from any GP fil
 ## Build &amp; deploy
 
 ```bash
-npm run dev            # Electron dev (renderer at :3000 + Electron window)
+npm run dev            # Electron dev (Vite renderer on :3000 + Electron window)
 npm run build          # Electron production
 npm run build:web      # static SPA for GH Pages (sets REACT_APP_BUILD_TARGET=web)
 npm run deploy:worker  # Cloudflare Worker (cd worker && wrangler deploy)
@@ -60,7 +60,7 @@ npm run deploy:worker  # Cloudflare Worker (cd worker && wrangler deploy)
 
 GH Pages auto-deploys on push to `main`. Web build excludes `Music2Notes` via `IS_WEB_BUILD = process.env.REACT_APP_BUILD_TARGET === 'web'` in `App.tsx` (lazy import + tab hidden).
 
-`npm install` always needs `--legacy-peer-deps` because react-scripts 5.0.1 has stale peer-dep declarations vs TypeScript 5.x. Vite migration is on the roadmap.
+**Vite, not CRA** — `vite.config.ts` plus `@coderline/alphatab-vite` replaces the old `react-scripts` + `craco` + `@coderline/alphatab-webpack` stack (migrated 2026-04). The `define` block in `vite.config.ts` keeps `process.env.REACT_APP_*` working verbatim, so source code didn't have to change. `base` is derived per build target: `'/bassmaster/'` for the web build, `'./'` for Electron. `npm install` no longer needs `--legacy-peer-deps`. Dev server boots in ~350 ms; production build in ~8 s (was ~60 s).
 
 ## Active conventions
 
@@ -77,6 +77,7 @@ GH Pages auto-deploys on push to `main`. Web build excludes `Music2Notes` via `I
 
 - **No Python anywhere** in the project stack. Rust / Node / C++ / WASM only. Don't even use pip for tooling. (See `feedback_no_python.md`.)
 - **Don't commit without explicit user approval.** When the user asks for a change, build + verify first; only commit when they say so or it's clearly the natural end of an iteration.
+- **Don't bump the version (`npm version …`) or push to upstream automatically.** Both are user-only actions — even when iterating quickly, wait for an explicit "bump and deploy" / "push" / "deploy" instruction. Auto-mode iteration must stay local-only until the user signs off.
 - **Don't push if the working copy has secrets**. We've already had one Cloudflare API token leak via `.claude/settings.local.json`; it's now gitignored. Watch for token-shaped strings before staging.
 - **Don't pre-schedule full-song audio**. See above — use the look-ahead pattern.
 
@@ -84,9 +85,8 @@ GH Pages auto-deploys on push to `main`. Web build excludes `Music2Notes` via `I
 
 1. **Polyphonic chord recognition** — biggest UX gap. Current YIN is monophonic, so strummed chords need N plucks to score. Candidate: FFT peak-picking, or run Spotify Basic Pitch incrementally.
 2. **Strum vs pick discrimination** — RMS-envelope shape analysis so a strum can score a whole chord at once (vs. accidentally registering only one tone).
-3. **Vite migration** off CRA — see `project_vite_migration.md`.
-4. Session replays, shareable song URLs, opt-in cloud song library.
-5. More chord-policy refinements (sus → suspended tone, V7→I leading-tone, jazz extensions).
+3. Session replays, shareable song URLs, opt-in cloud song library.
+4. More chord-policy refinements (sus → suspended tone, V7→I leading-tone, jazz extensions).
 
 ## Memory cross-refs (user-level)
 
@@ -94,4 +94,4 @@ GH Pages auto-deploys on push to `main`. Web build excludes `Music2Notes` via `I
 - `project_bun_available.md` — pass `--js-runtimes bun` to yt-dlp to silence warnings
 - `project_kids_mode_chord_policy.md` — ✅ shipped, current power/full/no-5th policy
 - `project_kids_mode_string_smoothing.md` — ✅ shipped (Kids Mode v2)
-- `project_vite_migration.md` — open, ~half day to migrate off CRA
+- `project_vite_migration.md` — ✅ shipped (Vite 7 + @coderline/alphatab-vite, dropped --legacy-peer-deps)

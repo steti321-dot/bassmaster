@@ -1,6 +1,6 @@
 {
   "name": "mp3-to-gp4",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Convert audio/video files to Guitar Pro notation (GP4 format)",
   "main": "dist/main.js",
   "homepage": "https://steti321-dot.github.io/bassmaster/",
@@ -9,16 +9,15 @@
   "scripts": {
     "postinstall": "node scripts/setup-ytdlp.mjs",
     "dev": "concurrently \"npm run dev:renderer\" \"wait-on http://localhost:3000 && npm run dev:electron\"",
-    "dev:renderer": "craco start",
+    "dev:renderer": "vite",
     "dev:electron": "npm run build:electron && cross-env NODE_ENV=development electron .",
     "build": "npm run build:renderer && npm run build:electron && npm run build:wasm",
-    "build:renderer": "craco build",
+    "build:renderer": "vite build",
     "build:electron": "tsc -p tsconfig.electron.json",
     "build:wasm": "wasm-pack build src-wasm --target web --release",
-    "build:web": "cross-env REACT_APP_BUILD_TARGET=web craco build",
-    "deploy:worker": "cd worker && npx wrangler deploy",
-    "test": "craco test",
-    "eject": "react-scripts eject"
+    "build:web": "cross-env REACT_APP_BUILD_TARGET=web vite build",
+    "preview": "vite preview --port 3001",
+    "deploy:worker": "cd worker && npx wrangler deploy"
   },
   "dependencies": {
     "@coderline/alphatab": "^1.8.2",
@@ -35,15 +34,15 @@
     "yt-dlp-wrap": "^2.3.12"
   },
   "devDependencies": {
-    "@coderline/alphatab-webpack": "^1.8.2",
-    "@craco/craco": "^7.1.0",
+    "@coderline/alphatab-vite": "^1.8.2",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^5.2.0",
     "concurrently": "^8.2.0",
     "cross-env": "^10.1.0",
     "electron": "^27.0.0",
-    "react-scripts": "5.0.1",
     "typescript": "^5.2.0",
+    "vite": "^7.3.2",
     "wait-on": "^7.0.1"
   },
   "browserslist": {

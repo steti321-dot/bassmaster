@@ -64,6 +64,7 @@ Pairs cleanly with Kids Mode: kids see one chip per beat, can see/hear the targe
 ### Other niceties
 
 - **Note rain** is colored by *pitch class* (12 chromatic colors), not by string — so two notes at different frets on the same string look visibly different. Each chip's fret number sits inside the stripe with a perspective tilt to match the column rails.
+- **3D pill / arrow stripes** — convex arcs at both ends (`)---)` profile), per-note radial-gradient highlight for a gem/candy 3D feel, perspective-scaled gap between consecutive notes so they never visually merge, and a hit-line `clipPath` so notes slide through the line intact instead of squashing as they're consumed.
 - **Side wheel** to the left of the rain shows the current note big and centered, with previous and upcoming notes flowing through. While paused, drag the slider to seek anywhere.
 - **Per-instrument tuning** — bass (4-string), guitar (6-string), drop-D, 5-string, 7-string, anything the file declares.
 - **Backing synth** runs every other track from the file via a look-ahead Web Audio scheduler — drums, rhythm guitar, vocals, all at once. Mute / volume per track.
@@ -164,7 +165,8 @@ Deploys ~50 lines of code that re-implement the Electron main process's `gprotab
 ### Shipped
 
 - Tuner with drop-D presets, octave-snap stabilization, calmer needle (median filter, hold-time, throttled UI updates)
-- Note-rain game with **per-pitch-class color stripes**, perspective-tilted fret digit, **3-state stripe phases** (approaching → hittable → hit/miss), expanding green hit-burst, **head-clamped sustain** so long notes shrink in place, top-anchored string labels with lowered hit bar (~18 % more chip airtime)
+- Note-rain game with **per-pitch-class color stripes**, perspective-tilted fret digit, **3-state stripe phases** (approaching → hittable → hit/miss), expanding green hit-burst, top-anchored string labels with lowered hit bar (~18 % more chip airtime)
+- **3D arrow/bullet stripes** — convex-arc ends with radial-gradient highlight, perspective-scaled inter-note gap, guaranteed minimum readable stripe size (`max(32 px, ryHead × 3.2)`), and a `clipPath` at the hit line so stripes slide through intact instead of squashing
 - **FretboardMini** strip below the rain — 12 frets with inlay markers, colored dots for the upcoming chord/note
 - Compact **chip-style SidePanel** wheel (past / current / future)
 - **Kids Mode**: chord reduction (power-chord → root, full-chord → 5th, dim/sus → root fallback), position remap to 0–5 frets, same-string smoothing across notes
@@ -172,8 +174,14 @@ Deploys ~50 lines of code that re-implement the Electron main process's `gprotab
 - **Chord-any-member scoring**: pluck any visible chord member, scorer picks the closest match
 - **Late-hit grace per difficulty** — Easy accepts hits any time the chip is still active
 - File sources: drag & drop, paste URL (proxied), gprotab.net search, four built-in **Quick Start** songs (Twinkle Twinkle, Smoke on the Water rhythm, The Four Chords, Queen — Another One Bites the Dust)
+- **Animated Start tab** (web build) — terminal-style typewriter intro with beep tones, checkmarks per step (Tune → Calibrate Mic → Search Tab → Play → Donate Coffee), AudioContext unlocked lazily on first user gesture
+- **About tab** — app version (read from `package.json`) + third-party-library attribution list (alphaTab LGPL, React MIT, Basic Pitch Apache, ffmpeg LGPL, yt-dlp Unlicense, Bravura SIL OFL, …)
+- **i18n in 6 languages** end-to-end — English, German, French, Spanish, Italian, Portuguese; every user-visible string lives in `src/locales/[lang]/[namespace].json`
+- AlphaSynth **pending-play queue** — if play is requested before the soundfont finishes loading, it's queued and started automatically once `soundFontLoaded` fires (fixes "no sound on first play" on the deployed web build)
+- **First-play countdown race fix** — `warmUp()` is called immediately when the synth instance is swapped, so `getContext()` is non-null on the very first play
 - Audio-to-Notes desktop pipeline (Mic / File / YouTube → Rust transcribe + Basic Pitch ML)
-- **GH Pages** static deploy + **Cloudflare Worker** CORS proxy (free tier, no auth)
+- **GH Pages** static deploy + **Cloudflare Worker** CORS proxy (free tier, no auth) — fixed CRA `PUBLIC_URL` chunk-doubling on subpath deploys
+- **Vite 7 toolchain** — replaced abandoned `react-scripts` + `craco` + `@coderline/alphatab-webpack` with `vite` + `@vitejs/plugin-react` + `@coderline/alphatab-vite`. Dropped `--legacy-peer-deps` everywhere; cold dev start now ~350 ms, production build ~8 s (was ~60 s)
 - Mobile-responsive layout end-to-end (collapsed SidePanel row, modal HUD options, scaled chips, fits iPhone-portrait)
 - Footer ☕ Ko-fi donate link + 🔗 Share button (Web Share API + clipboard fallback)
 
@@ -181,7 +189,6 @@ Deploys ~50 lines of code that re-implement the Electron main process's `gprotab
 
 - **Polyphonic chord recognition** — current pitch detector (YIN) is monophonic, so a strummed chord only registers one tone per pluck. A polyphonic detector (FFT pitch-peak picking, or a small ML model like Spotify's Basic Pitch run incrementally) would let "play the C chord" score in one motion instead of three separate plucks.
 - **Strum vs pick discrimination** — RMS-envelope shape analysis to detect whether the user strummed multiple strings simultaneously, so we can score the whole chord as one event in that case.
-- **Vite migration** off the deprecated CRA toolchain — drops `--legacy-peer-deps`, ~10× faster builds, modern peer-dep ranges (~half day).
 - **Session replays** — record per-note hit/miss + timing into a small JSON, let the player review the run.
 - **Shareable song URLs** — encode chosen file + settings into the URL hash so you can share a configured song link.
 - **Custom song library beyond IndexedDB** — opt-in account → cloud-saved stash that survives across browsers / devices.
