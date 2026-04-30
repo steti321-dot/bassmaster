@@ -170,6 +170,10 @@ export default function NoteRain({
             <stop offset="0%" stopColor="rgba(0,245,255,0.55)" />
             <stop offset="100%" stopColor="rgba(0,245,255,0)" />
           </radialGradient>
+          {/* Clip stripes at the hit line — they slide through without squashing */}
+          <clipPath id="rain-clip">
+            <rect x={0} y={0} width={totalWidth} height={hitLineY} />
+          </clipPath>
         </defs>
 
         {/* Floor gradient */}
@@ -250,15 +254,18 @@ export default function NoteRain({
           );
         })()}
 
-        {/* Falling bulbs (sorted back-to-front) */}
+        {/* Falling bulbs — clipped at hit line so shapes stay intact as they cross */}
+        <g clipPath="url(#rain-clip)">
         {[...visibleNotes]
           .sort((a, b) => a.note.time - b.note.time)
           .reverse()
           .map(({ note, idx }) => {
             const dtHead = note.time - currentTimeMs;
             const dtTail = note.time + note.duration - currentTimeMs;
-            const yHead = hitLineY - Math.max(0, dtHead) * pixelsPerMs;
-            const yTail = hitLineY - Math.max(0, dtTail) * pixelsPerMs;
+            // Unclamped — let stripes pass through the hit line so the shape
+            // never squashes. A clipPath on the bulbs group hides the part below.
+            const yHead = hitLineY - dtHead * pixelsPerMs;
+            const yTail = hitLineY - dtTail * pixelsPerMs;
 
             const headProj = project(note.string, yHead);
             const tailProj = project(note.string, yTail);
@@ -299,25 +306,37 @@ export default function NoteRain({
             const ryHead = rxHead * CHIP_FLATNESS;
 
             const minStripeH = Math.max(22, ryHead * 1.6);
-            const naturalH = yHead - yTail;
-            const yTailDraw = Math.min(yTail, yHead - minStripeH);
-            const tailDrawProj = naturalH < minStripeH
-              ? project(note.string, yTailDraw)
-              : tailProj;
+            // noteGap: small perspective-scaled clearance at the tail so consecutive
+            // notes on the same string don't visually merge.
+            const noteGap   = Math.max(12, ryHead * 2.2);
+            const yTailDraw = Math.min(yTail, yHead - minStripeH) + noteGap;
+            const tailDrawProj = project(note.string, yTailDraw);
             const xTailDraw = tailDrawProj.x + sideOffset * (tailDrawProj.scale / scale);
             const rxTailDraw = baseBulbRadius * tailDrawProj.scale;
 
-            // Half-width at each end — used as the arc x-radius for rounded caps.
-            // ry uses the chip's own flatness so the end cap stays perspective-flat.
-            const headR    = rxHead * 0.62;
-            const tailR    = rxTailDraw * 0.62;
-            const capRyH   = ryHead;                          // flat — matches chip
-            const capRyT   = capRyH * (tailR / headR);       // scale with perspective
+            // Arrow/bullet stripe: both ends bow outward with convex arcs.
+            // Head end bows toward the player, tail bows away — ")---)" style.
+            const headR = rxHead * 0.62;
+            const tailR = rxTailDraw * 0.62;
+            const arrowDepth = ryHead * 1.1;                        // head-end protrusion (perspective-correct)
+            const tailRound  = arrowDepth * (rxTailDraw / rxHead);  // scaled for tail perspective
             const stripePath =
               `M ${xHead - headR} ${yHead} ` +
-              `A ${headR} ${capRyH} 0 0 1 ${xHead + headR} ${yHead} ` +
+              // Head: convex arc bowing toward player (+y in SVG = downward)
+              `Q ${xHead} ${yHead + arrowDepth} ${xHead + headR} ${yHead} ` +
+              // Right side up to tail
               `L ${xTailDraw + tailR} ${yTailDraw} ` +
-              `A ${tailR} ${capRyT} 0 0 1 ${xTailDraw - tailR} ${yTailDraw} Z`;
+              // Tail: convex arc bowing away from player (-y in SVG = upward)
+              `Q ${xTailDraw} ${yTailDraw - tailRound} ${xTailDraw - tailR} ${yTailDraw} ` +
+              // Left side closed implicitly by Z
+              `Z`;
+
+            // 3D highlight: radial white glow at the upper-centre of each pill
+            // (simulates a light source in front, giving a gem/candy 3D feel)
+            const gradX = ((xHead + xTailDraw) / 2).toFixed(1);
+            const gradY = (yTailDraw + (yHead - yTailDraw) * 0.28).toFixed(1);
+            const gradR = (headR * 1.35).toFixed(1);
+            const gradId = `sg-${idx}`;
 
             const textY = (yHead + yTailDraw) / 2;
             const textX = (xHead + xTailDraw) / 2;
@@ -353,6 +372,16 @@ export default function NoteRain({
 
             return (
               <g key={`note-${idx}`} className="bulb" style={{ color }} opacity={opacityFactor}>
+                <defs>
+                  {/* Per-note 3D highlight gradient — white radial glow at upper-centre */}
+                  <radialGradient id={gradId}
+                    cx={gradX} cy={gradY} r={gradR}
+                    gradientUnits="userSpaceOnUse">
+                    <stop offset="0%"   stopColor="white" stopOpacity={0.52} />
+                    <stop offset="55%"  stopColor="white" stopOpacity={0.10} />
+                    <stop offset="100%" stopColor="white" stopOpacity={0}    />
+                  </radialGradient>
+                </defs>
                 {/* Stripe body */}
                 <path
                   d={stripePath}
@@ -360,6 +389,12 @@ export default function NoteRain({
                   fillOpacity={stripeFillOpacity}
                   stroke="none"
                   style={{ filter: stripeGlow }}
+                />
+                {/* 3D highlight overlay */}
+                <path
+                  d={stripePath}
+                  fill={`url(#${gradId})`}
+                  stroke="none"
                 />
                 <path
                   d={stripePath}
@@ -409,6 +444,7 @@ export default function NoteRain({
               </g>
             );
           })}
+        </g>{/* end rain-clip */}
 
         {/* Hit bursts — expanding green rings on freshly-scored notes */}
         {hitAt && [...hitAt.entries()].map(([idx, ts]) => {
