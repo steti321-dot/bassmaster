@@ -28,5 +28,10 @@
   "start_step4": "Jouez — votre micro note chaque note en temps réel",
   "start_cta": "Commencer",
   "start_skip": "Cliquez pour passer",
-  "start_step5": "Si l'app vous plaît — offrez-moi un café, merci ! ☕"
+  "start_step5": "Si l'app vous plaît — offrez-moi un café, merci ! ☕",
+  "repeat_count": "×{{count}}",
+  "repeat_meter_uniform": "{{passes}} × {{cellsPerPass}}",
+  "repeat_meter_mixed": "{{sizes}}",
+  "repeat_pass": "passage {{n}} / {{total}}  •  {{pos}} / {{cellsPerPass}}",
+  "player_track": "Piste joueur"
 }

@@ -28,5 +28,10 @@
   "start_step4": "Spiel mit — dein Mikrofon bewertet jede Note in Echtzeit",
   "start_cta": "Loslegen",
   "start_skip": "Klicken zum Überspringen",
-  "start_step5": "Wenn dir die App gefällt — spendier mir einen Kaffee, danke! ☕"
+  "start_step5": "Wenn dir die App gefällt — spendier mir einen Kaffee, danke! ☕",
+  "repeat_count": "×{{count}}",
+  "repeat_meter_uniform": "{{passes}} × {{cellsPerPass}}",
+  "repeat_meter_mixed": "{{sizes}}",
+  "repeat_pass": "Durchgang {{n}} / {{total}}  •  {{pos}} / {{cellsPerPass}}",
+  "player_track": "Spielerspur"
 }

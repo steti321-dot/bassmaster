@@ -21,81 +21,196 @@
   gap: 4px;
 }
 
-.chip-list {
+/* ─── Run summary (single-row progress bar, resets per pass) ─────────────── */
+/* The slot is always rendered (.run-summary-slot) so the panel layout never
+   jumps when a run starts/ends. The body inside (.run-summary) is hidden when
+   there's no active run; the slot height stays the same either way. */
+.run-summary-slot {
+  width: 100%;
+  min-height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(0, 245, 255, 0.18);
+  padding: 6px 4px;
+  box-sizing: border-box;
+}
+
+.run-summary-slot--empty {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.run-summary {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.run-header {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+  font-family: 'Rajdhani', sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.run-count {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--cy-text);
+  letter-spacing: 0.02em;
+}
+
+.run-pitch {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 6px currentColor;
+}
+
+.run-meter {
+  font-size: 0.66rem;
+  color: var(--cy-text-muted);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.run-progress {
+  display: flex;
+  flex-direction: row;
+  gap: 2px;
+  align-items: center;
+  justify-content: center;
+  margin: 1px 0;
+  /* Never wrap — 8 cells must always render as a single row on big screens.
+     Cells shrink rather than wrap if the panel becomes narrower. */
+  flex-wrap: nowrap;
+  width: 100%;
+  max-width: 100%;
+}
+
+.run-cell {
+  /* 8 cells × (8 px + 2 px gap) ≈ 78 px of intrinsic width — fits the 110 px
+     panel comfortably (after 12 + 4 px padding) on every breakpoint. */
+  flex: 0 1 8px;
+  width: 8px;
+  height: 14px;
+  min-width: 4px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: transparent;
+}
+
+.run-cell--upcoming {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.run-cell--current {
+  border-color: var(--cy-cyan);
+  background: rgba(0, 245, 255, 0.18);
+  box-shadow: 0 0 6px var(--cy-cyan);
+  animation: run-cell-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes run-cell-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+
+.run-cell--hit {
+  border-color: #3dff7a;
+  background: #3dff7a;
+  box-shadow: 0 0 4px #3dff7a;
+}
+
+.run-cell--miss {
+  border-color: #e74c3c;
+  background: #e74c3c;
+  box-shadow: 0 0 4px rgba(231, 76, 60, 0.7);
+}
+
+.run-counter {
+  font-size: 0.62rem;
+  color: var(--cy-cyan);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+/* ─── Upcoming preview (run-collapsed compact list) ──────────────────────── */
+.upcoming-preview {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  align-items: center;
+  gap: 3px;
   width: 100%;
+  flex: 0 0 auto;
+  align-items: stretch;
 }
 
-.chip-past {
-  justify-content: flex-end;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 70%);
-          mask-image: linear-gradient(to bottom, transparent 0%, black 70%);
-  min-height: 96px;
-  flex: 1 1 auto;
-}
-
-.chip-future {
-  justify-content: flex-start;
-  -webkit-mask-image: linear-gradient(to top, transparent 0%, black 70%);
-          mask-image: linear-gradient(to top, transparent 0%, black 70%);
-  min-height: 96px;
-  flex: 1 1 auto;
-}
-
-/* Past + future chips: small circle, two-line content. */
-.chip-row {
+/* Each entry has a fixed two-line height so longer "run + terminator" rows
+   don't push the rest of the panel down. Short entries leave empty space at
+   the bottom of their slot — predictable layout, no jitter. */
+.preview-entry {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 4px;
-}
-
-.chip-mini {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.05), transparent 70%),
-    rgba(7, 9, 13, 0.85);
-  border: 2px solid var(--chip-color, var(--cy-cyan));
-  box-shadow:
-    0 0 6px var(--chip-color, var(--cy-cyan)),
-    inset 0 0 6px rgba(0, 0, 0, 0.4);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   font-family: 'Rajdhani', sans-serif;
   font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+  flex-wrap: wrap;
+  justify-content: center;
+  min-height: 30px;
+  box-sizing: border-box;
 }
 
-.chip-mini-string {
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  line-height: 1;
+.preview-entry--empty {
+  opacity: 0;
+  pointer-events: none;
 }
 
-.chip-mini-fret {
-  font-size: 0.95rem;
+.preview-count {
   font-weight: 800;
-  color: var(--chip-color, var(--cy-cyan));
-  line-height: 1;
-  text-shadow: 0 0 4px var(--chip-color, var(--cy-cyan));
+  color: var(--cy-yellow);
+  text-shadow: 0 0 4px rgba(255, 240, 102, 0.4);
 }
 
-.chip-eta {
-  font-size: 0.62rem;
+.preview-pos {
+  font-weight: 700;
+  text-shadow: 0 0 4px currentColor;
+}
+
+.preview-pitch {
+  font-weight: 600;
   color: var(--cy-text-muted);
-  letter-spacing: 0.04em;
-  font-variant-numeric: tabular-nums;
+}
+
+.preview-sep {
+  margin: 0 2px;
+  color: var(--cy-text-muted);
+  opacity: 0.6;
+}
+
+.preview-terminator {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.preview-entry--chord .preview-pos {
+  color: var(--cy-cyan);
 }
 
 /* Centre — the BIG current chip + pitch / finger / ETA labels below it. */
@@ -257,9 +372,10 @@
     gap: 8px;
   }
 
-  /* Hide past/future on phones — the chips on the rain itself are enough,
-     and we want the current chip + pitch label to dominate. */
-  .chip-list {
+  /* Hide the run summary + upcoming preview on phones — the chips on the rain
+     itself are enough, and we want the current chip + pitch label to dominate. */
+  .run-summary,
+  .upcoming-preview {
     display: none;
   }
 

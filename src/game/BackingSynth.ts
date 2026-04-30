@@ -22,6 +22,12 @@ const SCHEDULER_INTERVAL_MS = 250;
 export class BackingSynth {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
+  /** Per-route gains — voices for the player's track go through `playerGain`,
+   *  voices for other backing tracks go through `backingGain`. The two gains
+   *  feed into masterGain so they share the compressor + mute control. This
+   *  lets the user balance their own track against the rest of the band. */
+  private playerGain: GainNode | null = null;
+  private backingGain: GainNode | null = null;
   /** Compressor sits between masterGain and destination — tames peaks when
    *  many tracks/voices play simultaneously (a multi-track song easily has
    *  10+ overlapping notes whose summed amplitude blows past clipping). */
@@ -30,7 +36,8 @@ export class BackingSynth {
   private liveSources: AudioScheduledSourceNode[] = [];
   private noiseBuffer: AudioBuffer | null = null;
   private muted = false;
-  private volume = 0.6;
+  private backingVolume = 0.6;
+  private playerVolume = 0.5;
 
   /** Pending event queue (sorted by absolute audio-context startSec). */
   private pending: Array<{ startSec: number; schedule: () => void }> = [];
@@ -42,13 +49,23 @@ export class BackingSynth {
     if (!this.ctx) {
       this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
 
-      // Voices → masterGain → compressor → destination
+      // Voices → playerGain | backingGain → masterGain → compressor → destination
       // The compressor prevents the heavy clipping you'd otherwise get when 6+
       // tracks each have multiple voices overlapping (the summed amplitude can
       // easily exceed 1.0 by a factor of 5-10×, which most audio outputs render
       // as silence rather than legible distortion).
+      // masterGain now serves as the global mute (0 / 1); per-track levels live
+      // on the playerGain / backingGain stages above it.
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.value = this.muted ? 0 : this.volume;
+      this.masterGain.gain.value = this.muted ? 0 : 1;
+
+      this.playerGain = this.ctx.createGain();
+      this.playerGain.gain.value = this.playerVolume;
+      this.playerGain.connect(this.masterGain);
+
+      this.backingGain = this.ctx.createGain();
+      this.backingGain.gain.value = this.backingVolume;
+      this.backingGain.connect(this.masterGain);
 
       this.compressor = this.ctx.createDynamicsCompressor();
       this.compressor.threshold.value = -14; // dB — start compressing here
@@ -82,17 +99,27 @@ export class BackingSynth {
     return this.ctx!;
   }
 
+  /** Backwards-compat alias: SimpleSynth's old "set master volume" call now
+   *  controls the *backing-tracks* gain. The player track has its own slider
+   *  via setPlayerTrackVolume(). */
   setVolume(v: number) {
-    this.volume = Math.max(0, Math.min(1, v));
-    if (this.masterGain) {
-      this.masterGain.gain.value = this.muted ? 0 : this.volume;
-    }
+    this.setBackingVolume(v);
+  }
+
+  setBackingVolume(v: number) {
+    this.backingVolume = Math.max(0, Math.min(1, v));
+    if (this.backingGain) this.backingGain.gain.value = this.backingVolume;
+  }
+
+  setPlayerTrackVolume(v: number) {
+    this.playerVolume = Math.max(0, Math.min(1, v));
+    if (this.playerGain) this.playerGain.gain.value = this.playerVolume;
   }
 
   setMuted(muted: boolean) {
     this.muted = muted;
     if (this.masterGain) {
-      this.masterGain.gain.value = this.muted ? 0 : this.volume;
+      this.masterGain.gain.value = this.muted ? 0 : 1;
     }
   }
 
@@ -104,13 +131,13 @@ export class BackingSynth {
    * (bass tracks get a sub-octave sine to fatten the low end).
    */
   start(
-    tracks: Array<{ notes: GameNote[]; instrument: InstrumentKind; isDrums?: boolean }>,
+    tracks: Array<{ notes: GameNote[]; instrument: InstrumentKind; isDrums?: boolean; isPlayer?: boolean }>,
     fromGameTimeMs: number,
     playbackRate: number
   ): void {
     this.stop();
     this.ensureContext();
-    if (!this.ctx || !this.masterGain) {
+    if (!this.ctx || !this.masterGain || !this.playerGain || !this.backingGain) {
       console.warn('[BackingSynth] no audio context available');
       return;
     }
@@ -121,20 +148,22 @@ export class BackingSynth {
     const totalIncoming = tracks.reduce((s, t) => s + t.notes.length, 0);
     console.log(
       `[BackingSynth] start ctx=${ctx.state} ` +
-        `tracks=${tracks.length} (${tracks.map((t) => (t.isDrums ? 'drums' : t.instrument)).join('+') || 'none'}) ` +
+        `tracks=${tracks.length} (${tracks.map((t) => (t.isDrums ? 'drums' : t.instrument) + (t.isPlayer ? '*' : '')).join('+') || 'none'}) ` +
         `notes=${totalIncoming} fromMs=${fromGameTimeMs.toFixed(0)} rate=${playbackRate} ` +
-        `vol=${this.volume} muted=${this.muted}`
+        `bvol=${this.backingVolume} pvol=${this.playerVolume} muted=${this.muted}`
     );
 
     if (!this.noiseBuffer) this.noiseBuffer = createNoiseBuffer(ctx);
     const noiseBuffer = this.noiseBuffer;
-    const masterGain = this.masterGain;
+    const playerGain = this.playerGain;
+    const backingGain = this.backingGain;
 
     // Build a closure for each note that, when called, actually pushes the
     // audio nodes into Web Audio. We don't run them now — the look-ahead
     // scheduler runs them in batches as their start time approaches.
     const pending: typeof this.pending = [];
     for (const track of tracks) {
+      const routeTo = track.isPlayer ? playerGain : backingGain;
       for (const n of track.notes) {
         if (n.time + n.duration < fromGameTimeMs - 50) continue;
         const gameOffsetMs = Math.max(0, n.time - fromGameTimeMs);
@@ -145,7 +174,7 @@ export class BackingSynth {
           pending.push({
             startSec,
             schedule: () => {
-              const result = scheduleDrum(ctx, masterGain, noiseBuffer, fret, startSec);
+              const result = scheduleDrum(ctx, routeTo, noiseBuffer, fret, startSec);
               this.liveSources.push(...result.sources);
               this.liveNodes.push(...result.nodes);
             },
@@ -157,7 +186,7 @@ export class BackingSynth {
           const inst = track.instrument;
           pending.push({
             startSec,
-            schedule: () => this.scheduleNote(freq, startSec, durSec, inst),
+            schedule: () => this.scheduleNote(freq, startSec, durSec, inst, routeTo),
           });
         }
       }
@@ -201,9 +230,10 @@ export class BackingSynth {
     freq: number,
     startSec: number,
     durSec: number,
-    instrument: InstrumentKind
+    instrument: InstrumentKind,
+    routeTo: GainNode,
   ): void {
-    if (!this.ctx || !this.masterGain) return;
+    if (!this.ctx) return;
     const ctx = this.ctx;
 
     // Two-oscillator voice for a fuller sound:
@@ -226,7 +256,7 @@ export class BackingSynth {
     voiceGain.gain.linearRampToValueAtTime(0.0001, startSec + durSec);
 
     fundamental.connect(voiceGain);
-    voiceGain.connect(this.masterGain);
+    voiceGain.connect(routeTo);
 
     fundamental.start(startSec);
     fundamental.stop(startSec + durSec + 0.05);
@@ -246,7 +276,7 @@ export class BackingSynth {
       subGain.gain.exponentialRampToValueAtTime(0.025, startSec + Math.min(0.25, durSec * 0.5));
       subGain.gain.linearRampToValueAtTime(0.0001, startSec + durSec);
       sub.connect(subGain);
-      subGain.connect(this.masterGain);
+      subGain.connect(routeTo);
       sub.start(startSec);
       sub.stop(startSec + durSec + 0.05);
       this.liveNodes.push(subGain);
@@ -289,6 +319,8 @@ export class BackingSynth {
       void this.ctx.close().catch(() => {});
       this.ctx = null;
       this.masterGain = null;
+      this.playerGain = null;
+      this.backingGain = null;
     }
   }
 }

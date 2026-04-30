@@ -14,14 +14,24 @@ import type { GameNote } from './types';
 import type { InstrumentKind } from './Instrument';
 import { BackingSynth } from './BackingSynth';
 
-export type BackingTrack = { notes: GameNote[]; instrument: InstrumentKind; isDrums?: boolean };
+export type BackingTrack = {
+  notes: GameNote[];
+  instrument: InstrumentKind;
+  isDrums?: boolean;
+  /** True for the user's own track when it's enabled as backing — routes to a
+   *  separate volume bus so the player can balance their part vs the rest. */
+  isPlayer?: boolean;
+};
 
 export interface ISynth {
   warmUp(): AudioContext;
   getContext(): AudioContext | null;
   start(tracks: BackingTrack[], fromMs: number, rate: number): void;
   stop(): void;
+  /** Backwards-compat alias for setBackingVolume. */
   setVolume(v: number): void;
+  /** Independent volume for the user's own track when it's enabled as backing. */
+  setPlayerTrackVolume(v: number): void;
   setMuted(muted: boolean): void;
   dispose(): void;
   /** AlphaTabSynth only — load GP file bytes into the player. */
@@ -40,7 +50,8 @@ export class SimpleSynth implements ISynth {
   getContext(): AudioContext | null { return this.inner.getContext(); }
   start(tracks: BackingTrack[], fromMs: number, rate: number): void { this.inner.start(tracks, fromMs, rate); }
   stop(): void { this.inner.stop(); }
-  setVolume(v: number): void { this.inner.setVolume(v); }
+  setVolume(v: number): void { this.inner.setBackingVolume(v); }
+  setPlayerTrackVolume(v: number): void { this.inner.setPlayerTrackVolume(v); }
   setMuted(m: boolean): void { this.inner.setMuted(m); }
   dispose(): void { this.inner.dispose(); }
 }
@@ -58,7 +69,9 @@ export class AlphaTabSynth implements ISynth {
 
   private sfReady = false;
   private scoreReady = false;
-  private volume = 0.6;
+  private volume = 0.6;            // backwards-compat / overall — kept for masterVolume.
+  private backingVolume = 0.6;
+  private playerVolume = 0.5;
   private muted = false;
   private playerTrackIdx = 0;
   private backingSet = new Set<number>();
@@ -172,15 +185,25 @@ export class AlphaTabSynth implements ISynth {
   }
 
   setVolume(v: number): void {
-    this.volume = Math.max(0, Math.min(1, v));
+    // Backwards-compat: drives the *backing-tracks* level. The player's own
+    // track has its own slider routed via setPlayerTrackVolume.
+    this.backingVolume = Math.max(0, Math.min(1, v));
+    this.volume = this.backingVolume;
     this.fallback.setVolume(v);
-    if (this.api) this.api.masterVolume = this.muted ? 0 : this.volume;
+    if (this.api) this.api.masterVolume = this.muted ? 0 : 1;
+    if (this.scoreReady) this.applyTrackVolumes();
+  }
+
+  setPlayerTrackVolume(v: number): void {
+    this.playerVolume = Math.max(0, Math.min(1, v));
+    this.fallback.setPlayerTrackVolume(v);
+    if (this.scoreReady) this.applyTrackVolumes();
   }
 
   setMuted(m: boolean): void {
     this.muted = m;
     this.fallback.setMuted(m);
-    if (this.api) this.api.masterVolume = this.muted ? 0 : this.volume;
+    if (this.api) this.api.masterVolume = this.muted ? 0 : 1;
   }
 
   dispose(): void {
@@ -218,9 +241,24 @@ export class AlphaTabSynth implements ISynth {
     if (!this.api?.score) return;
     const tracks = this.api.score.tracks;
     for (let i = 0; i < tracks.length; i++) {
-      // Play only backing tracks; mute the player's own track.
+      // Play any track that's in `backingSet` — including the player's own
+      // track when the user has explicitly enabled it as backing.
       const shouldPlay = this.backingSet.has(i);
       try { this.api.changeTrackMute([tracks[i]], !shouldPlay); } catch {}
+    }
+    this.applyTrackVolumes();
+  }
+
+  /** Set per-track volume so the player's own track and the rest of the band
+   *  can be balanced independently. Called after muting and on every volume
+   *  slider change. */
+  private applyTrackVolumes(): void {
+    if (!this.api?.score) return;
+    const tracks = this.api.score.tracks;
+    for (let i = 0; i < tracks.length; i++) {
+      if (!this.backingSet.has(i)) continue; // muted tracks don't need volume
+      const v = i === this.playerTrackIdx ? this.playerVolume : this.backingVolume;
+      try { (this.api as any).changeTrackVolume?.([tracks[i]], v); } catch {}
     }
   }
 }

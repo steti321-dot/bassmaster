@@ -15,6 +15,11 @@ export interface SongSettings {
   playbackRate: number;
   backingVolume: number;
   backingMuted: boolean;
+  /** Independent volume for the player's own track when it's enabled as
+   *  backing — lets the user keep their part audible (as a reference) at
+   *  a different level from the rest of the band. Optional for backwards
+   *  compat with older saves; default 0.5. */
+  playerTrackVolume?: number;
   monitorVolume: number;
   monitorMuted: boolean;
   noiseSuppress: boolean;

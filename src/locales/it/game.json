@@ -28,5 +28,10 @@
   "start_step4": "Suona — il microfono valuta ogni nota in tempo reale",
   "start_cta": "Inizia",
   "start_skip": "Clicca per saltare",
-  "start_step5": "Se ti piace l'app — offrimi un caffè, grazie! ☕"
+  "start_step5": "Se ti piace l'app — offrimi un caffè, grazie! ☕",
+  "repeat_count": "×{{count}}",
+  "repeat_meter_uniform": "{{passes}} × {{cellsPerPass}}",
+  "repeat_meter_mixed": "{{sizes}}",
+  "repeat_pass": "passaggio {{n}} / {{total}}  •  {{pos}} / {{cellsPerPass}}",
+  "player_track": "Traccia giocatore"
 }

@@ -28,5 +28,10 @@
   "start_step4": "Play along — your mic scores every note in real time",
   "start_cta": "Get Started",
   "start_skip": "Click anywhere to skip",
-  "start_step5": "If you enjoy the app — donate a coffee, thank you! ☕"
+  "start_step5": "If you enjoy the app — donate a coffee, thank you! ☕",
+  "repeat_count": "×{{count}}",
+  "repeat_meter_uniform": "{{passes}} × {{cellsPerPass}}",
+  "repeat_meter_mixed": "{{sizes}}",
+  "repeat_pass": "pass {{n}} / {{total}}  •  {{pos}} / {{cellsPerPass}}",
+  "player_track": "Player track"
 }

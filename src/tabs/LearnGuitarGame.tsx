@@ -58,6 +58,8 @@ export default function LearnGuitarGame() {
   const [playbackRate, setPlaybackRate] = useState(1.0);
   const [backingMuted, setBackingMuted] = useState(false);
   const [backingVolume, setBackingVolume] = useState(0.55);
+  // Independent volume for the player's own track when it's enabled as backing.
+  const [playerTrackVolume, setPlayerTrackVolume] = useState(0.5);
   const [enabledBacking, setEnabledBacking] = useState<Set<number>>(new Set());
   const [score, setScore] = useState<ScoreState>(INITIAL_SCORE);
   const [calibration] = useState<CalibrationData | null>(() => loadCalibration());
@@ -161,6 +163,7 @@ export default function LearnGuitarGame() {
         setPlaybackRate(saved.playbackRate);
         setBackingVolume(saved.backingVolume);
         setBackingMuted(saved.backingMuted);
+        setPlayerTrackVolume(saved.playerTrackVolume ?? 0.5);
         setMonitorVolume(saved.monitorVolume);
         setMonitorMuted(saved.monitorMuted);
         setNoiseSuppress(saved.noiseSuppress);
@@ -184,6 +187,7 @@ export default function LearnGuitarGame() {
       playbackRate,
       backingVolume,
       backingMuted,
+      playerTrackVolume,
       monitorVolume,
       monitorMuted,
       noiseSuppress,
@@ -197,6 +201,7 @@ export default function LearnGuitarGame() {
     playbackRate,
     backingVolume,
     backingMuted,
+    playerTrackVolume,
     monitorVolume,
     monitorMuted,
     noiseSuppress,
@@ -204,11 +209,18 @@ export default function LearnGuitarGame() {
     waitMode,
   ]);
 
-  // Build the list of tracks to feed into the synth based on `enabledBacking`
+  // Build the list of tracks to feed into the synth based on `enabledBacking`.
+  // The player's own track is tagged isPlayer so the synth can route it through
+  // a separate volume bus (the dual-volume design).
   const buildBackingTracks = (s: Song, enabled: Set<number>) =>
     s.tracks
       .filter((t) => enabled.has(t.index) && t.notes.length > 0)
-      .map((t) => ({ notes: t.notes, instrument: t.instrument, isDrums: t.isDrums }));
+      .map((t) => ({
+        notes: t.notes,
+        instrument: t.instrument,
+        isDrums: t.isDrums,
+        isPlayer: t.index === s.playerTrackIndex,
+      }));
 
   // Start / stop the embedded HTMLAudioElement synced to the game clock.
   // Volume is kept in sync by a separate effect; no need to set it here.
@@ -278,6 +290,9 @@ export default function LearnGuitarGame() {
   useEffect(() => {
     synthRef.current.setVolume(backingVolume);
   }, [backingVolume]);
+  useEffect(() => {
+    synthRef.current.setPlayerTrackVolume(playerTrackVolume);
+  }, [playerTrackVolume]);
   useEffect(() => {
     synthRef.current.setMuted(backingMuted);
   }, [backingMuted]);
@@ -1013,6 +1028,32 @@ export default function LearnGuitarGame() {
           />
           <span className="vol-label">{t('game:backing')}</span>
         </div>
+
+        {/* Independent volume for the player's own track when it's enabled
+            as backing — lets the user keep their part audible (as a reference)
+            at a different level from the rest of the band. Hidden when the
+            player track isn't part of the backing set (slider would be moot). */}
+        {song && enabledBacking.has(song.playerTrackIndex) && (
+          <div className="backing-controls" title={t('game:player_track')}>
+            <button
+              className="mute-btn"
+              onClick={() => setPlayerTrackVolume((v) => (v > 0 ? 0 : 0.5))}
+              title={playerTrackVolume === 0 ? 'Player track silent' : 'Mute player track'}
+            >
+              🎸
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={playerTrackVolume}
+              onChange={(e) => setPlayerTrackVolume(parseFloat(e.target.value))}
+              className="vol-slider"
+            />
+            <span className="vol-label">{t('game:player_track')}</span>
+          </div>
+        )}
 
         <div
           className="backing-controls"
