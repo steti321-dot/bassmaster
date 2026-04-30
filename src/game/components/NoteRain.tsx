@@ -305,30 +305,28 @@ export default function NoteRain({
             const rxTail = baseBulbRadius * tailProj.scale;
             const ryHead = rxHead * CHIP_FLATNESS;
 
-            const minStripeH = Math.max(22, ryHead * 1.6);
-            // noteGap: small perspective-scaled clearance at the tail so consecutive
-            // notes on the same string don't visually merge.
-            const noteGap   = Math.max(12, ryHead * 2.2);
+            // minStripeH: generous floor so every note is always readable.
+            const minStripeH = Math.max(32, ryHead * 3.2);
+            // noteGap: clearance between consecutive notes — capped at 40 % of
+            // minStripeH so it can never eat the shape into zero height.
+            const noteGap   = Math.min(Math.max(8, ryHead * 1.2), minStripeH * 0.38);
             const yTailDraw = Math.min(yTail, yHead - minStripeH) + noteGap;
             const tailDrawProj = project(note.string, yTailDraw);
             const xTailDraw = tailDrawProj.x + sideOffset * (tailDrawProj.scale / scale);
             const rxTailDraw = baseBulbRadius * tailDrawProj.scale;
 
-            // Arrow/bullet stripe: both ends bow outward with convex arcs.
-            // Head end bows toward the player, tail bows away — ")---)" style.
+            // Arrow/bullet stripe: both ends bow outward with convex arcs (")---)").
+            // Restored from c3ecdab — head bows toward player, tail bows away.
+            // The earlier "negative size" bug is fixed by minStripeH/noteGap above.
             const headR = rxHead * 0.62;
             const tailR = rxTailDraw * 0.62;
-            const arrowDepth = ryHead * 1.1;                        // head-end protrusion (perspective-correct)
-            const tailRound  = arrowDepth * (rxTailDraw / rxHead);  // scaled for tail perspective
+            const arrowDepth = ryHead * 1.1;                        // head-end protrusion
+            const tailRound  = arrowDepth * (rxTailDraw / rxHead);  // scaled for tail
             const stripePath =
               `M ${xHead - headR} ${yHead} ` +
-              // Head: convex arc bowing toward player (+y in SVG = downward)
               `Q ${xHead} ${yHead + arrowDepth} ${xHead + headR} ${yHead} ` +
-              // Right side up to tail
               `L ${xTailDraw + tailR} ${yTailDraw} ` +
-              // Tail: convex arc bowing away from player (-y in SVG = upward)
               `Q ${xTailDraw} ${yTailDraw - tailRound} ${xTailDraw - tailR} ${yTailDraw} ` +
-              // Left side closed implicitly by Z
               `Z`;
 
             // 3D highlight: radial white glow at the upper-centre of each pill
