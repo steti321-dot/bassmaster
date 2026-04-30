@@ -307,11 +307,17 @@ export default function NoteRain({
             const xTailDraw = tailDrawProj.x + sideOffset * (tailDrawProj.scale / scale);
             const rxTailDraw = baseBulbRadius * tailDrawProj.scale;
 
+            // Half-width at each end — used as the arc x-radius for rounded caps.
+            // ry uses the chip's own flatness so the end cap stays perspective-flat.
+            const headR    = rxHead * 0.62;
+            const tailR    = rxTailDraw * 0.62;
+            const capRyH   = ryHead;                          // flat — matches chip
+            const capRyT   = capRyH * (tailR / headR);       // scale with perspective
             const stripePath =
-              `M ${xHead - rxHead * 0.62} ${yHead} ` +
-              `L ${xHead + rxHead * 0.62} ${yHead} ` +
-              `L ${xTailDraw + rxTailDraw * 0.62} ${yTailDraw} ` +
-              `L ${xTailDraw - rxTailDraw * 0.62} ${yTailDraw} Z`;
+              `M ${xHead - headR} ${yHead} ` +
+              `A ${headR} ${capRyH} 0 0 1 ${xHead + headR} ${yHead} ` +
+              `L ${xTailDraw + tailR} ${yTailDraw} ` +
+              `A ${tailR} ${capRyT} 0 0 1 ${xTailDraw - tailR} ${yTailDraw} Z`;
 
             const textY = (yHead + yTailDraw) / 2;
             const textX = (xHead + xTailDraw) / 2;

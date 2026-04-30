@@ -33,16 +33,17 @@ function playBeep(ctx: AudioContext, accent = false) {
 export default function Start({ onNavigate }: StartProps) {
   const { t } = useTranslation(['game']);
 
-  const steps = [
-    { text: t('game:start_step1'), nav: 'tuner'         as NavTab },
-    { text: t('game:start_step2'), nav: 'setup'         as NavTab },
-    { text: t('game:start_step3'), nav: 'learn-guitar'  as NavTab },
-    { text: t('game:start_step4'), nav: null },
+  const steps: Array<{ text: string; nav: NavTab | null; url?: string }> = [
+    { text: t('game:start_step1'), nav: 'tuner'        },
+    { text: t('game:start_step2'), nav: 'setup'        },
+    { text: t('game:start_step3'), nav: 'learn-guitar' },
+    { text: t('game:start_step4'), nav: null           },
+    { text: t('game:start_step5'), nav: null, url: 'https://ko-fi.com/bassmaster' },
   ];
 
   const [lineIdx, setLineIdx]       = useState(-1);    // line being typed
   const [charIdx, setCharIdx]       = useState(0);     // chars shown
-  const [checked, setChecked]       = useState<boolean[]>([false, false, false, false]);
+  const [checked, setChecked]       = useState<boolean[]>([false, false, false, false, false]);
   const [showBtn, setShowBtn]       = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const cancelRef   = useRef(false);
@@ -124,7 +125,7 @@ export default function Start({ onNavigate }: StartProps) {
     cancelRef.current = true;
     setLineIdx(steps.length - 1);
     setCharIdx(steps[steps.length - 1].text.length);
-    setChecked([true, true, true, true]);
+    setChecked([true, true, true, true, true]);
     setShowBtn(true);
   };
 
@@ -160,6 +161,17 @@ export default function Start({ onNavigate }: StartProps) {
                   >
                     →
                   </button>
+                )}
+                {checked[i] && step.url && (
+                  <a
+                    className="start-url-btn"
+                    href={step.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    ☕
+                  </a>
                 )}
               </li>
             );

@@ -122,6 +122,24 @@
   border-color: var(--cy-cyan);
 }
 
+/* Coffee donate link ────────────────────── */
+.start-url-btn {
+  background: rgba(255, 157, 0, 0.1);
+  border: 1px solid rgba(255, 157, 0, 0.4);
+  border-radius: 4px;
+  color: rgba(255, 157, 0, 0.9);
+  font-size: 1rem;
+  padding: 2px 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.start-url-btn:hover {
+  background: rgba(255, 157, 0, 0.2);
+  border-color: rgba(255, 157, 0, 0.8);
+}
+
 /* CTA button ─────────────────────────────── */
 .start-cta-row {
   margin-top: 36px;
