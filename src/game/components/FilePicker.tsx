@@ -132,10 +132,16 @@ export default function FilePicker({ onFilePicked, onSongDirect }: FilePickerPro
     setDownloadingUrl(result.url);
     try {
       const { data, filename } = await gprotabDownload(result.url);
-      // Default to .gp5 if filename has no Guitar Pro extension
-      const safeName = /\.gp[x3-9]?$/i.test(filename)
-        ? filename
-        : `${result.artist} - ${result.title}.gp5`.replace(/[\\/:*?"<>|]/g, '_');
+      // Always prefer artist + title from the search result for the display name.
+      // Keep whatever Guitar Pro extension the server actually served (.gp3 /
+      // .gp4 / .gp5 / .gpx) so AlphaTab still gets the right format hint —
+      // gprotab.net otherwise returns generic "tab5.gp5"-style filenames.
+      const extMatch = filename.match(/\.gp[x3-9]?$/i);
+      const ext      = extMatch ? extMatch[0].toLowerCase() : '.gp5';
+      const baseName = `${result.artist} - ${result.title}`
+        .replace(/[\\/:*?"<>|]/g, '_')
+        .trim();
+      const safeName = `${baseName}${ext}`;
       await saveRecentFile(safeName, data);
       await refreshRecents();
       onFilePicked({ name: safeName, bytes: data });
