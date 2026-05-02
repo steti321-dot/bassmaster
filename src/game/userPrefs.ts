@@ -15,6 +15,9 @@ export interface UserPrefs {
   synthQuality: SynthQuality;
   /** Key of the selected downloadable SF2 for the 'high' quality tier. */
   highSoundFontKey: string;
+  /** Show karaoke-style lyric strip during play. On by default; hidden on
+   *  mobile portrait regardless via CSS. */
+  showLyrics: boolean;
 }
 
 const KEY = 'bassmaster_prefs_v1';
@@ -23,6 +26,7 @@ const DEFAULTS: UserPrefs = {
   noiseSuppressDefault: false,
   synthQuality: 'simple',
   highSoundFontKey: DEFAULT_HIGH_KEY,
+  showLyrics: true,
 };
 
 export function loadPrefs(): UserPrefs {

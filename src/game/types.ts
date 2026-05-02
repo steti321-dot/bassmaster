@@ -38,6 +38,24 @@ export interface SongTrack {
   tuning: number[];
 }
 
+/**
+ * One karaoke-style syllable in the song's vocal line, sorted by time.
+ * Extracted by `extractLyrics.ts` from the first track that carries lyrics
+ * in the parsed alphaTab score (`Beat.lyrics`).
+ */
+export interface LyricLine {
+  /** Onset time of the syllable, in milliseconds from song start. */
+  time: number;
+  /** The text to show — typically a syllable like "walk" / "in'" / "the". */
+  text: string;
+  /**
+   * True at sentence/line breaks. Renderer inserts a small visual gap so
+   * phrases don't run together while still rendering on a single horizontal
+   * row. alphaTab encodes line breaks with a `\r` between chunks.
+   */
+  isLineBreak?: boolean;
+}
+
 export interface Song {
   title: string;
   artist?: string;
@@ -54,6 +72,12 @@ export interface Song {
   instrument: InstrumentKind;
   /** Source file path (or 'demo' for the synthetic demo). */
   source?: string;
+  /**
+   * Karaoke-style per-syllable lyric timings, sorted by time. Absent if the
+   * source file carries no lyrics (or if it was loaded via the hand-rolled
+   * `Gp4Reader.ts` fallback path which discards lyrics).
+   */
+  lyrics?: LyricLine[];
 }
 
 export type Difficulty = 'easy' | 'medium' | 'strict';

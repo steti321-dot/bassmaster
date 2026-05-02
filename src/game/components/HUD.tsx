@@ -21,6 +21,8 @@ interface HUDProps {
   onKidsModeChange: (v: boolean) => void;
   waitMode: boolean;
   onWaitModeChange: (v: boolean) => void;
+  showLyrics: boolean;
+  onShowLyricsChange: (v: boolean) => void;
 }
 
 const RATE_PRESETS = [0.5, 0.75, 1.0];
@@ -43,6 +45,8 @@ export default function HUD({
   onKidsModeChange,
   waitMode,
   onWaitModeChange,
+  showLyrics,
+  onShowLyricsChange,
 }: HUDProps) {
   const { t } = useTranslation(['game', 'common']);
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -168,6 +172,13 @@ export default function HUD({
                     title={t('common:training_mode_title')}
                   >
                     {t('common:training_mode')}
+                  </button>
+                  <button
+                    className={`lyrics-btn ${showLyrics ? 'active' : ''}`}
+                    onClick={() => onShowLyricsChange(!showLyrics)}
+                    title={t('common:lyrics_toggle_title')}
+                  >
+                    {t('game:lyrics')}
                   </button>
                 </div>
               </div>

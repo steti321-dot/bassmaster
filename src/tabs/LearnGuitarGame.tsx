@@ -8,13 +8,14 @@ import NoteRain from '../game/components/NoteRain';
 import SidePanel from '../game/components/SidePanel';
 import HUD from '../game/components/HUD';
 import FretboardMini from '../game/components/FretboardMini';
+import LyricsStrip from '../game/components/LyricsStrip';
 import { getInstrument, buildProfileFromTuning } from '../game/Instrument';
 import { DIFFICULTIES, INITIAL_SCORE } from '../game/types';
 import type { Song, Difficulty, ScoreState } from '../game/types';
 import { SimpleSynth, AlphaTabSynth } from '../game/SynthManager';
 import type { ISynth } from '../game/SynthManager';
 import { MicCapture } from '../game/MicCapture';
-import { loadPrefs } from '../game/userPrefs';
+import { loadPrefs, savePrefs } from '../game/userPrefs';
 import { MEDIUM_SOUNDFONT, HIGH_SOUNDFONT_OPTIONS, DEFAULT_HIGH_KEY } from '../game/soundfontManifest';
 import { loadCachedSoundFont, fetchAndCacheSoundFont } from '../game/soundfontCache';
 import { detectPitch, centsBetween } from '../game/PitchDetectorJS';
@@ -70,6 +71,12 @@ export default function LearnGuitarGame() {
   const [monitorVolume, setMonitorVolume] = useState(0);
   const [monitorMuted, setMonitorMuted] = useState(false);
   const [noiseSuppress, setNoiseSuppress] = useState(() => loadPrefs().noiseSuppressDefault);
+  // Karaoke lyrics: default-on, persisted globally in userPrefs.
+  const [showLyrics, setShowLyrics] = useState(() => loadPrefs().showLyrics);
+  const handleShowLyricsChange = (v: boolean) => {
+    setShowLyrics(v);
+    savePrefs({ ...loadPrefs(), showLyrics: v });
+  };
   // Latency offset is global (set in Setup tab via calibration). The game
   // reads it once on mount; remounting (tab switch) picks up changes.
   const latencyOffsetMs = calibration?.latencyOffsetMs ?? 0;
@@ -921,6 +928,8 @@ export default function LearnGuitarGame() {
         onKidsModeChange={setKidsMode}
         waitMode={waitMode}
         onWaitModeChange={setWaitMode}
+        showLyrics={showLyrics}
+        onShowLyricsChange={handleShowLyricsChange}
       />
 
       <div className="game-stage">
@@ -941,6 +950,11 @@ export default function LearnGuitarGame() {
           }}
         />
         <div className="rain-column">
+          <LyricsStrip
+            lyrics={song.lyrics ?? []}
+            currentTimeMs={currentTimeMs}
+            visible={showLyrics}
+          />
           <NoteRain
             instrument={profile}
             notes={displayedNotes}

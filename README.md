@@ -189,6 +189,7 @@ Deploys ~50 lines of code that re-implement the Electron main process's `gprotab
 
 - **Polyphonic chord recognition** — current pitch detector (YIN) is monophonic, so a strummed chord only registers one tone per pluck. A polyphonic detector (FFT pitch-peak picking, or a small ML model like Spotify's Basic Pitch run incrementally) would let "play the C chord" score in one motion instead of three separate plucks.
 - **Strum vs pick discrimination** — RMS-envelope shape analysis to detect whether the user strummed multiple strings simultaneously, so we can score the whole chord as one event in that case.
+- **Export synth backing as WAV** — let the user save the SimpleSynth oscillator backing for a song to a downloadable `.wav` from the Track Setup screen, rendered offline via `OfflineAudioContext` (~1-2 s for a 4-min song) and encoded with the existing `encodeWav16` helper. OGG conversion deferred. Detailed design: `~/.claude/plans/check-what-midi-proud-horizon.md`.
 - **Session replays** — record per-note hit/miss + timing into a small JSON, let the player review the run.
 - **Shareable song URLs** — encode chosen file + settings into the URL hash so you can share a configured song link.
 - **Custom song library beyond IndexedDB** — opt-in account → cloud-saved stash that survives across browsers / devices.

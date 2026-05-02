@@ -1,0 +1,130 @@
+/* Karaoke-style lyric strip — static text with a glowing "current" syllable.
+   On wide PC viewports (≥ 1100 px) two rows stack: the line being sung on
+   top, the next line as a dim preview below. Narrower windows show one row.
+   Mobile portrait hides the strip entirely so the rain isn't squashed. */
+
+.lyrics-strip {
+  width: 100%;
+  flex-shrink: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 12px;
+  box-sizing: border-box;
+  background: rgba(7, 9, 13, 0.55);
+  border: 1px solid rgba(0, 245, 255, 0.18);
+  border-radius: 4px;
+  box-shadow: inset 0 0 16px rgba(0, 245, 255, 0.04);
+  overflow: hidden;
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: 0.04em;
+}
+
+/* Stable heights per layout mode — set on the strip so the rain reflows
+   only when crossing the 1100 px breakpoint, never per-render. */
+.lyrics-strip--one {
+  height: 36px;
+}
+.lyrics-strip--two {
+  height: 64px;
+}
+
+/* Always-rendered placeholder (no lyrics or toggle off) — keeps height 0 so
+   the layout stays stable but invisible to the user. */
+.lyrics-strip--empty {
+  height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* One static line of syllables. Mounted with `key={lineIdx}` in TSX, so a
+   line change re-mounts and fires the enter animation below. */
+.lyrics-line {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: center;
+  gap: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: lyric-line-enter 360ms cubic-bezier(0.22, 1, 0.36, 1);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+@keyframes lyric-line-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Bottom row in two-row mode is a dim "what's next" preview. */
+.lyrics-line--bottom {
+  opacity: 0.55;
+}
+
+/* Syllable styling. The whole line stays at full readable colour — only the
+   current syllable lights up, no past/future colour fade (user feedback:
+   "dark text is hard to read"). */
+.lyric-syl {
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--cy-text);
+  transition: color 0.18s ease, text-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.lyric-syl-static {
+  color: var(--cy-text);
+}
+
+.lyric-cur {
+  color: var(--cy-cyan);
+  font-weight: 800;
+  text-shadow:
+    0 0 6px rgba(0, 245, 255, 0.7),
+    0 0 16px rgba(0, 245, 255, 0.35);
+  transform: scale(1.06);
+  animation: lyric-cur-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes lyric-cur-pulse {
+  0%, 100% { text-shadow: 0 0 6px rgba(0, 245, 255, 0.7), 0 0 16px rgba(0, 245, 255, 0.35); }
+  50%      { text-shadow: 0 0 4px rgba(0, 245, 255, 0.5), 0 0 10px rgba(0, 245, 255, 0.2); }
+}
+
+/* Line-break markers (only relevant if a single line collected one mid-flow,
+   which is rare since buildLines splits at break markers — keeping for safety). */
+.lyric-break {
+  display: inline-block;
+  width: 12px;
+  flex-shrink: 0;
+}
+
+/* Dev-only drift readout. Sits in the bottom-right of the strip and shows
+   the current time, the time of the highlighted syllable, and the drift
+   (positive = lyric is in the past, i.e. highlight is late). Useful for
+   telling whether a timing problem lives in the GP file or our extractor. */
+.lyrics-debug {
+  position: absolute;
+  right: 6px;
+  bottom: 2px;
+  font-family: 'Rajdhani', monospace;
+  font-size: 0.55rem;
+  color: rgba(0, 245, 255, 0.55);
+  letter-spacing: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* Mobile portrait — every pixel of vertical space goes to the rain. */
+@media (max-width: 768px) {
+  .lyrics-strip {
+    display: none;
+  }
+}

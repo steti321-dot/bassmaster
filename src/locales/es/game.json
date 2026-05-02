@@ -33,5 +33,6 @@
   "repeat_meter_uniform": "{{passes}} × {{cellsPerPass}}",
   "repeat_meter_mixed": "{{sizes}}",
   "repeat_pass": "pasada {{n}} / {{total}}  •  {{pos}} / {{cellsPerPass}}",
-  "player_track": "Pista del jugador"
+  "player_track": "Pista del jugador",
+  "lyrics": "Letra"
 }

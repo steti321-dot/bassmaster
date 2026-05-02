@@ -4,7 +4,7 @@
  * FilePicker as a "Quick start" section.
  */
 
-import type { Song, GameNote } from './types';
+import type { Song, GameNote, LyricLine } from './types';
 import { fretToHz, BASS, GUITAR } from './Instrument';
 
 /**
@@ -133,6 +133,21 @@ function twinkleTwinkle(): Song {
     t += d;
   }
 
+  // Hand-aligned lyrics — one syllable per note. Useful as a known-good
+  // karaoke test case since most public GP files don't carry lyrics in
+  // the per-beat field that the lyrics strip needs.
+  const SYLLABLES = [
+    'Twin', 'kle', 'twin', 'kle', 'lit', 'tle', 'star',
+    'How',  'I',   'won',  'der', 'what', 'you', 'are',
+  ];
+  const lyrics: LyricLine[] = [];
+  notes.forEach((note, i) => {
+    // Verse break between "...star" and "How I wonder..." — drives the
+    // karaoke line shift even though the two phrases are back-to-back in time.
+    if (i === 7) lyrics.push({ time: note.time, text: '', isLineBreak: true });
+    lyrics.push({ time: note.time, text: SYLLABLES[i] });
+  });
+
   const playerTrack = {
     index: 0,
     name: 'Twinkle Twinkle — Melody',
@@ -150,6 +165,7 @@ function twinkleTwinkle(): Song {
     backingEnabled: new Set<number>([0]), // hear yourself when the synth plays it
     instrument: 'guitar',
     notes,
+    lyrics,
     source: 'builtin:twinkle',
   };
 }
@@ -276,16 +292,24 @@ function fourChords(): Song {
 
   // Two passes through the progression so kids hear a loop.
   const sequence: ChordVoicing[] = [G, D, Em, C, G, D, Em, C];
+  const SEQUENCE_NAMES = ['G', 'D', 'E-mi', 'C', 'G', 'D', 'E-mi', 'C'];
 
   const notes: GameNote[] = [];
+  const lyrics: LyricLine[] = [];
   let t = 800;
-  for (const chord of sequence) {
+  sequence.forEach((chord, i) => {
+    // One "syllable" per chord change — chord name as the lyric text. Useful
+    // both as a karaoke smoke-test and as a beginner reading aid: when you're
+    // learning the I-V-vi-IV progression, having the chord name highlight
+    // in time with the strum is a real practice cue.
+    if (i === 4) lyrics.push({ time: t, text: '', isLineBreak: true });
+    lyrics.push({ time: t, text: SEQUENCE_NAMES[i] });
     for (const [s, f] of chord) {
       // Each strum sustains nearly the full bar so the chord rings.
       notes.push(gNote(s, f, t, bar * 0.9));
     }
     t += bar;
-  }
+  });
 
   const playerTrack = {
     index: 0,
@@ -304,6 +328,7 @@ function fourChords(): Song {
     backingEnabled: new Set<number>([0]),
     instrument: 'guitar',
     notes,
+    lyrics,
     source: 'builtin:four-chords',
   };
 }

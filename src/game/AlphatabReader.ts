@@ -11,6 +11,13 @@ import type { Song, GameNote, SongTrack } from './types';
 import type { InstrumentKind } from './Instrument';
 import type { GpFileSummary, GpTrackInfo } from './Gp4Reader';
 import { midiProgramName } from './Gp4Reader';
+import { extractLyricsFromScore } from './extractLyrics';
+
+// Promote beat-text annotations to real lyrics for older GP3-5 files that
+// stored vocals there before the dedicated lyrics feature existed.
+try {
+  (alphaTab.importer.ScoreLoader as any).beatTextAsLyrics = true;
+} catch { /* alphaTab API may rename this in future versions */ }
 
 const TICKS_PER_QUARTER = 960; // alphatab's MidiUtils.QuarterTime
 
@@ -151,6 +158,7 @@ function convertScore(score: alphaTab.model.Score, options: ConvertOptions = {})
   if (backingEnabled.size === 0) backingEnabled.add(chosenIdx);
 
   const chosen = songTracks[chosenIdx];
+  const lyrics = extractLyricsFromScore(score);
   return {
     title: score.title || 'Untitled',
     artist: score.artist || undefined,
@@ -160,6 +168,7 @@ function convertScore(score: alphaTab.model.Score, options: ConvertOptions = {})
     backingEnabled,
     notes: chosen?.notes ?? [],
     instrument: chosen?.instrument ?? 'guitar',
+    lyrics: lyrics.length > 0 ? lyrics : undefined,
   };
 }
 

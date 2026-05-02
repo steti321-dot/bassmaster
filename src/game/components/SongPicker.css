@@ -149,7 +149,48 @@
 .setup-list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 4px 0 0; /* room for the scrollbar without crowding the rows */
+
+  /* Cap the height so a 20-track file scrolls in place instead of pushing
+     the Start button off the bottom of the screen. The bound shrinks on
+     short viewports so we still show the action buttons. */
+  max-height: clamp(180px, 50vh, 480px);
+  overflow-y: auto;
+
+  /* Cyan-themed scrollbar (Firefox + Chromium). */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 245, 255, 0.4) transparent;
+}
+
+.setup-list::-webkit-scrollbar {
+  width: 6px;
+}
+.setup-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.setup-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 245, 255, 0.4);
+  border-radius: 3px;
+}
+.setup-list::-webkit-scrollbar-thumb:hover {
+  background: var(--cy-cyan);
+}
+
+/* Backing-column "select all" header toggle. Sits next to the column label;
+   tri-state via React's indeterminate ref. */
+.setup-table-header .col-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.col-back-label { /* keeps the column heading visible next to the checkbox */ }
+.select-all-backing {
+  accent-color: var(--cy-cyan);
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+  margin: 0;
 }
 
 .setup-row {

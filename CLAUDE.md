@@ -85,8 +85,9 @@ GH Pages auto-deploys on push to `main`. Web build excludes `Music2Notes` via `I
 
 1. **Polyphonic chord recognition** — biggest UX gap. Current YIN is monophonic, so strummed chords need N plucks to score. Candidate: FFT peak-picking, or run Spotify Basic Pitch incrementally.
 2. **Strum vs pick discrimination** — RMS-envelope shape analysis so a strum can score a whole chord at once (vs. accidentally registering only one tone).
-3. Session replays, shareable song URLs, opt-in cloud song library.
-4. More chord-policy refinements (sus → suspended tone, V7→I leading-tone, jazz extensions).
+3. **Export synth backing as WAV** — render the SimpleSynth oscillator sound for the chosen backing tracks via `OfflineAudioContext`, encode with the existing `encodeWav16` helper (`src/services/micRecorder.ts:166`), trigger a download from Track Setup. OGG conversion is a deferred follow-up. Detailed design lives in `~/.claude/plans/check-what-midi-proud-horizon.md`.
+4. Session replays, shareable song URLs, opt-in cloud song library.
+5. More chord-policy refinements (sus → suspended tone, V7→I leading-tone, jazz extensions).
 
 ## Memory cross-refs (user-level)
 

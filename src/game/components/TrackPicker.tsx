@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './SongPicker.css';
 import { inspectGpFile, parseGpFile } from '../Gp4Reader';
@@ -122,7 +122,10 @@ export default function TrackPicker({ file, onBack, onSongReady }: TrackPickerPr
       <div className="picker-section">
         <div className="setup-table-header">
           <span className="col-play">{t('common:play')}</span>
-          <span className="col-back">{t('common:backing')}</span>
+          <span className="col-back">
+            <SelectAllBackingToggle tracks={tracks} backingSet={backingSet} onChange={setBackingSet} />
+            <span className="col-back-label">{t('common:backing')}</span>
+          </span>
           <span className="col-name">{t('common:track')}</span>
           <span className="col-badge">{t('common:type')}</span>
         </div>
@@ -232,4 +235,47 @@ function formatTuning(midiTunings: number[]): string {
   // GP file order is high → low (string 0 = highest pitch). Display low → high
   // so the leftmost note matches the lowest column in the game's note rain.
   return [...midiTunings].reverse().map(midiToName).join(' ');
+}
+
+/** Tri-state header checkbox for the Backing column. Reflects whether all
+ *  tracks are selected (checked), some are (indeterminate), or none are
+ *  (unchecked). Click toggles between "all" and "none". */
+interface SelectAllBackingToggleProps {
+  tracks: Array<{ index: number }>;
+  backingSet: Set<number>;
+  onChange: (next: Set<number>) => void;
+}
+function SelectAllBackingToggle({ tracks, backingSet, onChange }: SelectAllBackingToggleProps) {
+  const { t } = useTranslation(['common']);
+  const ref = useRef<HTMLInputElement>(null);
+
+  const total = tracks.length;
+  const selected = tracks.filter((tr) => backingSet.has(tr.index)).length;
+  const allChecked = total > 0 && selected === total;
+  const someChecked = selected > 0 && selected < total;
+
+  // HTML checkboxes have no React-controlled `indeterminate`; we set it via ref.
+  useEffect(() => {
+    if (ref.current) ref.current.indeterminate = someChecked;
+  }, [someChecked]);
+
+  const handleToggle = () => {
+    if (allChecked) {
+      onChange(new Set());
+    } else {
+      onChange(new Set(tracks.map((tr) => tr.index)));
+    }
+  };
+
+  return (
+    <input
+      ref={ref}
+      type="checkbox"
+      checked={allChecked}
+      onChange={handleToggle}
+      title={t('common:select_all_backing')}
+      aria-label={t('common:all')}
+      className="select-all-backing"
+    />
+  );
 }
