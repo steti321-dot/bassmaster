@@ -178,17 +178,17 @@ impl GP4Writer {
         // Measure-track pairs
         for measure_idx in 0..num_measures {
             for track_idx in 0..self.tracks.len() {
-                let beats = if measure_idx < self.measures[track_idx].len() {
-                    &self.measures[track_idx][measure_idx]
+                let beats_slice: &[Beat] = if measure_idx == 0 {
+                    &self.measures[track_idx]
                 } else {
                     &[]
                 };
 
                 // Number of beats in this measure
-                Self::write_int(buf, beats.len() as u32);
+                Self::write_int(buf, beats_slice.len() as u32);
 
                 // Write each beat
-                for beat in beats {
+                for beat in beats_slice {
                     self.write_beat(buf, beat);
                 }
             }

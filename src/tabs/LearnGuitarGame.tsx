@@ -1130,7 +1130,7 @@ export default function LearnGuitarGame() {
       {gamePhase === 'countdown' && synthRef.current.getContext() && (
         <CountdownOverlay
           audioCtx={synthRef.current.getContext()!}
-          bpm={Math.max(60, song.tempo / playbackRate)}
+          bpm={Math.min(100, Math.max(60, song.tempo / playbackRate))}
           onComplete={handleCountdownComplete}
           onCancel={() => {/* setGamePhase reset elsewhere; cleanup only */}}
         />

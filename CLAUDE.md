@@ -65,6 +65,7 @@ GH Pages auto-deploys on push to `main`. Web build excludes `Music2Notes` via `I
 ## Active conventions
 
 - **String indexing**: `0` = highest-pitched string (high e for guitar, G for bass), `numStrings-1` = lowest. NoteRain mirrors this for display so the *lowest* pitch sits on the **left** column (Rocksmith convention).
+- **Measure-aware bar lines** (v0.1.10): Both `Gp4Reader.ts` (GP3/4) and `AlphatabReader.ts` (GP5+) now set `measureNumber`, `timeSignatureNumerator`, `timeSignatureDenominator` on every note. NoteRain uses these to render measure-boundary cyan lines + numbers. AlphatabReader has fallback `bar.index ?? barIdx` for malformed files.
 - **Chord-policy** (Kids Mode): power chord (root + 5th) → root; full chord with perfect 5th → 5th (closest octave); diminished/sus/no-5th → root fallback. See `simplify.ts:pickFromChord` and `project_kids_mode_chord_policy.md`.
 - **Same-string smoothing**: position remap prefers the previous output note's string; +100 cost penalty for string changes. `simplify.ts` step 2.
 - **Difficulty**: Easy ±150 ¢ / ±250 ms onset / full sustain late-grace. Medium ±50 ¢ / ±150 ms / half sustain. Strict ±25 ¢ / ±75 ms / none.
@@ -96,3 +97,4 @@ GH Pages auto-deploys on push to `main`. Web build excludes `Music2Notes` via `I
 - `project_kids_mode_chord_policy.md` — ✅ shipped, current power/full/no-5th policy
 - `project_kids_mode_string_smoothing.md` — ✅ shipped (Kids Mode v2)
 - `project_vite_migration.md` — ✅ shipped (Vite 7 + @coderline/alphatab-vite, dropped --legacy-peer-deps)
+- `project_measure_aware_bar_lines.md` — ✅ shipped (v0.1.10: GP3/4/5 all have measure numbers + bar lines in NoteRain)

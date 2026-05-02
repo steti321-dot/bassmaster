@@ -50,7 +50,7 @@ impl AudioProcessor {
         sample_rate: u32,
     ) -> JsValue {
         let hop_size = 512;
-        let mut notes = Vec::new();
+        let mut notes: Vec<Note> = Vec::new();
         let mut prev_fret = -1i32;
         let mut note_start_time = 0.0f32;
 
