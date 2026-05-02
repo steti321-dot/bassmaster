@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './NoteRain.css';
 import type { GameNote } from '../types';
 import type { InstrumentProfile } from '../Instrument';
@@ -119,6 +119,19 @@ export default function NoteRain({
       const dtTail = note.time + note.duration - currentTimeMs;
       return dtTail > -HIT_LINGER_MS && dtHead < fallDurationSec * 1000 + 200;
     });
+
+  // Build measure boundary list once per song (first note per measure = measure start).
+  const measureBoundaries = useMemo(() => {
+    const seen = new Set<number>();
+    const out: Array<{ measureNumber: number; startMs: number }> = [];
+    for (const n of notes) {
+      if (n.measureNumber !== undefined && !seen.has(n.measureNumber)) {
+        seen.add(n.measureNumber);
+        out.push({ measureNumber: n.measureNumber, startMs: n.time });
+      }
+    }
+    return out;
+  }, [notes]);
 
   // ── Coin physics + emission (game-loop side-effect in render body) ────────
   const nowWall = performance.now();
@@ -256,6 +269,38 @@ export default function NoteRain({
 
         {/* Falling bulbs — clipped at hit line so shapes stay intact as they cross */}
         <g clipPath="url(#rain-clip)">
+
+        {/* Measure boundary lines — full-width horizontal cyan rule per bar */}
+        {measureBoundaries.map(({ measureNumber, startMs }) => {
+          const dt = startMs - currentTimeMs;
+          const y = hitLineY - dt * pixelsPerMs;
+          if (y < 0 || y > hitLineY) return null;
+          const lProj = project(numStrings - 1, y);
+          const rProj = project(0, y);
+          const xL = lProj.x - baseBulbRadius * lProj.scale * 0.6;
+          const xR = rProj.x + baseBulbRadius * rProj.scale * 0.6;
+          return (
+            <g key={`bar-${measureNumber}`} pointerEvents="none">
+              <line
+                x1={xL} y1={y} x2={xR} y2={y}
+                stroke="rgba(0,245,255,0.55)"
+                strokeWidth={1}
+                style={{ filter: 'drop-shadow(0 0 3px rgba(0,245,255,0.5))' }}
+              />
+              <text
+                x={xL - 4} y={y - 2}
+                textAnchor="end"
+                fontSize={8}
+                fontWeight={700}
+                fill="rgba(0,245,255,0.65)"
+                style={{ fontFamily: 'Rajdhani, sans-serif', letterSpacing: '0.04em' }}
+              >
+                {measureNumber + 1}
+              </text>
+            </g>
+          );
+        })}
+
         {[...visibleNotes]
           .sort((a, b) => a.note.time - b.note.time)
           .reverse()

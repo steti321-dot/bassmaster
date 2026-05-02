@@ -31,6 +31,9 @@ interface RunInfo {
   length: number;         // total notes in the run
   midi: number;           // MIDI pitch they all share
   passSizes: number[];    // greedy-decomposed pass sizes (e.g. [8,8] for 16, [8,3] for 11)
+  measureStart?: number;  // first measure (0-indexed) in this run, if available
+  measureEnd?: number;    // last measure (0-indexed) in this run, if available
+  timeSignature?: string; // e.g., "4/4" if available
 }
 
 /** Greedy: pull off passes of 8 until the remainder fits in a single shorter pass. */
@@ -79,15 +82,29 @@ function computeRuns(notes: GameNote[], instrument: InstrumentProfile): {
       if ((groupSizeAtIdx.get(j) ?? 1) > 1) break;
       const m = (instrument.midiTunings[notes[j].string] ?? 0) + notes[j].fret;
       if (m !== baseMidi) break;
+      // Break run at measure boundary if measure metadata is available.
+      if (notes[i].measureNumber !== undefined && notes[j].measureNumber !== undefined &&
+          notes[j].measureNumber !== notes[i].measureNumber) break;
       j++;
     }
     const length = j - i;
     if (length >= 3) {
+      // Extract measure info if available
+      const firstNote = notes[i];
+      const lastNote = notes[j - 1];
+      const measureStart = firstNote.measureNumber;
+      const measureEnd = lastNote.measureNumber;
+      const timeSignNum = firstNote.timeSignatureNumerator;
+      const timeSignDenom = firstNote.timeSignatureDenominator;
+
       const run: RunInfo = {
         startIdx: i,
         length,
         midi: baseMidi,
         passSizes: pickGrouping(length),
+        measureStart,
+        measureEnd,
+        timeSignature: timeSignNum && timeSignDenom ? `${timeSignNum}/${timeSignDenom}` : undefined,
       };
       runs.push(run);
       for (let k = i; k < j; k++) runByNoteIdx.set(k, run);
@@ -209,6 +226,12 @@ export default function SidePanel({
             tPass={(n: number, total: number, pos: number, cellsPerPass: number) =>
               t('game:repeat_pass', { n, total, pos, cellsPerPass })
             }
+            tMeasureSingle={(num: number, timeSignature: string) =>
+              t('game:repeat_measure_single', { num, timeSignature })
+            }
+            tMeasureRange={(start: number, end: number, timeSignature: string) =>
+              t('game:repeat_measure_range', { start, end, timeSignature })
+            }
           />
         )}
       </div>
@@ -265,11 +288,13 @@ interface RunSummaryProps {
   tMeterUniform: (passes: number, cellsPerPass: number) => string;
   tMeterMixed: (sizes: string) => string;
   tPass: (n: number, total: number, pos: number, cellsPerPass: number) => string;
+  tMeasureSingle?: (num: number, timeSignature: string) => string;
+  tMeasureRange?: (start: number, end: number, timeSignature: string) => string;
 }
 
 function RunSummary({
   run, currentIdx, instrument, noteResults,
-  lang, tRepeatCount, tMeterUniform, tMeterMixed, tPass,
+  lang, tRepeatCount, tMeterUniform, tMeterMixed, tPass, tMeasureSingle, tMeasureRange,
 }: RunSummaryProps) {
   const positionInRun = currentIdx - run.startIdx; // 0-based index within run
 
@@ -315,12 +340,23 @@ function RunSummary({
     cells.push(<span key={c} className={`run-cell ${stateClass}`} />);
   }
 
+  // Build measure info label if available
+  let measureInfo: string | undefined;
+  if (run.measureStart !== undefined && run.timeSignature) {
+    if (run.measureEnd !== undefined && run.measureEnd > run.measureStart) {
+      measureInfo = tMeasureRange?.(run.measureStart + 1, run.measureEnd + 1, run.timeSignature);
+    } else {
+      measureInfo = tMeasureSingle?.(run.measureStart + 1, run.timeSignature);
+    }
+  }
+
   return (
     <div className="run-summary" style={{ '--chip-color': color } as React.CSSProperties}>
       <div className="run-header">
         <span className="run-count">{tRepeatCount(run.length)}</span>
         <span className="run-pitch" style={{ color }}>{pitch}</span>
       </div>
+      {measureInfo && <div className="run-measure-info">{measureInfo}</div>}
       {meter && <div className="run-meter">{meter}</div>}
       <div className="run-progress">{cells}</div>
       <div className="run-counter">

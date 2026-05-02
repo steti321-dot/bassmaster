@@ -128,8 +128,15 @@ function twinkleTwinkle(): Song {
 
   const notes: GameNote[] = [];
   let t = 800; // brief lead-in so the player can find the first note
+  const barMs = quarter * 4; // 2500 ms per bar in 4/4
   for (const [s, f, d] of phrase) {
-    notes.push(gNote(s, f, t, d * 0.9));
+    const base = gNote(s, f, t, d * 0.9);
+    notes.push({
+      ...base,
+      measureNumber: Math.floor(Math.max(0, t - 800) / barMs),
+      timeSignatureNumerator: 4,
+      timeSignatureDenominator: 4,
+    });
     t += d;
   }
 

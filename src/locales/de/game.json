@@ -33,6 +33,8 @@
   "repeat_meter_uniform": "{{passes}} × {{cellsPerPass}}",
   "repeat_meter_mixed": "{{sizes}}",
   "repeat_pass": "Durchgang {{n}} / {{total}}  •  {{pos}} / {{cellsPerPass}}",
+  "repeat_measure_single": "T. {{num}} ({{timeSignature}})",
+  "repeat_measure_range": "T. {{start}}–{{end}} ({{timeSignature}})",
   "player_track": "Spielerspur",
   "lyrics": "Liedtext"
 }

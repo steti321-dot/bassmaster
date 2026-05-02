@@ -72,6 +72,15 @@
   text-shadow: 0 0 6px currentColor;
 }
 
+.run-measure-info {
+  font-size: 0.65rem;
+  color: var(--cy-text-muted);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Rajdhani', sans-serif;
+  min-height: 1.2em;
+}
+
 .run-meter {
   font-size: 0.66rem;
   color: var(--cy-text-muted);

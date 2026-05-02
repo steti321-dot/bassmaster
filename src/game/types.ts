@@ -21,6 +21,12 @@ export interface GameNote {
    * undefined = not specified in source; UI may compute a recommendation.
    */
   finger?: number;
+  /** Measure (bar) index where this note starts, 0-indexed. Populated during GP file parse. */
+  measureNumber?: number;
+  /** Numerator of the time signature at this measure (e.g., 4 for 4/4). */
+  timeSignatureNumerator?: number;
+  /** Denominator of the time signature at this measure (e.g., 4 for 4/4). */
+  timeSignatureDenominator?: number;
 }
 
 /**

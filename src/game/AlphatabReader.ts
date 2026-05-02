@@ -88,6 +88,10 @@ function convertScore(score: alphaTab.model.Score, options: ConvertOptions = {})
     for (const bar of staff.bars) {
       const timing = barTiming[bar.index] ?? barTiming[barTiming.length - 1];
       if (!timing) continue;
+      // Get time signature from the master bar at this bar index
+      const masterBar = score.masterBars[bar.index];
+      const timeSignNum = masterBar?.timeSignatureNumerator ?? 4;
+      const timeSignDenom = masterBar?.timeSignatureDenominator ?? 4;
       for (const voice of bar.voices) {
         for (const beat of voice.beats) {
           if (beat.isEmpty || beat.notes.length === 0) continue;
@@ -118,6 +122,9 @@ function convertScore(score: alphaTab.model.Score, options: ConvertOptions = {})
               string: ourString,
               fret: isDrums ? realValue : n.fret,
               frequency: isDrums ? 0 : midiToFreq(realValue),
+              measureNumber: bar.index,
+              timeSignatureNumerator: timeSignNum,
+              timeSignatureDenominator: timeSignDenom,
             });
           }
         }

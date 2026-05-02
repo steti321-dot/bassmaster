@@ -33,6 +33,8 @@
   "repeat_meter_uniform": "{{passes}} × {{cellsPerPass}}",
   "repeat_meter_mixed": "{{sizes}}",
   "repeat_pass": "passagem {{n}} / {{total}}  •  {{pos}} / {{cellsPerPass}}",
+  "repeat_measure_single": "c. {{num}} ({{timeSignature}})",
+  "repeat_measure_range": "c. {{start}}–{{end}} ({{timeSignature}})",
   "player_track": "Faixa do jogador",
   "lyrics": "Letra"
 }
