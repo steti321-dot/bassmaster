@@ -85,11 +85,14 @@ function convertScore(score: alphaTab.model.Score, options: ConvertOptions = {})
     const kind = trackKind(track);
     const notes: GameNote[] = [];
 
-    for (const bar of staff.bars) {
+    for (let barIdx = 0; barIdx < staff.bars.length; barIdx++) {
+      const bar = staff.bars[barIdx];
       const timing = barTiming[bar.index] ?? barTiming[barTiming.length - 1];
       if (!timing) continue;
+      const measureIdx = bar.index ?? barIdx;
+      if (barIdx < 3) console.log(`Bar ${barIdx}: bar.index=${bar.index}, using measureNumber=${measureIdx}`);
       // Get time signature from the master bar at this bar index
-      const masterBar = score.masterBars[bar.index];
+      const masterBar = score.masterBars[bar.index ?? barIdx];
       const timeSignNum = masterBar?.timeSignatureNumerator ?? 4;
       const timeSignDenom = masterBar?.timeSignatureDenominator ?? 4;
       for (const voice of bar.voices) {
@@ -122,7 +125,7 @@ function convertScore(score: alphaTab.model.Score, options: ConvertOptions = {})
               string: ourString,
               fret: isDrums ? realValue : n.fret,
               frequency: isDrums ? 0 : midiToFreq(realValue),
-              measureNumber: bar.index,
+              measureNumber: bar.index ?? barIdx,
               timeSignatureNumerator: timeSignNum,
               timeSignatureDenominator: timeSignDenom,
             });

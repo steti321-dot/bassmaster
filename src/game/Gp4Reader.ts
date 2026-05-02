@@ -414,6 +414,9 @@ function parseGpFileInner(
               ? 0
               : fretToHz(trackProfile, n.stringIdx, n.fret),
             finger: n.finger,
+            measureNumber: m,
+            timeSignatureNumerator: header.numerator,
+            timeSignatureDenominator: header.denominator,
           });
         }
         beatTime += beatRead.durationMs;
