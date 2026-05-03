@@ -29,9 +29,9 @@ Per-song settings (selected track, backing tracks, difficulty, latency offset, e
 | Medium | ±50 ¢ | ±150 ms | half the sustain |
 | Strict | ±25 ¢ | ±75 ms | none — onset window only |
 
-Hit / miss are detected from your mic in real time using a YIN pitch detector + RMS attack tracker. After every hit a small refractory period plus a fresh-attack detection step prevents one sustained note from accidentally scoring multiple identical chips in a row.
+Hit / miss are detected from your mic in real time using an FFT-based **polyphonic pitch detector** (up to 6 simultaneous pitches) + RMS attack tracker. After every hit a small refractory period plus a fresh-attack detection step prevents one sustained note from accidentally scoring multiple identical chips in a row.
 
-For chord groups (multiple notes sharing the same time), pluck **any** member's pitch — the scorer matches against every un-played member and accepts the closest one.
+For chord groups (multiple notes sharing the same time), **strum all strings at once** — a 100 ms strum window keeps the gate open so every detected pitch can score its matching chord member. On Easy/Medium, reaching ≥60 % of the chord auto-completes the rest; Strict requires each string to score independently.
 
 #### Stripe visual states
 
@@ -50,7 +50,7 @@ The hittable state uses the active difficulty's timing window, so Easy stripes w
 
 Designed for beginners (or for kids who want to play along to *Seven Nation Army* without learning fret 7). Two simplifications run in sequence on the player track:
 
-1. **Chord reduction** — for any group of simultaneous notes, keep only the lowest pitch. Power chords reduce to root, full chords stay readable as a single melodic line. (v2 will refine this to "5th of the chord" — see `project_kids_mode_chord_policy.md`.)
+1. **Chord reduction** — power chords (root + 5th) reduce to the root; full chords with a perfect 5th keep the 5th as the single target note (closest-octave match); diminished / sus / no-5th chords fall back to the root.
 2. **Position remap inside the 0–5 fret window** — for every note, prefer an alternative `(string, fret)` that produces the same pitch with `fret ≤ 5`, biased toward **staying on the previous note's string**. This dramatically reduces forced string-jumping.
 
 Kids Mode applies to **both display and scoring**, so the player isn't penalized for chord notes that aren't shown.
@@ -184,10 +184,11 @@ Deploys ~50 lines of code that re-implement the Electron main process's `gprotab
 - **Vite 7 toolchain** — replaced abandoned `react-scripts` + `craco` + `@coderline/alphatab-webpack` with `vite` + `@vitejs/plugin-react` + `@coderline/alphatab-vite`. Dropped `--legacy-peer-deps` everywhere; cold dev start now ~350 ms, production build ~8 s (was ~60 s)
 - Mobile-responsive layout end-to-end (collapsed SidePanel row, modal HUD options, scaled chips, fits iPhone-portrait)
 - Footer ☕ Ko-fi donate link + 🔗 Share button (Web Share API + clipboard fallback)
+- **Measure-aware bar lines** — both the hand-rolled GP3/4 parser (`Gp4Reader`) and the alphaTab-based GP5+ parser now stamp every note with `measureNumber` + time-signature; NoteRain renders a cyan divider + measure number at each bar boundary for all file formats
+- **Polyphonic chord recognition** — 100 ms strum window keeps the attack gate open after the first chord member scores, so the FFT-based polyphonic detector can catch remaining strings across ticks. ≥60 % of chord members detected auto-completes the rest as hits (Easy/Medium); Strict requires every string to score independently.
 
 ### Open / next up
 
-- **Polyphonic chord recognition** — current pitch detector (YIN) is monophonic, so a strummed chord only registers one tone per pluck. A polyphonic detector (FFT pitch-peak picking, or a small ML model like Spotify's Basic Pitch run incrementally) would let "play the C chord" score in one motion instead of three separate plucks.
 - **Strum vs pick discrimination** — RMS-envelope shape analysis to detect whether the user strummed multiple strings simultaneously, so we can score the whole chord as one event in that case.
 - **Export synth backing as WAV** — let the user save the SimpleSynth oscillator backing for a song to a downloadable `.wav` from the Track Setup screen, rendered offline via `OfflineAudioContext` (~1-2 s for a 4-min song) and encoded with the existing `encodeWav16` helper. OGG conversion deferred. Detailed design: `~/.claude/plans/check-what-midi-proud-horizon.md`.
 - **Session replays** — record per-note hit/miss + timing into a small JSON, let the player review the run.
