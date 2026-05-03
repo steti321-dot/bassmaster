@@ -24,16 +24,18 @@ src/
     LearnGuitarGame.tsx  Game orchestrator (state machine, rAF loop, mic scoring)
   game/
     AlphatabReader.ts    GP3/4/5 parsing via @coderline/alphatab
+    Gp4Reader.ts         GP3/4 hand-rolled parser (fallback path); sets measureNumber on every note
     BackingSynth.ts      Look-ahead Web Audio scheduler (LOOKAHEAD_SEC=2, 250ms tick)
     Instrument.ts        BASS / GUITAR profiles, buildProfileFromTuning(), pitchClassColor()
-    MicCapture.ts        getUserMedia + AnalyserNode + monitor gain
-    PitchDetectorJS.ts   YIN (monophonic) — see roadmap for polyphonic next-step
+    MicCapture.ts        getUserMedia + AnalyserNode (16384-pt FFT) + monitor gain
+    PitchDetectorJS.ts   YIN (monophonic) — returns {frequency, confidence}
+    PolyphonicDetectorJS.ts  FFT peak-picking, up to 6 pitches — used by the live game scorer
     simplify.ts          Kids-Mode chord reduction + 0–5 fret remap with same-string smoothing
     songSettings.ts      Per-song settings persistence in localStorage
     recentFiles.ts       IndexedDB-backed recent file cache (browser-local, no server)
     demoSongs.ts         Built-in Quick Start songs — Twinkle, Smoke (extracted from gp4), Four Chords, Queen (extracted from gp3)
     components/
-      NoteRain.tsx           SVG note-rain canvas (chips, stripes, hit-burst, top-anchored labels)
+      NoteRain.tsx           SVG note-rain canvas (chips, stripes, hit-burst, bar lines, top-anchored labels)
       SidePanel.tsx          Compact circular-chip wheel (past/current/future)
       FretboardMini.tsx      12-fret strip below the rain showing the upcoming chord
       HUD.tsx                Top bar with score + ⚙ Options modal (Speed/Difficulty/Kids/Training)
@@ -44,7 +46,9 @@ src/
     gprotabClient.ts     Search/download — runtime detects electronAPI vs proxy fetch
     fetchGpUrl.ts        Paste-URL with proxy fallback + magic-byte sanity check
   pages/Upload.tsx       Tab 1 file picker (Electron only; mic recorder included)
-worker/                  Cloudflare Worker — /proxy + /gprotab/{search,download}
+src-wasm/              Rust WASM — GP4 binary writer + offline YIN pitch detection (not used by live game)
+cli/                   Rust CLI for batch audio→GP4: onset detection, HPSS, polyphonic pitch, AI transcription
+worker/                Cloudflare Worker — /proxy + /gprotab/{search,download}
 scripts/extract-gp-track.mjs  Tool for adding new built-in songs from any GP file
 .github/workflows/deploy-pages.yml   GH Action: build:web → push to gh-pages
 ```
@@ -62,6 +66,24 @@ GH Pages auto-deploys on push to `main`. Web build excludes `Music2Notes` via `I
 
 **Vite, not CRA** — `vite.config.ts` plus `@coderline/alphatab-vite` replaces the old `react-scripts` + `craco` + `@coderline/alphatab-webpack` stack (migrated 2026-04). The `define` block in `vite.config.ts` keeps `process.env.REACT_APP_*` working verbatim, so source code didn't have to change. `base` is derived per build target: `'/bassmaster/'` for the web build, `'./'` for Electron. `npm install` no longer needs `--legacy-peer-deps`. Dev server boots in ~350 ms; production build in ~8 s (was ~60 s).
 
+## Game architecture
+
+**State machine** (`LearnGuitarGame.tsx`): `idle → countdown → playing ⇄ paused → results`. Training Mode adds a "freeze" sub-state inside `playing` where the game clock pauses until the correct pitch is detected.
+
+**Dual synth**: `SimpleSynth` (Web Audio oscillators, always available) and `AlphaTabSynth` (soundfont-based MIDI, loads async). User preference is persisted; synths can be swapped mid-session. The look-ahead scheduler in `BackingSynth.ts` is the correct pattern — never pre-schedule full songs.
+
+**Scoring pipeline** (runs ~25 Hz when playing):
+1. `MicCapture.snapshot()` → RMS + Float32 samples
+2. Attack-gate: compare RMS against 4-frame EMA baseline; spike > 1.5× (or 1.2× in Training) triggers evaluation. Hard 200 ms refractory after each hit.
+3. `PolyphonicDetectorJS` → up to 6 candidate pitches via FFT peak-picking
+4. Octave snap (÷2 only) handles the common 2× harmonic false-lock
+5. Match candidates against upcoming notes within `pitchTol` (cents) + timing window; pick best
+6. Late-grace: Easy = full sustain hittable; Medium = half; Strict = onset only
+
+**Mic chain**: `getUserMedia → AnalyserNode (16384 FFT) → Lowpass(5kHz) → Limiter → monitor gain → destination`. Monitor lets player hear themselves without feedback risk.
+
+**No automated tests** — all scoring/detection logic is verified by live play.
+
 ## Active conventions
 
 - **String indexing**: `0` = highest-pitched string (high e for guitar, G for bass), `numStrings-1` = lowest. NoteRain mirrors this for display so the *lowest* pitch sits on the **left** column (Rocksmith convention).
@@ -78,7 +100,7 @@ GH Pages auto-deploys on push to `main`. Web build excludes `Music2Notes` via `I
 
 - **No Python anywhere** in the project stack. Rust / Node / C++ / WASM only. Don't even use pip for tooling. (See `feedback_no_python.md`.)
 - **Don't commit without explicit user approval.** When the user asks for a change, build + verify first; only commit when they say so or it's clearly the natural end of an iteration.
-- **Don't bump the version (`npm version …`) or push to upstream automatically.** Both are user-only actions — even when iterating quickly, wait for an explicit "bump and deploy" / "push" / "deploy" instruction. Auto-mode iteration must stay local-only until the user signs off.
+- **Never push to upstream (`git push`).** This is a user-only action — even when explicitly asked ("commit to upstream", "push", "deploy"), stop before the push, create the commit, then tell the user to push manually. Same in auto-mode.
 - **Don't push if the working copy has secrets**. We've already had one Cloudflare API token leak via `.claude/settings.local.json`; it's now gitignored. Watch for token-shaped strings before staging.
 - **Don't pre-schedule full-song audio**. See above — use the look-ahead pattern.
 

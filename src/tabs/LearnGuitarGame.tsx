@@ -150,6 +150,10 @@ export default function LearnGuitarGame() {
   // after the hit was scored.
   const lastHitAtRef = useRef<number>(0);
   const REFRACTORY_MS = 200;
+  // Strum window: after the first chord member scores, keep the gate open for
+  // this many ms so the polyphonic FFT can catch remaining strings.
+  const STRUM_WINDOW_MS = 100;
+  const chordEvalRef = useRef<{ chordTime: number; openedAt: number } | null>(null);
   const embeddedAudioRef = useRef<EmbeddedAudioTrack[] | undefined>(undefined);
   embeddedAudioRef.current = embeddedAudio;
 
@@ -448,6 +452,19 @@ export default function LearnGuitarGame() {
       // Scoring — only run pitch detection at ~25 Hz to keep CPU happy
       if (now - lastDetectAtRef.current > 40 && micCaptureRef.current?.isStarted()) {
         lastDetectAtRef.current = now;
+
+        // If a chord strum window is open and has expired, close the gate now.
+        if (chordEvalRef.current) {
+          const { openedAt } = chordEvalRef.current;
+          if (now - openedAt > STRUM_WINDOW_MS) {
+            chordEvalRef.current = null;
+            requireSilenceRef.current = true;
+            peakRmsSinceHitRef.current = micCaptureRef.current?.snapshot()?.rms ?? 0;
+            recentRmsRef.current = peakRmsSinceHitRef.current;
+            lastHitAtRef.current = now;
+          }
+        }
+
         const cfg = DIFFICULTIES[difficultyRef.current];
         // Pitch tolerance: user override beats difficulty preset
         const pitchTol = cfg.pitchToleranceCents;
@@ -614,36 +631,47 @@ export default function LearnGuitarGame() {
                 DEV && console.log(`[HIT]  note#${hitIdx} ${freqToNoteName(hn.frequency)}(${hn.frequency.toFixed(0)}Hz) detected@${detectedFreq.toFixed(0)}Hz ±${bestMatchCents.toFixed(0)}¢`);
               }
             }
-            // Attack detection/refractory applies only to the first pitch
-            // in this frame to avoid multiple triggers from a single strum.
+            // After scoring: decide whether to close the gate immediately or
+            // open a strum window to catch remaining chord members.
             if (anyHitThisFrame && !requireSilenceRef.current) {
-              // Lock the gate AND start the refractory timer. Anchor the
-              // baselines at the hit's RMS so the very next frame compares
-              // sustained ringing against this level (not pre-hit silence).
-              requireSilenceRef.current = true;
-              peakRmsSinceHitRef.current = snap?.rms ?? 0;
-              recentRmsRef.current = snap?.rms ?? 0;
-              lastHitAtRef.current = now;
+              // Find the chord boundaries for the note that was just hit.
+              const lastHitNote = displayedNotes[i];
+              let cStart = i;
+              while (cStart > 0 && displayedNotes[cStart - 1].time === lastHitNote.time) cStart--;
+              let cEnd = i;
+              while (cEnd + 1 < displayedNotes.length && displayedNotes[cEnd + 1].time === lastHitNote.time) cEnd++;
+              const cSize = cEnd - cStart + 1;
+              const cHits = Array.from({ length: cSize }, (_, k) => results.get(cStart + k) === 'hit')
+                .filter(Boolean).length;
+
+              if (cSize > 1 && cHits < cSize) {
+                // Multi-note chord, not yet complete — open strum window.
+                // Gate stays open so polyphonic FFT keeps running next ticks.
+                if (!chordEvalRef.current) {
+                  chordEvalRef.current = { chordTime: lastHitNote.time, openedAt: now };
+                }
+              } else {
+                // Single note or chord fully scored — close gate normally.
+                requireSilenceRef.current = true;
+                peakRmsSinceHitRef.current = snap?.rms ?? 0;
+                recentRmsRef.current = snap?.rms ?? 0;
+                lastHitAtRef.current = now;
+                chordEvalRef.current = null;
+              }
             }
           }
 
-          // Partial-chord forgiveness: DISABLED across all difficulties.
-          // The rule is now uniform: every note requires its own attack +
-          // matching pitch. Polyphonic detection already accepts multiple
-          // simultaneous pitches from one strum, so legitimate full strums
-          // still score the whole chord on a single attack — but partial
-          // strums that miss strings now correctly miss those notes.
-          const forgiveMin = Infinity;
-          if (forgiveMin < Infinity) {
-            // Scan backward to find the first chord member at n.time
-            // (earlier members may have been scored in previous frames).
+          // Partial-chord forgiveness: if ≥60 % of chord members scored
+          // (Easy/Medium), auto-complete the rest. Strict requires every string.
+          {
             let chordStart = i;
             while (chordStart > 0 && displayedNotes[chordStart - 1].time === n.time) chordStart--;
-            // Scan forward to find the last chord member.
             let chordEnd = i;
             while (chordEnd + 1 < displayedNotes.length && displayedNotes[chordEnd + 1].time === n.time) chordEnd++;
-
             const chordSize = chordEnd - chordStart + 1;
+            const forgiveMin = difficultyRef.current === 'strict'
+              ? Infinity
+              : Math.ceil(chordSize * 0.6);
             if (chordSize > 1) {
               let chordHits = 0;
               for (let j = chordStart; j <= chordEnd; j++) {
@@ -661,6 +689,14 @@ export default function LearnGuitarGame() {
                     scoreChanged = true;
                     hitAtRef.current.set(j, now);
                   }
+                }
+                // Chord complete — close gate now.
+                if (chordEvalRef.current?.chordTime === n.time) {
+                  chordEvalRef.current = null;
+                  requireSilenceRef.current = true;
+                  peakRmsSinceHitRef.current = snap?.rms ?? 0;
+                  recentRmsRef.current = snap?.rms ?? 0;
+                  lastHitAtRef.current = now;
                 }
               }
             }
