@@ -18,7 +18,7 @@ const isWebBuild = process.env.REACT_APP_BUILD_TARGET === 'web';
 
 export default defineConfig({
   plugins: [react(), alphaTab()],
-  base: isWebBuild ? '/bassmaster/' : './',
+  base: isWebBuild ? './' : './',
   define: {
     'process.env.REACT_APP_BUILD_TARGET': JSON.stringify(
       process.env.REACT_APP_BUILD_TARGET || '',
